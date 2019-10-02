@@ -57,7 +57,7 @@ def getNP_protein(idLists):
 # human_enzymes = getHumanEnzymes(readHumanEnzymes['IdList'][100:110])
 # print(human_enzymes)
 
-handleMissense = Entrez.esearch(db='clinvar',
+handleMissense = Entrez.esearch(db='clinvar', retmax=200000,
                                 term='( ( ("clinsig has conflicts"[Properties]) OR ("clinsig vus"[Properties]) ) AND ("missense variant"[molecular consequence] OR "SO 0001583"[molecular consequence]))')
 recordsMissense = Entrez.read(handleMissense)
 print("{} genes are found".format(recordsMissense['Count']))
@@ -66,6 +66,19 @@ print(recordsMissense)
 # print(detailMissesnse.read())
 
 def getNP_Clinvar(idLists):
+    missense = dict()
+
+    for i in idLists:
+        missense_info = Entrez.efetch(db='clinvar', id=i, rettype='vcv', is_variationid="true", from_esearch="true")
+        tree = ET.parse(missense_info)
+        root = tree.getroot()
+        for mutation in root.iter('ProteinExpression'):
+            np = mutation.attrib['sequenceAccessionVersion']
+            change = mutation.attrib['change'].split('p.')[1]
+            missense[np] = change
+
+    return missense
+
 
 
 # nuccore xml MM
