@@ -1,3 +1,4 @@
+import pandas as pd
 import xml.etree.ElementTree as ET
 from Bio import Entrez
 
@@ -13,54 +14,59 @@ handleHumanEnzymes = Entrez.esearch(db="protein", retmax=20000,
                                     term="Homo sapiens[Organism] AND RefSeq[Filter] AND (1*[EC/RN Number] OR 2*[EC/RN Number] OR 3*[EC/RN Number] OR 4*[EC/RN Number] OR 5*[EC/RN Number] OR 6*[EC/RN Number])")
 readHumanEnzymes = Entrez.read(handleHumanEnzymes)
 print("{} enzymes are found".format(readHumanEnzymes["Count"]))
+protein_detail = Entrez.efetch(db='protein', id=readHumanEnzymes['IdList'][0], retmode='xml')
+# print(readHumanEnzymes['IdList'][0])
+# print(protein_detail.read())
 
 
-def getNP_protein(idLists):
+def getHumanGenes(idLists):
     human_enzymes = set()
 
     for i in idLists:
         protein_info = Entrez.efetch(db='protein', id=i, retmode='xml')
         tree = ET.parse(protein_info)
         root = tree.getroot()
-        np = root.find('./GBSeq/GBSeq_accession-version')
-        human_enzymes.add(np.text)
+        gene = root.find('./GBSeq/GBSeq_feature-table/GBFeature/GBFeature_quals/GBQualifier/[GBQualifier_name="gene"]/GBQualifier_value')
+        human_enzymes.add(gene.text)
 
     return human_enzymes
 
 
-# np_human_enzymes = getNP_protein(readHumanEnzymes['IdList'][0:10])
-# print(np_human_enzymes)
+human_genes = getHumanGenes(readHumanEnzymes['IdList'][0:150])
+print(human_genes)
 
 handleMissense = Entrez.esearch(db='clinvar', retmax=200000,
                                 term='( ( ("clinsig has conflicts"[Properties]) OR ("clinsig vus"[Properties]) ) AND ("missense variant"[molecular consequence] OR "SO 0001583"[molecular consequence]))')
 recordsMissense = Entrez.read(handleMissense)
 print("{} genes are found".format(recordsMissense['Count']))
 # print(recordsMissense)
-# detailMissesnse = Entrez.efetch(db='clinvar', id=558834, rettype='vcv', is_variationid="true", from_esearch="true")
+detailMissesnse = Entrez.efetch(db='clinvar', id=558834, rettype='vcv', is_variationid="true", from_esearch="true")
 # print(detailMissesnse.read())
 
-
-def getNP_Clinvar(idLists):
-    missense = dict()
-
+def getVUS_Clinvar(idLists, genes):
+    data = {'Gene': [], 'VUS_protein': [], 'NP': [], 'PDB': []}
     for i in idLists:
         missense_info = Entrez.efetch(db='clinvar', id=i, rettype='vcv', is_variationid="true", from_esearch="true")
         tree = ET.parse(missense_info)
         root = tree.getroot()
-        for mutation in root.iter('ProteinExpression'):
-            np = mutation.attrib['sequenceAccessionVersion']
-            change = mutation.attrib['change'].split('p.')[1]
-            before = aatranlation[change[0:3]]
-            after = aatranlation[change[len(change)-3:len(change)]]
-            num = change[3:len(change)-3]
-            abbreviated_change = before + num + after
-            missense[np] = abbreviated_change
+        name = root.find('./VariationArchive/InterpretedRecord/SimpleAllele/GeneList/Gene').attrib['Symbol']
+        if name in genes:
+            for mutation in root.iter('ProteinExpression'):
+                data['Gene'].append(name)
+                np = mutation.attrib['sequenceAccessionVersion']
+                change = mutation.attrib['change'].split('p.')[1]
+                before = aatranlation[change[0:3]]
+                after = aatranlation[change[len(change) - 3:len(change)]]
+                num = change[3:len(change) - 3]
+                abbreviated_change = before + num + after
+                data['VUS_protein'].append(abbreviated_change)
+                data['NP'].append(np)
+    df = pd.DataFrame(data)
+    return df
 
-    return missense
 
-
-list_Clinvar = getNP_Clinvar(recordsMissense['IdList'][0:3])
-print(list_Clinvar.items())
+df_Clinvar = getVUS_Clinvar(recordsMissense['IdList'][0:100], human_genes)
+print(df_Clinvar)
 
 # def getGenes(xmlfile):
 #     tree = ET.parse(xmlfile)
