@@ -62,7 +62,7 @@ def getVUS_Clinvar(idLists, genes):
                 print(mutation.attrib['change'])  # debug
                 np_num = mutation.attrib['sequenceAccessionVersion']
                 change = mutation.attrib['change'].split('p.')[1]
-                before = aatranlation[change[0:3]]
+                before = aatranlation[change[0:3]]  # add a condition for non-missnese
                 after = aatranlation[change[len(change) - 3:len(change)]]
                 num = change[3:len(change) - 3]
                 abbreviated_change = before + num + after
