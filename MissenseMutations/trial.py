@@ -100,7 +100,7 @@ def getFASTA(np_num, location, beforeMutation, numOfSequence = 5):
     seq_record = SeqIO.read(handle, 'fasta')
     sequence = seq_record.seq
     if location - 1 < len(sequence) and sequence[location - 1] == beforeMutation:
-        if 2 * numOfSequence + 1 <= len(sequence):
+        if 2 * numOfSequence + 1 <= len(sequence):  
             if location - 1 - numOfSequence >= 0:
                 if location - 1 + numOfSequence < len(sequence):
                     return sequence[location-1-numOfSequence:location+numOfSequence]
@@ -111,13 +111,18 @@ def getFASTA(np_num, location, beforeMutation, numOfSequence = 5):
         else:
             return sequence
     else:
-        return False
+        return False  # what should I return here?
 
 sequence = getFASTA('NP_005557.1', 190, 'L', 5)
 print(sequence)
 
-# np_list = ['NP_005557.1', 'NP_001128711.1', 'NP_001158886.1']
-# handle = Entrez.efetch(db='protein', id=np_list, rettype='fasta', retmode='text')
-# seq_record = SeqIO.read(handle, 'fasta')
-# sequence = seq_record.seq
-# print(sequence[189])
+np_list = ['NP_005557.1', 'NP_001128711.1', 'NP_001158886.1']
+handle = Entrez.efetch(db='protein', id=np_list, rettype='fasta', retmode='text')
+
+seq_record = SeqIO.read(handle, 'fasta')
+sequence = seq_record
+print(handle)
+
+# proteinSeq = seqData[0 if else : ]
+# handle = NCBIWW.qblast("blastp", 'pdb', proteinSeq, expect = 10.0)
+# Hit_id
