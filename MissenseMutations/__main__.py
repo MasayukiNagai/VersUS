@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import csv
 import xml.etree.ElementTree as ET
 from Bio import Entrez
 from Bio import SeqIO
@@ -46,7 +47,7 @@ def readHumanGenes():
 def getVUSIDs():
     handleVUS = Entrez.esearch(db='clinvar', retmax=200000,
                                     term='( ( ("clinsig has conflicts"[Properties]) OR ("clinsig vus"[Properties]) ) AND ("missense variant"[molecular consequence] OR "SO 0001583"[molecular consequence]))')
-    recordVUS = Entrez.read(handleMissense)
+    recordVUS = Entrez.read(handleVUS)
     return recordVUS['IdList']
 
 
@@ -91,6 +92,15 @@ def getVUS_Clinvar(idLists, genes):
     return df
 
 
+def readVUScsv():
+    data = []
+    with open('../data/MM_enzyme.csv') as filehandle:
+        reader = csv.reader(filehandle)
+        data = list(reader)
+    df = pd.DataFrame(data)
+    return df
+
+
 def getFASTA(np_num, location, beforeMutation, numOfSequence = 5):
     handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text')
     seq_record = SeqIO.read(handle, 'fasta')
@@ -132,10 +142,12 @@ print(len(human_genes))
 # get every missense genes
 VUS_ids = getVUSIDs()
 print("{} variants are found".format(len(VUS_ids)))
-# print(recordsMissense)
-# detailMissesnse = Entrez.efetch(db='clinvar', id=recordsMissense['IdList'][14000:14003], rettype='vcv', is_variationid="true", from_esearch="true")
-# print(detailMissesnse.read())
 
 
-df_Clinvar = getVUS_Clinvar(VUS_ids, human_genes)
-print(df_Clinvar)
+# get csv file which filters VUS_ids out with human_genes  
+# df_VUS = getVUS_Clinvar(VUS_ids, human_genes)
+# print(df_VUS)
+
+# read csv file and make dataframe
+df_VUS = readVUScsv()
+print(df_VUS)
