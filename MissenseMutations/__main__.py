@@ -20,7 +20,7 @@ def getHumanEnzymeIDs():
     return readHumanEnzymes['IdList']
 
 
-def getHumanGenes(idLists):
+def getHumanGenes(idLists, path):
     human_enzymes = set()
     protein_info = Entrez.efetch(db='protein', id=idLists, retmode='xml', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
     tree = ET.parse(protein_info)
@@ -37,9 +37,9 @@ def getHumanGenes(idLists):
     return human_enzymes
 
 
-def readHumanGenes():
+def readHumanGenes(path):
     human_genes = []
-    with open('../data/HumanEnzymes.txt', 'r') as filehandle:
+    with open(path, 'r') as filehandle:
         human_genes = filehandle.read().splitlines()
     return human_genes
 
@@ -51,7 +51,7 @@ def getVUSIDs():
     return recordVUS['IdList']
 
 
-def getVUS_Clinvar(idLists, genes):
+def getVUS_Clinvar(idLists, genes, path):
     data = {'Gene': [], 'VUS_protein': [], 'NP': [], 'PDB': []}
     i = 0
     count = 0  # debug
@@ -88,37 +88,28 @@ def getVUS_Clinvar(idLists, genes):
         print(count)  # debug
     print(len(geneSet))                
     df = pd.DataFrame(data)
-    df.to_csv('../data/MM_enzyme.csv', index = False, header = True)
+    df.to_csv(path, index = False, header = True)
     return df
 
 
-def readVUScsv():
+def readVUScsv(path):
     data = []
-    with open('../data/MM_enzyme.csv') as filehandle:
+    with open(path) as filehandle:
         reader = csv.reader(filehandle)
         data = list(reader)
     df = pd.DataFrame(data)
     return df
 
 
-def getFASTA(np_num, location, beforeMutation, numOfSequence = 5):
+def getFASTA(np_num, location, beforeMutation, numOfSequence = 10):
     handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text')
     seq_record = SeqIO.read(handle, 'fasta')
     sequence = seq_record.seq
     if location - 1 < len(sequence) and sequence[location - 1] == beforeMutation:
-        if 2 * numOfSequence + 1 <= len(sequence):
-            if location - 1 - numOfSequence >= 0:
-                if location - 1 + numOfSequence < len(sequence):
-                    return sequence[location-1-numOfSequence:location+numOfSequence]
-                else:
-                    return sequence[len(sequence)-1-2*numOfSequence:len(sequence)]
-            else:
-                return sequence[0:2*numOfSequence+2]
-        else:
-            return sequence
+        proteinSeq = seq_record[0 if location - 1 - numOfSequence <= 0 else location - 1 - numOfSequence : location + numOfSequence]
     else:
         return False
-    
+
 
 # get every enzyme
 enzyme_ids = getHumanEnzymeIDs()
@@ -128,13 +119,13 @@ print("{} enzymes are found".format(len(enzyme_ids)))
 
 
 # get human genes
-# human_genes = getHumanGenes(readHumanEnzymes['IdList'])
+# human_genes = getHumanGenes(readHumanEnzymes['IdList'], '../data/HumanEnzymes.txt')
 # print(human_genes)
 # print(len(human_genes))
 
 
 # read human genes text file
-human_genes = readHumanGenes()
+human_genes = readHumanGenes('../data/UniProtHumanEnzymeGenes.txt')
 print(human_genes)
 print(len(human_genes))
 
@@ -145,9 +136,9 @@ print("{} variants are found".format(len(VUS_ids)))
 
 
 # get csv file which filters VUS_ids out with human_genes  
-# df_VUS = getVUS_Clinvar(VUS_ids, human_genes)
-# print(df_VUS)
+df_VUS = getVUS_Clinvar(VUS_ids, human_genes, '../data/MM_enzyme.csv')
+print(df_VUS)
 
 # read csv file and make dataframe
-df_VUS = readVUScsv()
-print(df_VUS)
+# df_VUS = readVUScsv('../data/MM_enzyme.csv')
+# print(df_VUS)
