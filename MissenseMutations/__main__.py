@@ -4,6 +4,8 @@ import csv
 import xml.etree.ElementTree as ET
 from Bio import Entrez
 from Bio import SeqIO
+from Bio.Blast import NCBIWWW
+import datetime
 
 Entrez.email = "mnaffairs.intl@gmail.com"
 
@@ -13,6 +15,8 @@ aatranlation = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                 'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
 
 
+# fetch id numbers of human enzymes from ncbi protein database
+# return list of the ids
 def getHumanEnzymeIDs():
     handleHumanEnzymes = Entrez.esearch(db="protein", retmax=20000,
                                         term="Homo sapiens[Organism] AND RefSeq[Filter] AND (1*[EC/RN Number] OR 2*[EC/RN Number] OR 3*[EC/RN Number] OR 4*[EC/RN Number] OR 5*[EC/RN Number] OR 6*[EC/RN Number])")
@@ -20,6 +24,8 @@ def getHumanEnzymeIDs():
     return readHumanEnzymes['IdList']
 
 
+# fetch gene names from ncbi protein databse using id lists of the enzymes
+# return set of the enzymes and write to a csv file
 def getHumanGenes(idLists, path):
     human_enzymes = set()
     protein_info = Entrez.efetch(db='protein', id=idLists, retmode='xml', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
@@ -37,6 +43,8 @@ def getHumanGenes(idLists, path):
     return human_enzymes
 
 
+# read csv file of gene names of human enzymes
+# return list of the enzymes
 def readHumanGenes(path):
     human_genes = []
     with open(path, 'r') as filehandle:
@@ -44,6 +52,8 @@ def readHumanGenes(path):
     return human_genes
 
 
+# fetch id numbers of missense/uncertain significance variants from clinvar
+# return list of the ids
 def getVUSIDs():
     handleVUS = Entrez.esearch(db='clinvar', retmax=200000,
                                     term='( ( ("clinsig has conflicts"[Properties]) OR ("clinsig vus"[Properties]) ) AND ("missense variant"[molecular consequence] OR "SO 0001583"[molecular consequence]))')
@@ -51,6 +61,8 @@ def getVUSIDs():
     return recordVUS['IdList']
 
 
+# fetch gene name, mutation, np number
+# return dataframe
 def getVUS_Clinvar(idLists, genes, path):
     data = {'Gene': [], 'VUS_protein': [], 'NP': [], 'PDB': []}
     i = 0
@@ -92,6 +104,8 @@ def getVUS_Clinvar(idLists, genes, path):
     return df
 
 
+# read csv file of missense information
+# return dataframe
 def readVUScsv(path):
     data = []
     with open(path) as filehandle:
@@ -101,21 +115,209 @@ def readVUScsv(path):
     return df
 
 
+def removeSameVariations(path):
+    data = []
+    with open(path) as filehandle:
+        reader = csv.reader(filehandle)
+        data = list(reader)
+    length = len(data)
+    ct = 0
+    i = 1
+    while ct < length - 1:
+        geneCurr = data[i][0]
+        geneNext = data[i+1][0]
+        if geneCurr == geneNext:
+            mutation = data[i][1]
+            before = mutation[0]
+            afterCurr = mutation[len(mutation)-1]
+            location = int(mutation[1:len(mutation)-1])
+            sequenceCurr = getFASTA(data[i][2], location, before, 10)
+            mutation = data[i+1][1]
+            before = mutation[0]
+            afterNext = mutation[len(mutation)-1]
+            location = int(mutation[1:len(mutation)-1])
+            sequenceNext = getFASTA(data[i+1][2], location, before, 10)
+            if sequenceCurr == sequenceNext and afterCurr == afterNext:
+                data.pop(i+1)
+                print(geneCurr)
+                print("popped")
+            else:
+                i += 1
+        else:
+            i += 1
+        ct += 1
+        print(ct)
+    df = pd.DataFrame(data)
+    df.to_csv(path, index = False, header= False)
+    return df
+
+
+def removeSameVariationsByName(inpath, outpath):
+    with open(outpath, 'w') as outFile, open(inpath, 'r') as inputFile:
+        writer = csv.writer(outFile, delimiter=',')
+        reader = csv.reader(inputFile, delimiter=',')
+        writer.writerow(next(reader))
+        rowCurr = next(reader)
+        print(rowCurr)
+        for rowNext in reader:
+            geneCurr = rowCurr[0]
+            geneNext = rowNext[0]
+            print(geneCurr + " " + geneNext)
+            if geneCurr == geneNext:
+                print("same gene")
+                mutationCurr = rowCurr[1]
+                mutationNext = rowNext[1]
+                if mutationCurr != mutationNext:
+                    writer.writerow(rowCurr)
+                    print("debug: added")
+                    rowCurr = rowNext
+            else:
+                rowCurr = rowNext
+    
+
+def removeSameVariationsBySequence(inpath, outpath):
+    with open(outpath, 'w') as outFile, open(inpath, 'r') as inputFile:
+        writer = csv.writer(outFile, delimiter=',')
+        reader = csv.reader(inputFile, delimiter=',')
+        writer.writerow(next(reader))
+        rowCurr = next(reader)
+        sequenceCurr = ''
+        print(rowCurr)
+        for rowNext in reader:
+            geneCurr = rowCurr[0]
+            geneNext = rowNext[0]
+            print(geneCurr + " " + geneNext)
+            if geneCurr == geneNext:
+                mutationCurr = rowCurr[1]
+                beforeCurr = mutationCurr[0]
+                afterCurr = mutationCurr[len(mutationCurr)-1]
+                locationCurr = int(mutationCurr[1:len(mutationCurr)-1])
+                npCurr = rowCurr[2]
+
+                mutationNext = rowNext[1]
+                beforeNext = mutationNext[0]
+                afterNext = mutationNext[len(mutationNext)-1]
+                locationNext = int(mutationNext[1:len(mutationNext)-1])
+                npNext = rowNext[2]
+                if beforeCurr == beforeNext:
+                    sequenceNext = getFASTA(npNext, locationNext, beforeNext, 10)
+                    if sequenceCurr != sequenceNext:
+                        writer.writerow(rowCurr)
+                        print("debug: added")
+                        rowCurr = rowNext
+                        sequenceCurr = sequenceNext
+                else:
+                    print("debug: added")
+                    writer.writerow(rowCurr)
+                    rowCurr = rowNext
+            else:
+                rowCurr = rowNext
+
+
+    # data = list(reader)
+    # length = len(data)
+    # ct = 0
+    # i = 1
+    # while ct < length - 1:
+    #     geneCurr = data[i][0]
+    #     geneNext = data[i+1][0]
+    #     if geneCurr == geneNext:
+    #         mutation = data[i][1]
+    #         before = mutation[0]
+    #         afterCurr = mutation[len(mutation)-1]
+    #         location = int(mutation[1:len(mutation)-1])
+    #         sequenceCurr = getFASTA(data[i][2], location, before, 10)
+    #         mutation = data[i+1][1]
+    #         before = mutation[0]
+    #         afterNext = mutation[len(mutation)-1]
+    #         location = int(mutation[1:len(mutation)-1])
+    #         sequenceNext = getFASTA(data[i+1][2], location, before, 10)
+    #         if sequenceCurr == sequenceNext and afterCurr == afterNext:
+    #             data.pop(i+1)
+    #             print(geneCurr)
+    #             print("popped")
+    #         else:
+    #             i += 1
+    #     else:
+    #         i += 1
+    #     ct += 1
+    #     print(ct)
+    # df = pd.DataFrame(data)
+    # df.to_csv(path, index = False, header= False)
+    # return df                    
+
+
+# ideally add fasta sequecne to csv file but not working right now
+def addFASTA(path):
+    data = []
+    with open(path) as filehandle:
+        reader = csv.reader(filehandle)
+        data = list(reader)
+    data['FASTA'] = []
+    for i in range(len(data['Gene'])):
+        change = data['VUS_protein'][i]
+        before = change[0]
+        location = change[1:len(change)-1]
+        fasta = getFASTA(data["NP"][i], location, before, 10)
+        data['FASTA'].add(fasta)
+    df = pd.DataFrame(data)
+    return df
+
+
+# fetch specified range of fasta sequence
+# return fasta sequence if found or None
 def getFASTA(np_num, location, beforeMutation, numOfSequence = 10):
-    handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text')
+    handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
     seq_record = SeqIO.read(handle, 'fasta')
     sequence = seq_record.seq
     if location - 1 < len(sequence) and sequence[location - 1] == beforeMutation:
-        proteinSeq = seq_record[0 if location - 1 - numOfSequence <= 0 else location - 1 - numOfSequence : location + numOfSequence]
+        proteinSeq = sequence[0 if location - 1 - numOfSequence <= 0 else location - 1 - numOfSequence : location + numOfSequence]
+        return proteinSeq
     else:
-        return False
+        return None
+
+
+# blast pdb database
+# return id of the pdb sequence if found or None
+def getPDB(sequence, expectValue):
+    pdb = None
+    print("start blast")
+    handle = NCBIWWW.qblast("blastp", 'pdb', sequence, expect = expectValue, hitlist_size=3)
+    record = handle.read()
+    root = ET.fromstring(record)
+    hit_id = root.find("./BlastOutput_iterations/Iteration/Iteration_hits/Hit/Hit_id")
+    if hit_id is not None:
+        pdb = hit_id.text.split("|")[3]
+    handle.close()
+    return pdb
+
+
+# blast pdb database and add id of the pdb to dataframe imported from csv file
+# return dataframe and write to a new csv file
+def addPDB(path):
+    data = []
+    with open(path) as filehandle:
+        reader = csv.reader(filehandle)
+        data = list(reader)   
+    for i in range(1,len(data)):  # try smaller range 
+        mutation = data[i][1]
+        before = mutation[0]
+        location = int(mutation[1:len(mutation)-1])
+        sequence = getFASTA(data[i][2], location, before, 10)
+        print(sequence)
+        data[i][3] = getPDB(sequence, 10.0)
+        # data[i][3] = i
+    df = pd.DataFrame(data)
+    df.to_csv(path, index = False, header = False)
+    return df
+
 
 
 # get every enzyme
-enzyme_ids = getHumanEnzymeIDs()
-print(len(enzyme_ids))  
-print(len(set(enzyme_ids))) # check if enzyme_ids have duplicates
-print("{} enzymes are found".format(len(enzyme_ids)))
+# enzyme_ids = getHumanEnzymeIDs()
+# print(len(enzyme_ids))  
+# print(len(set(enzyme_ids))) # check if enzyme_ids have duplicates
+# print("{} enzymes are found".format(len(enzyme_ids)))
 
 
 # get human genes
@@ -125,20 +327,39 @@ print("{} enzymes are found".format(len(enzyme_ids)))
 
 
 # read human genes text file
-human_genes = readHumanGenes('../data/UniProtHumanEnzymeGenes.txt')
-print(human_genes)
-print(len(human_genes))
+# human_genes = readHumanGenes('../data/UniProtHumanEnzymeGenes.txt')
+# print(human_genes)
+# print(len(human_genes))
 
 
 # get every missense genes
-VUS_ids = getVUSIDs()
-print("{} variants are found".format(len(VUS_ids)))
+# VUS_ids = getVUSIDs()
+# print("{} variants are found".format(len(VUS_ids)))
 
 
 # get csv file which filters VUS_ids out with human_genes  
-df_VUS = getVUS_Clinvar(VUS_ids, human_genes, '../data/MM_enzyme.csv')
-print(df_VUS)
+# df_VUS = getVUS_Clinvar(VUS_ids, human_genes, '../data/MM_enzyme.csv')
+# print(df_VUS)
 
 # read csv file and make dataframe
 # df_VUS = readVUScsv('../data/MM_enzyme.csv')
 # print(df_VUS)
+
+
+# addPDB('../data/MM_enzyme.csv')
+
+# df = removeSameVariations('../data/MM_enzyme.csv')
+# print(df)
+
+# removeSameVariationsByName('../data/MM_enzyme.csv', '../data/MM_enzyme_filter_1.csv')
+
+removeSameVariationsBySequence('../data/MM_enzyme_filter_1.csv', '../data/MM_enzyme_filter_2.csv')
+# start = datetime.datetime.now()
+# sequence = getFASTA('NP_005557.1', 190, 'L', 10)
+# sequence = 'KFGELVAEEARRKGELRYMHS'
+# pdb = getPDB(sequence, 10.0)
+# print(pdb)
+# end = datetime.datetime.now()
+# time = end - start
+# c = divmod(time.days * 86400 + time.seconds, 60)
+# print(c)

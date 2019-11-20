@@ -1,0 +1,20 @@
+.vscode
+
+### macOS ###
+.DS_Store
+
+# ClinVar data
+ClinVarFullRelease_00-latest.xml
+
+# pdb sequence data
+pdb_seqres.txt
+
+# sample file
+sample_LIPA.txt
+LDHA_xml.txt
+RCV000077146.xml
+
+# randome output file
+MM_enzyme_copy.csv
+MM_enzyme_filter_1.csv
+MM_enzyme_filter_2.csv
