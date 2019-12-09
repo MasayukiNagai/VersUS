@@ -10,9 +10,10 @@ ClinVarFullRelease_00-latest.xml
 pdb_seqres.txt
 
 # sample file
-sample_LIPA.txt
-LDHA_xml.txt
-RCV000077146.xml
+*.txt
+*.csv
+*.xlsx
+*.xml
 
 # randome output file
 MM_enzyme_copy.csv
