@@ -1,43 +1,15 @@
+import csv 
 import pandas as pd
 import numpy as np
-import csv
-import xml.etree.ElementTree as ET
-from Bio import Entrez
-from Bio import SeqIO
-from Bio.Blast import NCBIWWW
-
-Entrez.email = "mnaffairs.intl@gmail.com"
+from lxml import etree
 
 aatranlation = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                 'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
                 'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
                 'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
 
-
-def getHumanEnzymeIDs():
-    handleHumanEnzymes = Entrez.esearch(db="protein", retmax=20000,
-                                        term="Homo sapiens[Organism] AND RefSeq[Filter] AND (1*[EC/RN Number] OR 2*[EC/RN Number] OR 3*[EC/RN Number] OR 4*[EC/RN Number] OR 5*[EC/RN Number] OR 6*[EC/RN Number])")
-    readHumanEnzymes = Entrez.read(handleHumanEnzymes)
-    return readHumanEnzymes['IdList']
-
-
-def getHumanGenes(idLists, path):
-    human_enzymes = set()
-    protein_info = Entrez.efetch(db='protein', id=idLists, retmode='xml', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
-    tree = ET.parse(protein_info)
-    root = tree.getroot()
-    count = 0  # debug
-    for gene in root.findall('./GBSeq/GBSeq_feature-table/GBFeature/GBFeature_quals/GBQualifier/[GBQualifier_name="gene"]/GBQualifier_value'):
-        human_enzymes.add(gene.text)
-        count += 1  # debug
-    print(count)
-    with open('../data/HumanEnzymes.txt', 'w') as filehandle:
-        filehandle.seek(0)  # sets the file's current position at 0
-        filehandle.truncate()  # sets the logical size of a file to 0, which means to delte its content
-        filehandle.writelines('%s\n' % human_enzyme for human_enzyme in human_enzymes)
-    return human_enzymes
-
-
+# read csv file of gene names of human enzymes
+# return list of the enzymes
 def readHumanGenes(path):
     human_genes = []
     with open(path, 'r') as filehandle:
@@ -45,82 +17,94 @@ def readHumanGenes(path):
     return human_genes
 
 
-def getVUSIDs():
-    handleVUS = Entrez.esearch(db='clinvar', retmax=200000,
-                                    term='( ( ("clinsig has conflicts"[Properties]) OR ("clinsig vus"[Properties]) ) AND ("missense variant"[molecular consequence] OR "SO 0001583"[molecular consequence]))')
-    recordVUS = Entrez.read(handleVUS)
-    return recordVUS['IdList']
+class variationTarget(object):
+    def __init__(self, enzyme_genes):
+        self.dictlist = {'interpretation': [], 'gene':[], 'accession':[], 'mutation': [], 'NP': [], 'Chr': [], 'start':[], 'stop':[], 'referenceAllele':[], 'alternateAllele':[], 'FASTA':[], 'PDB': []}
+        self.enzyme_genes = enzyme_genes
+        self.gene = ""
+        self.interpretation = ""
+        self.accession = ""
+        self.mutation = ""
+        self.np_num = ""
+        self.change = ""
+        self.chr = ""
+        self.start_num = ""
+        self.stop_num = ""
+        self.referenceAllele = ""
+        self.alternateAllele = ""
+        self.is_GeneList = False
+        self.ct_gene = 0
+        self.ct_seq = 0
+        self.ct_hgvs = 0
+        self.is_missense = False
+        self.ct = 0
 
+    def start(self, tag, attrs):
+        if tag == 'VariationArchive':
+            self.accession = attrs['Accession']
+        elif tag == 'GeneList':
+            self.is_GeneList = True
+        elif tag == 'Gene' and self.ct_gene == 0:
+            if attrs['Symbol'] in self.enzyme_genes:
+                self.gene = attrs['Symbol']
+                self.ct_gene += 1
+        elif tag == 'SequenceLocation' and self.is_GeneList == False and self.ct_seq == 0:
+            self.chr = attrs['Chr']
+            self.start_num = attrs['start']
+            self.stop_num = attrs['stop']
+            self.referenceAllele = attrs['referenceAlleleVCF']
+            self.alternateAllele = attrs['alternateAlleleVCF']
+        elif tag == 'ProteinExpression':
+            self.np_num = attrs['sequenceAccessionVersion']
+            self.change = attrs['change'].split('p.')[1] 
+        elif tag == 'MolecularConsequence':
+            self.is_missense = True if attrs['Type'] == 'missense variant' else False
+        elif tag == 'RCVAccession':
+            self.interpretation = attrs['Interpretation']
 
-def getVUS_Clinvar(idLists, genes, path):
-    data = {'Gene': [], 'VUS_protein': [], 'NP': [], 'PDB': []}
-    i = 0
-    count = 0  # debug
-    geneSet = set()
-    while i < len(idLists):
-        missense_info = Entrez.efetch(db='clinvar', id=idLists[i:i+10000], retmax=10000, rettype='vcv', is_variationid="true", from_esearch="true",
-                                  api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
-        tree = ET.parse(missense_info)
-        root = tree.getroot()
-        for variation in root.findall('./VariationArchive'):
-            gene = variation.find('./InterpretedRecord/SimpleAllele/GeneList/Gene')
-            name = gene.attrib['Symbol']
-            count += 1
-            if name in genes:
-                geneSet.add(name)
-                for mutation in variation.findall('.//ProteinExpression'):
-                    np_num = mutation.attrib['sequenceAccessionVersion']
-                    change = mutation.attrib['change'].split('p.')[1]
-                    before = aatranlation.get(change[0:3])
-                    after = aatranlation.get(change[len(change) - 3:len(change)])
-                    if before and after:  # check if both have a value in aa dict
-                        num = change[3:len(change) - 3]
-                        abbreviated_change = before + num + after
-                        data['Gene'].append(name)
-                        data['VUS_protein'].append(abbreviated_change)
-                        data['NP'].append(np_num)
-                        data['PDB'].append(np.nan)
-        if i + 10000 < len(idLists):
-            i += 10000
-        elif i == len(idLists) - 1:
-            break
-        else:
-            i += len(idLists) % 10000 - 1
-        print(count)  # debug
-    print(len(geneSet))                
+    def end(self, tag):
+        if tag == 'VariationArchive':
+            if self.gene in self.enzyme_genes and self.is_missense and (("Uncertain" in self.interpretation) or ("Conflicting" in self.interpretation)):
+                print('found the uncertain significance of mutation', self.change)
+                before = aatranlation.get(self.change[0:3])
+                after = aatranlation.get(self.change[len(self.change) - 3:len(self.change)])
+                if before and after:  # check if both have a value in aa dict
+                    num = self.change[3:len(self.change) - 3]
+                    abbreviated_change = before + num + after
+                    # fasta = getFASTA(np_num, int(num) ,before)
+                    fasta = np.nan
+                    self.dictlist['interpretation'].append(self.interpretation)
+                    self.dictlist['gene'].append(self.gene)
+                    self.dictlist['accession'].append(self.accession)
+                    self.dictlist['mutation'].append(abbreviated_change)
+                    self.dictlist['NP'].append(self.np_num)
+                    self.dictlist['Chr'].append(self.chr)
+                    self.dictlist['start'].append(self.start_num)
+                    self.dictlist['stop'].append(self.stop_num)
+                    self.dictlist['referenceAllele'].append(self.referenceAllele)
+                    self.dictlist['alternateAllele'].append(self.alternateAllele)
+                    self.dictlist['FASTA'].append(fasta)
+                    self.dictlist['PDB'].append(np.nan)
+                    self.ct += 1
+                    print('debug: ' + str(self.ct))                
+        elif tag == 'GeneList':
+            self.is_GeneList = False
+
+    def close(self):
+        return self.dictlist
+
+# read xml file including name, mutation, chromosome, np number
+# return dataframe and write to a csv file
+def readVUS_ClinVar(input_path, output_path, gene_set):
+    parser = etree.XMLParser(target = variationTarget(gene_set))
+    data = etree.parse(input_path, parser)
+    print(data)
     df = pd.DataFrame(data)
-    df.to_csv(path, index = False, header = True)
+    df.to_csv(output_path, index = False, header = True)
     return df
 
+# read human genes text file
+human_genes = readHumanGenes('../data/UniProtHumanEnzymeGenes.txt')
+print(str(len(human_genes)) + " genes of human enzymes are imported")
 
-def readVUScsv(path):
-    data = []
-    with open(path) as filehandle:
-        reader = csv.reader(filehandle)
-        data = list(reader)
-    df = pd.DataFrame(data)
-    return df
-
-
-def getFASTA(np_num, location, beforeMutation, numOfSequence = 10):
-    handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text')
-    seq_record = SeqIO.read(handle, 'fasta')
-    sequence = seq_record.seq
-    if location - 1 < len(sequence) and sequence[location - 1] == beforeMutation:
-        proteinSeq = sequence[0 if location - 1 - numOfSequence <= 0 else location - 1 - numOfSequence : location + numOfSequence]
-        return proteinSeq
-    else:
-        print("error")  # debug
-        return False
-
-id = 558835
-missense_info = Entrez.efetch(db='clinvar', id=id, retmax=10000, rettype='vcv', is_variationid="true", from_esearch="true",
-                              api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
-readHumanGenes = missense_info.read()
-print(readHumanGenes)
-
-# sequence = getFASTA('NP_005557.1', 190, 'L', 10)
-# print(sequence)
-
-# handle = NCBIWWW.qblast("blastp", 'pdb', proteinSeq, expect = 10.0)
-# Hit_id
+readVUS_ClinVar('../data/clinvarVariation_4.xml', '../data/MM_enzyme_short.csv', human_genes)
