@@ -57,9 +57,10 @@ def readHumanGenes(path):
 
 class variationHandler(object):
     def __init__(self, enzyme_genes):
-        self.dictlist = {'interpretation': [], 'gene':[], 'accession':[], 'mutation': [], 'NP': [], 'Chr': [], 'start':[], 'stop':[], 'referenceAllele':[], 'alternateAllele':[], 'FASTA':[], 'PDB': []}
+        self.dictlist = {'interpretation': [], 'gene':[], 'gene_name':[], 'accession':[], 'mutation': [], 'NP': [], 'Chr': [], 'start':[], 'stop':[], 'referenceAllele':[], 'alternateAllele':[], 'FASTA':[], 'PDB': []}
         self.enzyme_genes = enzyme_genes
         self.gene = ""
+        self.gene_name = ""
         self.interpretation = ""
         self.accession = ""
         self.mutation = ""
@@ -75,6 +76,8 @@ class variationHandler(object):
         self.check_grch = False
         self.ct_np = 0
         self.is_missense = False
+        self.is_conf_patho = False
+        self.is_not_provided = False
         self.ct = 0
 
     def start(self, tag, attrs):
@@ -83,9 +86,9 @@ class variationHandler(object):
         elif tag == 'GeneList':
             self.is_GeneList = True
         elif tag == 'Gene' and self.ct_gene == 0:
-            if attrs['Symbol'] in self.enzyme_genes:
-                self.gene = attrs.get('Symbol')
-                self.ct_gene += 1
+            self.gene = attrs.get('Symbol')
+            self.gene_name = attrs.get('FullName')
+            self.ct_gene += 1
         elif tag == 'SequenceLocation' and self.is_GeneList == False and self.check_grch == False:
             if attrs.get('Assembly') == 'GRCh38':
                 self.chr = attrs.get('Chr')
@@ -100,7 +103,12 @@ class variationHandler(object):
             if self.np_num.startswith('NP'):            
                 self.ct_np += 1
         elif tag == 'MolecularConsequence':
-            self.is_missense = True if attrs.get('Type') == 'missense variant' else False
+            if attrs.get('Type') == 'missense variant':
+                self.is_missense = True
+            elif attrs.get('Type') == 'Conflicting interpretations of pathogenicity':
+                self.is_conf_patho = True
+            # elif attrs.get('Type') == 'not provided':
+            #     self.is_not_provided = True
         elif tag == 'RCVAccession':
             self.interpretation = attrs.get('Interpretation')
 
@@ -121,6 +129,7 @@ class variationHandler(object):
                     fasta = np.nan
                     self.dictlist['interpretation'].append(self.interpretation)
                     self.dictlist['gene'].append(self.gene)
+                    self.dictlist['gene_name'].append(self.gene_name)
                     self.dictlist['accession'].append(self.accession)
                     self.dictlist['mutation'].append(abbreviated_change)
                     self.dictlist['NP'].append(self.np_num)
@@ -130,16 +139,18 @@ class variationHandler(object):
                     self.dictlist['referenceAllele'].append(self.referenceAllele)
                     self.dictlist['alternateAllele'].append(self.alternateAllele)
                     self.dictlist['FASTA'].append(fasta)
-                    self.dictlist['PDB'].append(np.nan)     
+                    self.dictlist['PDB'].append(np.nan)
+            self.ct_gene = 0             
             self.check_grch = False
-            self.is_missense = False 
+            self.is_missense = False
+            self.is_conf_patho = False
+            self.is_not_provided = False
             self.ct_np = 0
             self.ct +=1 
             if self.ct % 10000 == 0:
                 print(self.ct)
         elif tag == 'GeneList':
             self.is_GeneList = False
-            self.ct_gene = 0
             
     def close(self):
         print('debug: the file is closed')
