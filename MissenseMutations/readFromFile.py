@@ -108,7 +108,7 @@ class variationHandler(object):
         if tag == 'VariationArchive':
             if (self.gene in self.enzyme_genes) and self.is_missense and (("Uncertain" in self.interpretation) or ("Conflicting" in self.interpretation)):
                 try:
-                    self.change= self.change.split('p.')[1]
+                    self.change = self.change.split('p.')[1]
                     before = aatranlation.get(self.change[0:3])
                     after = aatranlation.get(self.change[len(self.change) - 3:len(self.change)])
                 except: 
@@ -131,7 +131,8 @@ class variationHandler(object):
                     self.dictlist['alternateAllele'].append(self.alternateAllele)
                     self.dictlist['FASTA'].append(fasta)
                     self.dictlist['PDB'].append(np.nan)     
-            self.check_grch = False 
+            self.check_grch = False
+            self.is_missense = False 
             self.ct_np = 0
             self.ct +=1 
             if self.ct % 10000 == 0:

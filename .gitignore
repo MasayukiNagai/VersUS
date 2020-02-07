@@ -15,7 +15,7 @@ pdb_seqres.txt
 *.xlsx
 *.xml
 
-# randome output file
+# random output file
 MM_enzyme_copy.csv
 MM_enzyme_filter_1.csv
 MM_enzyme_filter_2.csv
