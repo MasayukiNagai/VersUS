@@ -14,6 +14,7 @@ pdb_seqres.txt
 *.csv
 *.xlsx
 *.xml
+*.faa
 
 # random output file
 MM_enzyme_copy.csv

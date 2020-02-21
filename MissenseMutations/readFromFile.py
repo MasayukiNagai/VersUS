@@ -1,13 +1,12 @@
+import os
 import pandas as pd
 import numpy as np
 import csv
-import xml.etree.ElementTree as ET
 from Bio import Entrez
 from Bio import SeqIO
 from Bio.Blast import NCBIWWW
-import time
-import datetime
-import xml.sax
+# import time
+# import datetime
 from lxml import etree
 
 Entrez.email = "mnaffairs.intl@gmail.com"
@@ -75,10 +74,13 @@ class variationHandler(object):
         self.ct_gene = 0
         self.check_grch = False
         self.ct_np = 0
+        self.ct_mc = 0  # counter for Molecular Consequence tag
         self.is_missense = False
-        self.is_conf_patho = False
-        self.is_not_provided = False
+        self.is_conflicting = False
         self.ct = 0
+        self.ct_missense = 0
+        self.ct_uncertain = 0
+        self.ct_conflicting = 0
 
     def start(self, tag, attrs):
         if tag == 'VariationArchive':
@@ -102,19 +104,24 @@ class variationHandler(object):
             self.change = attrs.get('change') 
             if self.np_num.startswith('NP'):            
                 self.ct_np += 1
-        elif tag == 'MolecularConsequence':
-            if attrs.get('Type') == 'missense variant':
+        elif tag == 'MolecularConsequence' and self.ct_mc == 0:
+            if attrs.get('Type') and 'missense' in attrs.get('Type').lower():
                 self.is_missense = True
-            elif attrs.get('Type') == 'Conflicting interpretations of pathogenicity':
-                self.is_conf_patho = True
-            # elif attrs.get('Type') == 'not provided':
-            #     self.is_not_provided = True
+                self.ct_missense += 1
+            self.ct_mc += 1
         elif tag == 'RCVAccession':
-            self.interpretation = attrs.get('Interpretation')
+            self.interpretation = attrs.get('Interpretation').lower()
+            if "uncertain" in self.interpretation:
+                self.is_uncertain = True
+                self.ct_uncertain += 1
+            elif "conflicting" in self.interpretation:
+                self.is_conflicting = True
+                self.ct_conflicting += 1
+            # elif "no interpretation" in self.interpretation:
 
     def end(self, tag):
         if tag == 'VariationArchive':
-            if (self.gene in self.enzyme_genes) and self.is_missense and (("Uncertain" in self.interpretation) or ("Conflicting" in self.interpretation)):
+            if (self.gene in self.enzyme_genes) and self.is_missense and (self.is_uncertain or self.is_conflicting):
                 try:
                     self.change = self.change.split('p.')[1]
                     before = aatranlation.get(self.change[0:3])
@@ -143,9 +150,10 @@ class variationHandler(object):
             self.ct_gene = 0             
             self.check_grch = False
             self.is_missense = False
-            self.is_conf_patho = False
-            self.is_not_provided = False
+            self.is_uncertain = False
+            self.is_conflicting = False
             self.ct_np = 0
+            self.ct_mc = 0
             self.ct +=1 
             if self.ct % 10000 == 0:
                 print(self.ct)
@@ -153,13 +161,17 @@ class variationHandler(object):
             self.is_GeneList = False
             
     def close(self):
+        print(f"Variations: {self.ct}")
+        print(f"Uncertain Significance: {self.ct_uncertain}")
+        print(f"Conflicting Report: {self.ct_conflicting}")
+        print(f"Missense: {self.ct_missense}")
         print('debug: the file is closed')
         return self.dictlist
 
 
-# read xml file including name, mutation, chromosome, np number
+# read xml file of variations from ClinVar
 # return dataframe and write to a csv file
-def readVUS_ClinVar(input_path, output_path, gene_set):
+def readClinVarVariationsXML(input_path, output_path, gene_set):
     print('debug: start parcing')
     parser = etree.XMLParser(target=variationHandler(gene_set))
     data = etree.parse(input_path, parser)
@@ -314,6 +326,78 @@ def removeSameVariationsBySequence(inpath, outpath):
     # return df                    
 
 
+# makes dictionary of fasta sequences and np number 
+# returns the dictionary
+def makeDictOfFasta(dictpath):
+    fasta_dict = {}
+    for root, d_names, file_names in os.walk(dictpath):
+        for filename in file_names:
+            fname = os.path.join(root, filename)
+            with open(fname) as f:
+                print('opened a fasta file')
+                np_num = ''
+                sequence = ''
+                for line in f:
+                    if line[0] == '>':
+                        if sequence != '':
+                            fasta_dict[np_num] = sequence
+                            np_num = ''
+                            sequence = ''                    
+                        i = 1
+                        while line[i] != ' ':
+                            np_num += line[i]
+                            i += 1
+                    else:
+                        line = line.strip('\n')
+                        sequence += line
+    print(f'length of fasta dictionary: {len(fasta_dict)}')
+    return fasta_dict
+
+
+# crops fasta sequence
+# returns the cropped sequnece with a specified range
+def cropFASTA(sequence, location, reference, seqRange):
+    # print(f'sequence: {sequence}')
+    # print(f'location: {location}, {sequence[location - 1]}, ref: {reference}')
+    if location - 1 < len(sequence) and sequence[location - 1] == reference:
+        proteinSeq = sequence[0 if location - 1 - seqRange <= 0 else location - 1 - seqRange : location + seqRange]
+        return proteinSeq
+    else:
+        return None
+
+
+# add fasta sequence to a csv file of variations
+# returns dataframe and writes to a csv file
+def addFASTAfromDict(fasta_dict, path):
+    data = []
+    none_acc = []
+    with open(path) as filehandle:
+        print('opened a csv file of variations')
+        reader = csv.reader(filehandle)
+        for tags in reader:
+            data.append(tags)
+            break
+        for variation in reader:
+            mutation = variation[4]  # spcifiy the column of mutation
+            ref = mutation[0]
+            try:
+                location = int(mutation[1:len(mutation)-1])
+                np_num = variation[5]  # specify the column of np 
+                sequence = fasta_dict.get(np_num)
+                seqRange = 10  # range of sequences to take
+                seq = cropFASTA(sequence, location, ref, seqRange) if sequence else None
+            except:
+                seq = None
+                accession = variation[3]
+                none_acc.append(accession)
+            variation[11] = seq
+            data.append(variation)
+    print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
+    df = pd.DataFrame(data)
+    df.to_csv(path, index = False, header = False)
+    return df  
+
+
 # ideally add fasta sequecne to csv file but not working right now
 def addFASTA(path):
     data = []
@@ -323,12 +407,13 @@ def addFASTA(path):
     i = 1
     while i < len(data):
         for j in range(0, 500): 
-            mutation = data[i+j][1]
+            mutation = data[i+j][4]  # spcifiy the column of mutation
             before = mutation[0]
             location = int(mutation[1:len(mutation)-1])
-            sequence = getFASTA(data[i+j][2], location, before, 10)
-            data[i+j][3] = sequence
-            print("debug: " + str(i+j))
+            np_num = data[i+j][5]  # specify the column of np 
+            sequence = getFASTA(np_num, location, before, 10)
+            data[i+j][11] = sequence  # specify the column of fasta sequence
+            print("debug: so far " + str(i+j) + " " + sequence)
         print("debug: waiting " + str(i+j))
         df = pd.DataFrame(data)
         df.to_csv(path, index = False, header = False)
@@ -446,5 +531,10 @@ print(str(len(human_genes)) + " genes of human enzymes are imported")
 # c = divmod(time.days * 86400 + time.seconds, 60)
 # print(c)
 
-# readVUS_ClinVar('../data/clinvarVariation_4.xml', '../data/MM_enzyme_short.csv', human_genes)
-readVUS_ClinVar('../data/ClinVarVariationRelease_00-latest_weekly.xml', '../data/MM_enzyme.csv', human_genes)
+# readClinVarVariationsXML('../data/clinvarVariation_4.xml', '../data/MM_enzyme_short.csv', human_genes)
+# readClinVarVariationsXML('../data/ClinVarVariationRelease_00-latest_weekly.xml', '../data/MM_enzyme.csv', human_genes)
+
+
+# add fasta sequence to csv file
+fasta_dict = makeDictOfFasta('../fasta_sequences/')
+df_VUS = addFASTAfromDict(fasta_dict, '../data/MM_enzyme.csv')
