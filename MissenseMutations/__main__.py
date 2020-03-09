@@ -437,3 +437,28 @@ print(df_VUS)
 # time = end - start
 # c = divmod(time.days * 86400 + time.seconds, 60)
 # print(c)
+
+def addFASTAfromDict(fasta_dict, df):
+    data = []
+    none_acc = []
+    
+
+        for variation in reader:
+            mutation = variation[4]  # spcifiy the column of mutation
+            ref = mutation[0]
+            try:
+                location = int(mutation[1:len(mutation)-1])
+                np_num = variation[5]  # specify the column of np 
+                sequence = fasta_dict.get(np_num)
+                seqRange = 10  # range of sequences to take
+                seq = cropFASTA(sequence, location, ref, seqRange) if sequence else None
+            except:
+                seq = None
+                accession = variation[3]
+                none_acc.append(accession)
+            variation[11] = seq
+            data.append(variation)
+    print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
+    df = pd.DataFrame(data)
+    df.to_csv(path, index = False, header = False)
+    return df  

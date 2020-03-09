@@ -365,10 +365,32 @@ def cropFASTA(sequence, location, reference, seqRange):
     else:
         return None
 
+# add fasta sequence to a csv file of variations
+# returns dataframe
+def addFASTAfromDict(fasta_dict, df):
+    none_acc = []
+    seq_list = []
+    for index, row in df.iterrows():
+        mutation = row['mutation']
+        try:
+            ref = mutation[0]
+            location = int(mutation[1:len(mutation)-1])
+            np_num = row['NP']  # specify the column of np 
+            sequence = fasta_dict.get(np_num)
+            seqRange = 10  # range of sequences to take
+            seq = cropFASTA(sequence, location, ref, seqRange) if sequence else None
+        except:
+            seq = None
+            accession = row['accession']
+            none_acc.append(accession)
+        seq_list.append(seq)
+    df['FASTA'] = seq_list
+    print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
+    return df
 
 # add fasta sequence to a csv file of variations
 # returns dataframe and writes to a csv file
-def addFASTAfromDict(fasta_dict, path):
+def addFASTAfromDict2(fasta_dict, path):
     data = []
     none_acc = []
     with open(path) as filehandle:
@@ -444,6 +466,21 @@ def getFASTA(np_num, location, beforeMutation, numOfSequence = 10):
         return None
 
 
+# make FASTA text file from dataframe
+def makeFASTAfile(df, output_path):
+    subset = df[['NP', 'gene', 'gene_name', 'FASTA']]
+    tuples = [tuple(x) for x in subset.values]
+    with open(output_path, 'w') as f:
+        for tup in tuples:
+            line = '>' + '\t'.join(tup[0:3]) + '\n'
+            fasta = str(tup[3]) + '\n'
+            f.write(line)
+            f.write(fasta) 
+
+
+def blastLocal(sequence, expectValue):
+    pass
+
 # blast pdb database
 # return id of the pdb sequence if found or None
 def getPDB(sequence, expectValue):
@@ -463,8 +500,8 @@ def getPDB(sequence, expectValue):
 # return dataframe and write to a new csv file
 def addPDB(path):
     data = []
-    with open(path) as filehandle:
-        reader = csv.reader(filehandle)
+    with open(path) as f:
+        reader = csv.reader(f)
         data = list(reader)   
     for i in range(1,len(data)):  # try smaller range 
         mutation = data[i][1]
@@ -534,7 +571,11 @@ print(str(len(human_genes)) + " genes of human enzymes are imported")
 # readClinVarVariationsXML('../data/clinvarVariation_4.xml', '../data/MM_enzyme_short.csv', human_genes)
 # readClinVarVariationsXML('../data/ClinVarVariationRelease_00-latest_weekly.xml', '../data/MM_enzyme.csv', human_genes)
 
+df_0 = pd.read_csv('../data/MM_enzyme.csv')
 
 # add fasta sequence to csv file
 fasta_dict = makeDictOfFasta('../fasta_sequences/')
-df_VUS = addFASTAfromDict(fasta_dict, '../data/MM_enzyme.csv')
+df_fasta = addFASTAfromDict(fasta_dict, df_0)
+df_fasta.to_csv('../data/MM_enzyme.csv', index = False, header = False)
+
+makeFASTAfile(df_fasta, '../data/fasta.txt')

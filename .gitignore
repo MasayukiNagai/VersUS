@@ -23,3 +23,10 @@ MM_enzyme_filter_2.csv
 
 # trial python file
 trial.py
+
+# blast files
+blast_db
+pdb_seqres.txt
+
+# ipynb file
+*.ipynb
