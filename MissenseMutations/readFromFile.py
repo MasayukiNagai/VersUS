@@ -77,10 +77,17 @@ class variationHandler(object):
         self.ct_mc = 0  # counter for Molecular Consequence tag
         self.is_missense = False
         self.is_conflicting = False
+        self.is_not_provided = False
+        self.is_interpretations = False
+        self.is_interpretation = False
+        self.is_description = False
+        self.intpn = []
         self.ct = 0
         self.ct_missense = 0
         self.ct_uncertain = 0
         self.ct_conflicting = 0
+        self.ct_not_provided = 0
+        self.ct_rcv = 0
 
     def start(self, tag, attrs):
         if tag == 'VariationArchive':
@@ -117,11 +124,20 @@ class variationHandler(object):
             elif "conflicting" in self.interpretation:
                 self.is_conflicting = True
                 self.ct_conflicting += 1
-            # elif "no interpretation" in self.interpretation:
+            elif "not provided" in self.interpretation:
+                self.is_not_provided = True
+                self.ct_not_provided += 1
+            self.ct_rcv += 1
+        elif tag == 'Interpretations':
+            self.is_interpretations = True
+        elif tag == 'Interpretation':
+            self.is_interpretation = True
+        elif tag == 'Description':
+            self.is_description = True
 
     def end(self, tag):
         if tag == 'VariationArchive':
-            if (self.gene in self.enzyme_genes) and self.is_missense and (self.is_uncertain or self.is_conflicting):
+            if (self.gene in self.enzyme_genes) and self.is_missense and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
                 try:
                     self.change = self.change.split('p.')[1]
                     before = aatranlation.get(self.change[0:3])
@@ -152,13 +168,27 @@ class variationHandler(object):
             self.is_missense = False
             self.is_uncertain = False
             self.is_conflicting = False
+            self.is_not_provided = False
             self.ct_np = 0
             self.ct_mc = 0
-            self.ct +=1 
+            self.ct +=1
+            self.ct_rcv = 0
+            self.is_description = False
             if self.ct % 10000 == 0:
                 print(self.ct)
+            self.intpn = []
         elif tag == 'GeneList':
             self.is_GeneList = False
+        elif tag == 'Interpretations':
+            self.is_interpretations = False
+        elif tag == 'Interpretation':
+            self.is_interpretaion = False
+        elif tag == 'Description':
+            self.is_description = False
+                
+    def data(self, data):
+        if self.is_interpretations and self.is_interpretation and self.is_description:
+            self.intpn.append(data)
             
     def close(self):
         print(f"Variations: {self.ct}")
