@@ -1,9 +1,9 @@
 import os
 import pandas as pd
 import numpy as np
-import csv
+# import csv
 from Bio import Entrez
-from Bio import SeqIO
+# from Bio import SeqIO
 from Bio.Blast import NCBIWWW
 # import time
 # import datetime
@@ -45,7 +45,7 @@ def getHumanGenes(idLists, path):
     return human_enzymes
 
 
-# read csv file of gene names of human enzymes
+# read txt file of gene names of human enzymes
 # return list of the enzymes
 def readHumanGenes(path):
     human_genes = []
@@ -177,17 +177,6 @@ def readClinVarVariationsXML(input_path, output_path, gene_set):
     data = etree.parse(input_path, parser)
     df = pd.DataFrame(data)
     df.to_csv(output_path, index = False, header = True)
-    return df
-
-
-# read csv file of missense information
-# return dataframe
-def readVUScsv(path):
-    data = []
-    with open(path) as filehandle:
-        reader = csv.reader(filehandle)
-        data = list(reader)
-    df = pd.DataFrame(data)
     return df
 
 
@@ -354,7 +343,8 @@ def makeDictOfFasta(dictpath):
     return fasta_dict
 
 
-# crops fasta sequence
+# crops fasta sequence to a specified range
+# checks if the reference amino acid maches the
 # returns the cropped sequnece with a specified range
 def cropFASTA(sequence, location, reference, seqRange):
     # print(f'sequence: {sequence}')
@@ -364,6 +354,7 @@ def cropFASTA(sequence, location, reference, seqRange):
         return proteinSeq
     else:
         return None
+
 
 # add fasta sequence to a csv file of variations
 # returns dataframe
@@ -388,85 +379,8 @@ def addFASTAfromDict(fasta_dict, df):
     print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
     return df
 
-# add fasta sequence to a csv file of variations
-# returns dataframe and writes to a csv file
-def addFASTAfromDict2(fasta_dict, path):
-    data = []
-    none_acc = []
-    with open(path) as filehandle:
-        print('opened a csv file of variations')
-        reader = csv.reader(filehandle)
-        for tags in reader:
-            data.append(tags)
-            break
-        for variation in reader:
-            mutation = variation[4]  # spcifiy the column of mutation
-            ref = mutation[0]
-            try:
-                location = int(mutation[1:len(mutation)-1])
-                np_num = variation[5]  # specify the column of np 
-                sequence = fasta_dict.get(np_num)
-                seqRange = 10  # range of sequences to take
-                seq = cropFASTA(sequence, location, ref, seqRange) if sequence else None
-            except:
-                seq = None
-                accession = variation[3]
-                none_acc.append(accession)
-            variation[11] = seq
-            data.append(variation)
-    print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
-    df = pd.DataFrame(data)
-    df.to_csv(path, index = False, header = False)
-    return df  
 
-
-# ideally add fasta sequecne to csv file but not working right now
-def addFASTA(path):
-    data = []
-    with open(path) as filehandle:
-        reader = csv.reader(filehandle)
-        data = list(reader)
-    i = 1
-    while i < len(data):
-        for j in range(0, 500): 
-            mutation = data[i+j][4]  # spcifiy the column of mutation
-            before = mutation[0]
-            location = int(mutation[1:len(mutation)-1])
-            np_num = data[i+j][5]  # specify the column of np 
-            sequence = getFASTA(np_num, location, before, 10)
-            data[i+j][11] = sequence  # specify the column of fasta sequence
-            print("debug: so far " + str(i+j) + " " + sequence)
-        print("debug: waiting " + str(i+j))
-        df = pd.DataFrame(data)
-        df.to_csv(path, index = False, header = False)
-        i += 500
-        time.sleep(5)
-    # for i in range(1, len(data)):
-    #     mutation = data[i][1]
-    #     before = mutation[0]
-    #     location = int(mutation[1:len(mutation)-1])
-    #     sequence = getFASTA(data[i][2], location, before, 10)
-    #     data[i][3] = sequence
-    #     print("debug:" + str(i))
-    df = pd.DataFrame(data)
-    df.to_csv(path, index = False, header = False)
-    return df
-
-
-# fetch specified range of fasta sequence
-# return fasta sequence if found or None
-def getFASTA(np_num, location, beforeMutation, numOfSequence = 10):
-    handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
-    seq_record = SeqIO.read(handle, 'fasta')
-    sequence = seq_record.seq
-    if location - 1 < len(sequence) and sequence[location - 1] == beforeMutation:
-        proteinSeq = sequence[0 if location - 1 - numOfSequence <= 0 else location - 1 - numOfSequence : location + numOfSequence]
-        return proteinSeq
-    else:
-        return None
-
-
-# make FASTA text file from dataframe
+# make FASTA format text file from dataframe for blast search
 def makeFASTAfile(df, output_path):
     subset = df[['NP', 'gene', 'gene_name', 'FASTA']]
     tuples = [tuple(x) for x in subset.values]
@@ -537,45 +451,29 @@ print(str(len(human_genes)) + " genes of human enzymes are imported")
 # VUS_ids = getVUSIDs()
 # print(str(len(VUS_ids)) + " variants are found")
 
-
 # get csv file which filters VUS_ids out with human_genes  
 # df_VUS = fetchVUS_ClinVar(VUS_ids, human_genes, '../data/MM_enzyme.csv')
 # print(df_VUS)
 
-# read csv file and make dataframe
-# df_VUS = readVUScsv('../data/MM_enzyme.csv')
-# print(df_VUS)
-
-# add fasta sequence to dataframe
-# df_VUS = addFASTA('../data/MM_enzyme_filter_1.csv')
-# print(df_VUS)
-
-# addPDB('../data/MM_enzyme.csv')
-
-# df = removeSameVariations('../data/MM_enzyme.csv')
-# print(df)
-
-# removeSameVariationsByName('../data/MM_enzyme.csv', '../data/MM_enzyme_filter_1.csv')
-
-# removeSameVariationsBySequence('../data/MM_enzyme_filter_1.csv', '../data/MM_enzyme_filter_2.csv')
 # start = datetime.datetime.now()
-# sequence = getFASTA('NP_005557.1', 190, 'L', 10)
-# sequence = 'KFGELVAEEARRKGELRYMHS'
-# pdb = getPDB(sequence, 10.0)
-# print(pdb)
-# end = datetime.datetime.now()
 # time = end - start
 # c = divmod(time.days * 86400 + time.seconds, 60)
 # print(c)
 
-# readClinVarVariationsXML('../data/clinvarVariation_4.xml', '../data/MM_enzyme_short.csv', human_genes)
-# readClinVarVariationsXML('../data/ClinVarVariationRelease_00-latest_weekly.xml', '../data/MM_enzyme.csv', human_genes)
 
-df_0 = pd.read_csv('../data/MM_enzyme.csv')
+clinvar_xml = '../data/ClinVarVariationRelease_00-latest_weekly.xml'
+MM_enzyme_csv = '../data/MM_enzyme.csv'
+clinvar_4_xml = '../data/clinvarVariation_4.xml'
+MM_enzyme_short_csv = '../data/MM_enzyme_short.csv'
+
+# readClinVarVariationsXML(clinvar_4_xml, MM_enzyme_short_csv, human_genes)
+readClinVarVariationsXML(clinvar_xml, MM_enzyme_csv, human_genes)
+
+df_0 = pd.read_csv(MM_enzyme_csv)
 
 # add fasta sequence to csv file
 fasta_dict = makeDictOfFasta('../fasta_sequences/')
 df_fasta = addFASTAfromDict(fasta_dict, df_0)
-df_fasta.to_csv('../data/MM_enzyme.csv', index = False, header = False)
+df_fasta.to_csv(MM_enzyme_csv, index = False, header = False)
 
 makeFASTAfile(df_fasta, '../data/fasta.txt')
