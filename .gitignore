@@ -28,8 +28,5 @@ trial.py
 blast_db
 pdb_seqres.txt
 
-# ipynb file
-*.ipynb
-
 # ncbi folder
 /ncbi
