@@ -406,7 +406,8 @@ def addFASTAfromDict(fasta_dict, df):
             none_acc.append(accession)
         seq_list.append(seq)
     df['FASTA'] = seq_list
-    print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
+    if len(none_acc) > 0:
+        print(f'Unfound Sequences: {len(none_acc)} {none_acc}')
     return df
 
 
@@ -493,7 +494,7 @@ print(str(len(human_genes)) + " genes of human enzymes are imported")
 
 clinvar_xml = '../data/ClinVarVariationRelease_00-latest_weekly.xml'
 MM_enzyme_csv = '../data/MM_enzyme.csv'
-clinvar_4_xml = '../data/clinvarVariation_4.xml'
+clinvar_4_xml = '../data/clinvarVariation_6.xml'
 MM_enzyme_short_csv = '../data/MM_enzyme_short.csv'
 
 # readClinVarVariationsXML(clinvar_4_xml, MM_enzyme_short_csv, human_genes)

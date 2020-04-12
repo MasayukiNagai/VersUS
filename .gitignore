@@ -30,3 +30,6 @@ pdb_seqres.txt
 
 # ipynb file
 *.ipynb
+
+# ncbi folder
+/ncbi
