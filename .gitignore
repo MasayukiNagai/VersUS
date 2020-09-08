@@ -21,8 +21,6 @@ MM_enzyme_copy.csv
 MM_enzyme_filter_1.csv
 MM_enzyme_filter_2.csv
 
-# trial python file
-trial.py
 
 # blast files
 blast_db
@@ -30,3 +28,6 @@ pdb_seqres.txt
 
 # ncbi folder
 /ncbi
+
+#ipynb
+.ipynb_checkpoints
