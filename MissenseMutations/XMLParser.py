@@ -39,7 +39,7 @@ class VariationHandler(object):
         self.ct_missense_var = 0
         self.ct_uncertain_var = 0
         self.ct_conflicting_var = 0
-        self.ct_not_provided = 0
+        self.ct_not_provided_var = 0
 
     def start(self, tag, attrs):
         if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_pick):
@@ -189,6 +189,7 @@ class variationHandler(object):
         self.ct_uncertain = 0
         self.ct_conflicting = 0
         self.ct_not_provided = 0
+        print('debug: start parcing')
         
     def start(self, tag, attrs):
         if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() not in self.unnecessary_types):
