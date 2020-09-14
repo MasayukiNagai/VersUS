@@ -1,39 +1,156 @@
 import pandas as pd
-import numpy as np
-import csv
-import os
-import xml.etree.ElementTree as ET
 from lxml import etree
-from Bio import Entrez
-from Bio import SeqIO
-# from Bio.Blast import NCBIWWW
-import time
-import datetime
 
-Entrez.email = "mnaffairs.intl@gmail.com"
-
-aatranlation = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
-                'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
-                'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
-                'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
+aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
+                   'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
+                   'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
+                   'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
 
 
-# read csv file of gene names of human enzymes
-# return dict of gene names
-def readHumanGenesEC(path):
-    genes_dict = {}
-    dup = set()
-    with open(path, 'r') as f:
-        f.readline()
-        reader = csv.reader(f)
-        for row in reader:
-            key = row[0]
-            if key in genes_dict.keys():
-                dup.add(key)
-            else:
-                genes_dict[key] = row[1]
-    print(f'{len(dup)} genes are duplicated: ', dup)  # prints, if any, genes duplicated in the file
-    return genes_dict
+class VariationHandler(object):
+    def __init__(self, gene_dict):
+        self.vus_dict = {}
+        self.gene_dict = gene_dict
+        self.var_types_to_get = ('single nucleotide variant')
+        self.is_var_type_to_get = False
+        self.clinvar_acc = ''
+        self.gene_symbol = ''
+        self.gene_name = ''
+        self.chr = ''
+        self.start_pos = ''
+        self.stop_pos = ''
+        self.ref = ''
+        self.alt = ''
+        self.is_first_gene_tag = True
+        self.has_np_yet = False
+        self.has_mut_type_yet = False
+        self.is_missense = False
+        self.is_uncertain = False
+        self.is_conflicting = False
+        self.is_not_provided = False
+
+        self.in_GeneList_tag = False
+        self.in_Interpretations_tag = False
+        self.in_Interpretation_tag = False
+        self.in_Description_tag = False
+        self.in_Desc_Hist_tag = False
+        
+        self.ct_var = 0
+        self.ct_missense_var = 0
+        self.ct_uncertain_var = 0
+        self.ct_conflicting_var = 0
+        self.ct_not_provided = 0
+
+    def start(self, tag, attrs):
+        if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_pick):
+            self.is_var_type_to_get = True  # don't forget to reset
+            self.clinvar_acc = attrs.get('Accession')
+        if self.is_var_type_to_get:
+            if tag == 'GeneList':
+                self.in_GeneList_tag = True  # don't forget to reset
+            elif tag == 'Gene' and self.is_first_gene_tag == True:
+                self.gene_symbol = attrs.get('Symbol')
+                self.gene_name = attrs.get('FullName')
+                self.is_first_gene_tag == False   # don't forget to reset
+            elif tag == 'SequenceLocation' and self.in_GeneList_tag == False:
+                if attrs.get('Assembly') == 'GRCh38':
+                    self.chr = attrs.get('Chr')
+                    self.start_pos = attrs.get('start')
+                    self.stop_pos = attrs.get('stop')
+                    self.ref = attrs.get('referenceAlleleVCF')
+                    self.alt = attrs.get('alternateAlleleVCF')
+            elif tag == 'ProteinExpression' and self.has_np_yet == False:
+                np_acc = attrs.get('sequenceAccessionVersion')
+                if (np_acc is not None) and self.np_acc.startswith('NP'):
+                    self.np_acc = np_acc
+                    self.change = attrs.get('change') 
+                    self.has_np_yet = True  # don't forget to reset
+            elif tag == 'MolecularConsequence' and self.has_np_yet == True and self.has_mut_type_yet == False:
+                if (attrs.get('Type') is not None) and 'missense' in attrs.get('Type').lower():
+                    self.is_missense = True
+                    self.ct_missense_var += 1
+                self.has_mut_type_yet = True  # don't forget to reset
+            elif tag == 'Interpretations':
+                self.in_Interpretations_tag = True
+            elif tag == 'Interpretation':
+                self.in_Interpretation_tag = True
+            elif tag == 'Description':
+                self.in_Description_tag = True
+            elif tag == 'DescriptionHistory':
+                self.in_Desc_Hist_tag = True
+
+    def end(self, tag):
+        if tag == 'VariationArchive' and self.is_var_type_to_get:
+            clinical_significance = self.interpretation.lower()
+            if 'uncertain' in clinical_significance:
+                self.is_uncertain = True
+                self.ct_uncertain_var += 1
+            elif 'conflicting' in clinical_significance:
+                self.is_conflicting = True
+                self.ct_conflicting_var += 1
+            elif 'not provided' in clinical_significance:
+                self.is_not_provided = True
+                self.ct_not_provided += 1
+            if (self.gene_symbol in self.gene_dict.keys()) and self.is_missense and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
+                try:
+                    self.change = self.change.split('p.')[1]
+                    ref = aaMapThreeToOne.get(self.change[0:3])
+                    alt = aaMapThreeToOne.get(self.change[len(self.change) - 3:len(self.change)])
+                except:
+                    ref = None
+                    alt = None
+                if ref and alt:
+                    pos = self.change[3:len(self.change) - 3]
+                    change_one_char = ref + pos + alt
+                    self.vus_dict[self.clinvar_acc] = {}
+                    self.vus_dict[self.clinvar_acc]['gene_symbol'] = self.gene_symbol
+                    self.vus_dict[self.clinvar_acc]['gene_name'] = self.gene_name
+                    self.vus_dict[self.clinvar_acc]['clinical_significance'] = clinical_significance
+                    self.vus_dict[self.clinvar_acc]['EC_number'] = self.gene_dict.get(self.gene_symbol)
+                    self.vus_dict[self.clinvar_acc]['protein_change'] = change_one_char
+                    self.vus_dict[self.clinvar_acc]['chr'] = self.chr
+                    self.vus_dict[self.clinvar_acc]['start'] = self.start_pos
+                    self.vus_dict[self.clinvar_acc]['stop'] = self.stop_pos
+                    self.vus_dict[self.clinvar_acc]['referenceAllele'] = self.ref
+                    self.vus_dict[self.clinvar_acc]['alternateAllele'] = self.alt
+
+        if tag == 'VariationArchive':
+            self.is_var_type_to_get = False
+            self.is_first_gene_tag = True
+            self.has_np_yet = False
+            self.has_mut_type_yet = False
+            self.is_missense = False
+            self.is_uncertain = False
+            self.is_conflicting = False
+            self.is_not_provided = False
+
+            self.ct_var += 1
+            if self.ct % 10000 == 0:
+                print(f'counter: {self.ct_var}')
+        elif tag == 'GeneList':
+            self.in_GeneList_tag = False
+        elif tag == 'Interpretations':
+            self.in_Interpretations_tag = False
+        elif tag == 'Interpretation':
+            self.in_Interpretation_tag = False
+        elif tag == 'Description':
+            self.in_Description_tag = False
+        elif tag == 'DescriptionHistory':
+            self.in_Desc_Hist_tag = False
+    
+    def data(self, data):
+        if self.in_Interpretations_tag and self.in_Interpretation_tag and self.in_Description_tag and (not self.in_Desc_Hist_tag):
+            self.interpretation = data  # needs to check this part 
+
+    def close(self):
+        print(f"Variations: {self.ct_var}")
+        print(f"Uncertain Significance: {self.ct_uncertain_var}")
+        print(f"Conflicting Report: {self.ct_conflicting_var}")
+        print(f"Not Provided: {self.ct_not_provided_var}")
+        print(f"Missense: {self.ct_missense_var}")
+        print(f"Mutations in the list: {len(self.vus_dict)}")
+        print('debug: the file is closed')
+        return self.vus_dictm
 
 
 class variationHandler(object):
@@ -131,15 +248,15 @@ class variationHandler(object):
             if (self.gene_ID in self.genes_dict.keys()) and self.is_missense and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
                 try:
                     self.change = self.change.split('p.')[1]
-                    before = aatranlation.get(self.change[0:3])
-                    after = aatranlation.get(self.change[len(self.change) - 3:len(self.change)])
+                    before = aaMapThreeToOne.get(self.change[0:3])
+                    after = aaMapThreeToOne.get(self.change[len(self.change) - 3:len(self.change)])
                 except: 
                     before = None
                     after = None
                 if before and after:  # check if both have a value in aa dict
                     num = self.change[3:len(self.change) - 3]
                     abbreviated_change = before + num + after
-                    fasta = np.nan
+                    fasta = ''
                     self.dictlist['gene_ID'].append(self.gene_ID)
                     self.dictlist['gene_name'].append(self.gene_name)
                     self.dictlist['clinical_significance'].append(clinical_significance)
@@ -197,9 +314,9 @@ class variationHandler(object):
 
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
-def readClinVarVariationsXML(input_path, output_path, gene_set):
+def readClinVarVariationsXML(input_path, output_path, gene_dict):
     print('debug: start parcing')
-    parser = etree.XMLParser(target=variationHandler(gene_set))
+    parser = etree.XMLParser(target=VariationHandler(gene_dict))
     data = etree.parse(input_path, parser)
     df = pd.DataFrame(data)
     df.to_csv(output_path, index = False, header = True)
@@ -211,7 +328,7 @@ class variationHandlerSpecific(object):
         self.is_accession = False
         self.accession = accession
         self.ct = 0
-        print(self.accession)
+        print("Accession:" + self.accession)
         
     def start(self, tag, attrs):
         global WFILE
@@ -260,105 +377,6 @@ def readClinVarVariationsXMLSpecific(input_path, accession):
     print('Start parcing')
     parser = etree.XMLParser(target=variationHandlerSpecific(accession))
     etree.parse(input_path, parser)
-
-# makes dictionary of fasta sequences and np number 
-# returns the dictionary
-def makeDictOfFasta(dictpath):
-    fasta_dict = {}
-    for root, d_names, file_names in os.walk(dictpath):
-        for filename in file_names:
-            fname = os.path.join(root, filename)
-            with open(fname, 'r') as f:
-                print('opened a fasta file')
-                np_num = ''
-                sequence = ''
-                for line in f:
-                    if line[0] == '>':
-                        if sequence != '':
-                            fasta_dict[np_num] = sequence
-                            np_num = ''
-                            sequence = ''                    
-                        i = 1
-                        while line[i] != ' ':
-                            np_num += line[i]
-                            i += 1
-                    else:
-                        line = line.strip('\n')
-                        sequence += line
-    print(f'length of fasta dictionary: {len(fasta_dict)}')
-    return fasta_dict
-
-
-# fetches fasta sequences for varinants whose sequences aren't in the imported files
-# returns dict of fasta
-def getFASTA(ls_np):
-    fasta_dict = {}
-    for np_num in ls_np:
-        handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
-        seq_record = SeqIO.read(handle, 'fasta')
-        sequence = seq_record.seq
-        fasta_dict[np_num] = sequence
-    return fasta_dict
-
-
-# crops fasta sequence
-# returns the cropped sequnece with a specified range
-def cropFASTA(sequence, location, reference, seqRange):
-    if location - 1 < len(sequence) and sequence[location - 1] == reference:
-        if location - 1 - seqRange <= 0:
-            proteinSeq = sequence[0:2 * seqRange + 1]
-        elif location - 1 + seqRange > len(sequence) - 1:
-            proteinSeq = sequence[0 if len(sequence) - 1 - 2 * seqRange <= 0 else len(sequence) - 1 - 2 * seqRange:len(sequence)]
-        else:
-            proteinSeq = sequence[location - 1 - seqRange : location + seqRange]
-        return proteinSeq
-    else:
-        return None 
-
-
-def addFASTAfromDict(fasta_dict, df):
-    unfound = set()
-    seq_list = []
-    for index, row in df.iterrows():
-        mutation = row['missense_variation']
-        try:
-            ref = mutation[0]
-            try:
-                location = int(mutation[1:len(mutation)-1])
-            except:
-                location = int(mutation.split('_')[0][1:])
-            np_num = row['NP_accession']  # specify the column of np 
-            sequence = fasta_dict[np_num]  # 
-            seqRange = 12  # range of sequences to take
-            seq = cropFASTA(sequence, location, ref, seqRange) if sequence else None
-        except:
-            seq = None
-            unfound_np = row['NP_accession']
-            unfound.add(unfound_np)
-        seq_list.append(seq)
-    df['FASTA_window'] = seq_list
-    print(f'Unfound Sequences: {len(unfound)} {unfound}')
-    return df        
-
-
-# make FASTA format text file from dataframe for blast search
-def makeFastaFileForBlast(df, output_path):
-    subset = df[['NP_accession', 'gene_ID', 'gene_name', 'FASTA_window']]
-    tuples = [tuple(x) for x in subset.values]
-    with open(output_path, 'w') as f:
-        for tup in tuples:
-            line = '>' + '\t'.join(tup[0:3]) + '\n'
-            fasta = str(tup[3]) + '\n'
-            f.write(line)
-            f.write(fasta) 
-
-
-def blastLocally(fasta_path, out_path, evalue=10.0, window_size=3):
-    cmd1 = '../ncbi/blast/bin/'
-    cmd2 = 'blastp' + ' '         + '-query ' + fasta_path + ' '         + '-db ' + cmd1 + 'pdbaa' + ' '         + '-evalue ' + str(evalue) + ' '         + '-outfmt ' + '5' + ' '         + '-out ' + out_path
-    cmd = cmd1 + cmd2
-    b_cmd = os.system(cmd)
-    print(cmd + ' : ran with exit code %d' %b_cmd)
 
 
 class BlastHandler(object):
@@ -433,210 +451,3 @@ def readBlastXML(input_path):
     parser = etree.XMLParser(target=BlastHandler())
     data = etree.parse(input_path, parser)
     return data    
-
-
-def addBlastResults(df, dictlist):
-    df['pdb_ID'] = dictlist['pdb_ID']
-    df['BLAST_evalue'] = dictlist['BLAST_evalue']
-    df['hit_from'] = dictlist['hit_from']
-    df['hit_to'] = dictlist['hit_to']
-    return df
-
-
-def orderColumns(df, col_names):
-    df_cols = set(df.colums)
-    if set(col_names).issubset(df_cols):
-            df_ordered = df.loc[:, col_names]
-            return df_ordered
-    else:
-        print('column names given include missing labels')
-
-
-# read csv file
-# return dataframe
-def readCSV(path):
-    return pd.read_csv(path)
-
-
-
-
-
-
-def removeSameVariations(path):
-    data = []
-    with open(path) as filehandle:
-        reader = csv.reader(filehandle)
-        data = list(reader)
-    length = len(data)
-    ct = 0
-    i = 1
-    while ct < length - 1:
-        geneCurr = data[i][0]
-        geneNext = data[i+1][0]
-        if geneCurr == geneNext:
-            mutation = data[i][1]
-            before = mutation[0]
-            afterCurr = mutation[len(mutation)-1]
-            location = int(mutation[1:len(mutation)-1])
-            sequenceCurr = getFASTA(data[i][2], location, before, 10)
-            mutation = data[i+1][1]
-            before = mutation[0]
-            afterNext = mutation[len(mutation)-1]
-            location = int(mutation[1:len(mutation)-1])
-            sequenceNext = getFASTA(data[i+1][2], location, before, 10)
-            if sequenceCurr == sequenceNext and afterCurr == afterNext:
-                data.pop(i+1)
-                print(geneCurr)
-                print("popped")
-            else:
-                i += 1
-        else:
-            i += 1
-        ct += 1
-        print(ct)
-    df = pd.DataFrame(data)
-    df.to_csv(path, index = False, header= False)
-    return df
-
-
-def removeSameVariationsByName(inpath, outpath):
-    with open(outpath, 'w') as outFile, open(inpath, 'r') as inputFile:
-        writer = csv.writer(outFile, delimiter=',')
-        reader = csv.reader(inputFile, delimiter=',')
-        writer.writerow(next(reader))
-        rowCurr = next(reader)
-        print(rowCurr)
-        for rowNext in reader:
-            geneCurr = rowCurr[0]
-            geneNext = rowNext[0]
-            np = rowCurr[2]
-            print(geneCurr + " " + geneNext)
-            if geneCurr == geneNext:
-                mutationCurr = rowCurr[1]
-                mutationNext = rowNext[1]
-                if mutationCurr[0:len(mutationCurr)-2] != mutationNext[0:len(mutationNext)-2]:
-                    if np[0:3] == 'NP_':
-                        writer.writerow(rowCurr)
-                        print("debug: added")
-                        rowCurr = rowNext
-            else:
-                if np[0:3] == 'NP_':
-                    writer.writerow(rowCurr)
-                rowCurr = rowNext
-
-
-def removeSameVariationsBySequence(inpath, outpath):
-    with open(outpath, 'w') as outFile, open(inpath, 'r') as inputFile:
-        writer = csv.writer(outFile, delimiter=',')
-        reader = csv.reader(inputFile, delimiter=',')
-        writer.writerow(next(reader))
-        rowCurr = next(reader)
-        sequenceCurr = ''
-        print(rowCurr)
-        for rowNext in reader:
-            geneCurr = rowCurr[0]
-            geneNext = rowNext[0]
-            print(geneCurr + " " + geneNext)
-            if geneCurr == geneNext:
-                mutationCurr = rowCurr[1]
-                beforeCurr = mutationCurr[0]
-                afterCurr = mutationCurr[len(mutationCurr)-1]
-                locationCurr = int(mutationCurr[1:len(mutationCurr)-1])
-                npCurr = rowCurr[2]
-
-                mutationNext = rowNext[1]
-                beforeNext = mutationNext[0]
-                afterNext = mutationNext[len(mutationNext)-1]
-                locationNext = int(mutationNext[1:len(mutationNext)-1])
-                npNext = rowNext[2]
-                if beforeCurr == beforeNext:
-                    sequenceNext = getFASTA(npNext, locationNext, beforeNext, 10)
-                    if sequenceCurr != sequenceNext:
-                        writer.writerow(rowCurr)
-                        print("debug: added")
-                        rowCurr = rowNext
-                        sequenceCurr = sequenceNext
-                else:
-                    print("debug: added")
-                    writer.writerow(rowCurr)
-                    rowCurr = rowNext
-            else:
-                rowCurr = rowNext
-
-
-    # data = list(reader)
-    # length = len(data)
-    # ct = 0
-    # i = 1
-    # while ct < length - 1:
-    #     geneCurr = data[i][0]
-    #     geneNext = data[i+1][0]
-    #     if geneCurr == geneNext:
-    #         mutation = data[i][1]
-    #         before = mutation[0]
-    #         afterCurr = mutation[len(mutation)-1]
-    #         location = int(mutation[1:len(mutation)-1])
-    #         sequenceCurr = getFASTA(data[i][2], location, before, 10)
-    #         mutation = data[i+1][1]
-    #         before = mutation[0]
-    #         afterNext = mutation[len(mutation)-1]
-    #         location = int(mutation[1:len(mutation)-1])
-    #         sequenceNext = getFASTA(data[i+1][2], location, before, 10)
-    #         if sequenceCurr == sequenceNext and afterCurr == afterNext:
-    #             data.pop(i+1)
-    #             print(geneCurr)
-    #             print("popped")
-    #         else:
-    #             i += 1
-    #     else:
-    #         i += 1
-    #     ct += 1
-    #     print(ct)
-    # df = pd.DataFrame(data)
-    # df.to_csv(path, index = False, header= False)
-    # return df                    
-
-
-# get every enzyme
-# enzyme_ids = getHumanEnzymeIDs()
-# print(str(len(enzyme_ids)) + " enzymes are found".format(len(enzyme_ids)))
-
-
-# get human genes
-# human_genes = getHumanGenes(enzyme_ids, '../data/HumanEnzymes.txt')
-# print(human_genes)
-# print(len(human_genes))
-
-
-# read human genes text file
-# human_genes = readHumanGenes('../data/UniProtHumanEnzymeGenes.txt')
-# print(human_genes)
-# print(str(len(human_genes)) + " genes of human enzymes are imported")
-
-
-# get every missense genes
-# VUS_ids = getVUSIDs()
-# print(str(len(VUS_ids)) + " variants are found")
-
-
-# get csv file which filters VUS_ids out with human_genes  
-# df_VUS = fetchVUS_ClinVar(VUS_ids, human_genes, '../data/MM_enzyme.csv')
-# print(df_VUS)
-
-# addPDB('../data/MM_enzyme.csv')
-
-# df = removeSameVariations('../data/MM_enzyme.csv')
-# print(df)
-
-# removeSameVariationsByName('../data/MM_enzyme.csv', '../data/MM_enzyme_filter_1.csv')
-
-# removeSameVariationsBySequence('../data/MM_enzyme_filter_1.csv', '../data/MM_enzyme_filter_2.csv')
-# start = datetime.datetime.now()
-# sequence = getFASTA('NP_005557.1', 190, 'L', 10)
-# sequence = 'KFGELVAEEARRKGELRYMHS'
-# pdb = getPDB(sequence, 10.0)
-# print(pdb)
-# end = datetime.datetime.now()
-# time = end - start
-# c = divmod(time.days * 86400 + time.seconds, 60)
-# print(c)
