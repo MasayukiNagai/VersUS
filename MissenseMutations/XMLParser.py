@@ -40,6 +40,7 @@ class VariationHandler(object):
         self.ct_uncertain_var = 0
         self.ct_conflicting_var = 0
         self.ct_not_provided_var = 0
+        print('debug: start parcing')
 
     def start(self, tag, attrs):
         if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_pick):
@@ -123,7 +124,6 @@ class VariationHandler(object):
             self.is_uncertain = False
             self.is_conflicting = False
             self.is_not_provided = False
-
             self.ct_var += 1
             if self.ct % 10000 == 0:
                 print(f'counter: {self.ct_var}')
@@ -150,7 +150,7 @@ class VariationHandler(object):
         print(f"Missense: {self.ct_missense_var}")
         print(f"Mutations in the list: {len(self.vus_dict)}")
         print('debug: the file is closed')
-        return self.vus_dictm
+        return self.vus_dict
 
 
 class variationHandler(object):
@@ -189,7 +189,6 @@ class variationHandler(object):
         self.ct_uncertain = 0
         self.ct_conflicting = 0
         self.ct_not_provided = 0
-        print('debug: start parcing')
         
     def start(self, tag, attrs):
         if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() not in self.unnecessary_types):
