@@ -21,6 +21,9 @@ class VariationHandler(object):
         self.stop_pos = ''
         self.ref = ''
         self.alt = ''
+        self.np_acc = ''
+        self.change = ''
+        self.interpretation = ''
         self.is_first_gene_tag = True
         self.has_np_yet = False
         self.has_mut_type_yet = False
@@ -43,7 +46,7 @@ class VariationHandler(object):
         print('debug: start parcing')
 
     def start(self, tag, attrs):
-        if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_pick):
+        if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
             self.is_var_type_to_get = True  # don't forget to reset
             self.clinvar_acc = attrs.get('Accession')
         if self.is_var_type_to_get:
@@ -52,7 +55,7 @@ class VariationHandler(object):
             elif tag == 'Gene' and self.is_first_gene_tag == True:
                 self.gene_symbol = attrs.get('Symbol')
                 self.gene_name = attrs.get('FullName')
-                self.is_first_gene_tag == False   # don't forget to reset
+                self.is_first_gene_tag = False   # don't forget to reset
             elif tag == 'SequenceLocation' and self.in_GeneList_tag == False:
                 if attrs.get('Assembly') == 'GRCh38':
                     self.chr = attrs.get('Chr')
@@ -62,7 +65,7 @@ class VariationHandler(object):
                     self.alt = attrs.get('alternateAlleleVCF')
             elif tag == 'ProteinExpression' and self.has_np_yet == False:
                 np_acc = attrs.get('sequenceAccessionVersion')
-                if (np_acc is not None) and self.np_acc.startswith('NP'):
+                if (np_acc is not None) and np_acc.startswith('NP'):
                     self.np_acc = np_acc
                     self.change = attrs.get('change') 
                     self.has_np_yet = True  # don't forget to reset
@@ -81,7 +84,7 @@ class VariationHandler(object):
                 self.in_Desc_Hist_tag = True
 
     def end(self, tag):
-        if tag == 'VariationArchive' and self.is_var_type_to_get:
+        if tag == 'VariationArchive':
             clinical_significance = self.interpretation.lower()
             if 'uncertain' in clinical_significance:
                 self.is_uncertain = True
@@ -91,8 +94,11 @@ class VariationHandler(object):
                 self.ct_conflicting_var += 1
             elif 'not provided' in clinical_significance:
                 self.is_not_provided = True
-                self.ct_not_provided += 1
-            if (self.gene_symbol in self.gene_dict.keys()) and self.is_missense and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
+                self.ct_not_provided_var += 1
+            if self.is_var_type_to_get \
+               and (self.gene_symbol in self.gene_dict.keys())\
+               and self.is_missense \
+               and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
                 try:
                     self.change = self.change.split('p.')[1]
                     ref = aaMapThreeToOne.get(self.change[0:3])
@@ -103,19 +109,31 @@ class VariationHandler(object):
                 if ref and alt:
                     pos = self.change[3:len(self.change) - 3]
                     change_one_char = ref + pos + alt
+                    # register the variant
                     self.vus_dict[self.clinvar_acc] = {}
-                    self.vus_dict[self.clinvar_acc]['gene_symbol'] = self.gene_symbol
+                    self.vus_dict[self.clinvar_acc]['gene_id'] = self.gene_symbol
                     self.vus_dict[self.clinvar_acc]['gene_name'] = self.gene_name
                     self.vus_dict[self.clinvar_acc]['clinical_significance'] = clinical_significance
                     self.vus_dict[self.clinvar_acc]['EC_number'] = self.gene_dict.get(self.gene_symbol)
-                    self.vus_dict[self.clinvar_acc]['protein_change'] = change_one_char
+                    self.vus_dict[self.clinvar_acc]['missense_variation'] = change_one_char
+                    self.vus_dict[self.clinvar_acc]['NP_accession'] = self.np_acc
                     self.vus_dict[self.clinvar_acc]['chr'] = self.chr
                     self.vus_dict[self.clinvar_acc]['start'] = self.start_pos
                     self.vus_dict[self.clinvar_acc]['stop'] = self.stop_pos
                     self.vus_dict[self.clinvar_acc]['referenceAllele'] = self.ref
                     self.vus_dict[self.clinvar_acc]['alternateAllele'] = self.alt
-
-        if tag == 'VariationArchive':
+            # reset variables
+            self.clinvar_acc = ''
+            self.gene_symbol = ''
+            self.gene_name = ''
+            self.chr = ''
+            self.start_pos = ''
+            self.stop_pos = ''
+            self.ref = ''
+            self.alt = ''
+            self.np_acc = ''
+            self.change = ''
+            self.interpretation = ''
             self.is_var_type_to_get = False
             self.is_first_gene_tag = True
             self.has_np_yet = False
@@ -125,7 +143,7 @@ class VariationHandler(object):
             self.is_conflicting = False
             self.is_not_provided = False
             self.ct_var += 1
-            if self.ct % 10000 == 0:
+            if self.ct_var % 10000 == 0:
                 print(f'counter: {self.ct_var}')
         elif tag == 'GeneList':
             self.in_GeneList_tag = False
@@ -315,12 +333,11 @@ class variationHandler(object):
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
 def readClinVarVariationsXML(input_path, output_path, gene_dict):
-    print('debug: start parcing')
-    parser = etree.XMLParser(target=VariationHandler(gene_dict))
+    parser = etree.XMLParser(target=variationHandler(gene_dict))
     data = etree.parse(input_path, parser)
-    df = pd.DataFrame(data)
-    df.to_csv(output_path, index = False, header = True)
-    return df
+    # df = pd.DataFrame(data)
+    # df.to_csv(output_path, index = False, header = True)
+    return data
 
 
 class variationHandlerSpecific(object):

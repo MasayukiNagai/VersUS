@@ -18,18 +18,17 @@ pdb_seqres.txt
 *.html
 *.pdf
 
-# random output file
-MM_enzyme_copy.csv
-MM_enzyme_filter_1.csv
-MM_enzyme_filter_2.csv
-
-
 # blast files
 blast_db
 pdb_seqres.txt
 
-# ncbi folder
-/ncbi
+# folders
+ncbi
+data
+configuration
 
 #ipynb
 .ipynb_checkpoints
+
+#pycache
+__pycache__
