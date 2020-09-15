@@ -333,7 +333,7 @@ class variationHandler(object):
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
 def readClinVarVariationsXML(input_path, output_path, gene_dict):
-    parser = etree.XMLParser(target=variationHandler(gene_dict))
+    parser = etree.XMLParser(target=VariationHandler(gene_dict))
     data = etree.parse(input_path, parser)
     # df = pd.DataFrame(data)
     # df.to_csv(output_path, index = False, header = True)
