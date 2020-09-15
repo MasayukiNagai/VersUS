@@ -39,7 +39,7 @@ class VariationHandler(object):
         self.in_Desc_Hist_tag = False
         
         self.ct_var = 0
-        self.ct_missense_var = 0
+        self.ct_missense_and_type_to_get = 0
         self.ct_uncertain_var = 0
         self.ct_conflicting_var = 0
         self.ct_not_provided_var = 0
@@ -72,20 +72,21 @@ class VariationHandler(object):
             elif tag == 'MolecularConsequence' and self.has_np_yet == True and self.has_mut_type_yet == False:
                 if (attrs.get('Type') is not None) and 'missense' in attrs.get('Type').lower():
                     self.is_missense = True
-                    self.ct_missense_var += 1
+                    self.ct_missense_and_type_to_get += 1
                 self.has_mut_type_yet = True  # don't forget to reset
-            elif tag == 'Interpretations':
-                self.in_Interpretations_tag = True
-            elif tag == 'Interpretation':
-                self.in_Interpretation_tag = True
-            elif tag == 'Description':
-                self.in_Description_tag = True
-            elif tag == 'DescriptionHistory':
-                self.in_Desc_Hist_tag = True
+        if tag == 'Interpretations':  # if we want to skip interpretation of variants we are not interested in, we can nest the following ifs in the above if
+            self.in_Interpretations_tag = True
+        elif tag == 'Interpretation':
+            self.in_Interpretation_tag = True
+        elif tag == 'Description':
+            self.in_Description_tag = True
+        elif tag == 'DescriptionHistory':
+            self.in_Desc_Hist_tag = True
 
     def end(self, tag):
         if tag == 'VariationArchive':
             clinical_significance = self.interpretation.lower()
+            # print('debug: ' + clinical_significance)
             if 'uncertain' in clinical_significance:
                 self.is_uncertain = True
                 self.ct_uncertain_var += 1
@@ -161,12 +162,12 @@ class VariationHandler(object):
             self.interpretation = data  # needs to check this part 
 
     def close(self):
-        print(f"Variations: {self.ct_var}")
+        print(f"Total Variations: {self.ct_var}")
         print(f"Uncertain Significance: {self.ct_uncertain_var}")
         print(f"Conflicting Report: {self.ct_conflicting_var}")
         print(f"Not Provided: {self.ct_not_provided_var}")
-        print(f"Missense: {self.ct_missense_var}")
-        print(f"Mutations in the list: {len(self.vus_dict)}")
+        print(f"Missense and Type to get: {self.ct_missense_and_type_to_get}")
+        print(f"VUS in the list: {len(self.vus_dict)}")
         print('debug: the file is closed')
         return self.vus_dict
 
@@ -175,7 +176,8 @@ class variationHandler(object):
     def __init__(self, genes_dict):
         self.dictlist = {'gene_ID':[], 'gene_name':[], 'clinical_significance': [], 'EC_number': [], 'missense_variation': [], 'NP_accession': [], 'ClinVar_accession':[], 'Chr': [], 'start':[], 'stop':[], 'referenceAllele':[], 'alternateAllele':[]}
         self.genes_dict = genes_dict
-        self.unnecessary_types = ('inversion', 'copy number gain', 'tandem duplication', 'microsatellite', 'copy number loss', 'distinct chromosomes', 'fusion', 'complex', 'duplication', 'translocation')
+        # self.unnecessary_types = ('inversion', 'copy number gain', 'tandem duplication', 'microsatellite', 'copy number loss', 'distinct chromosomes', 'fusion', 'complex', 'duplication', 'translocation')
+        self.unnecessary_types = ('protein only', 'inversion', 'tandem duplication', 'insertion', 'copy number gain', 'microsatellite', 'copy number loss', 'variation', 'diplotype', 'distinct chromosomes', 'fusion', 'complex', 'indel', 'deletion', 'haplotype', 'duplication', 'phase unknown', 'translocation')
         self.is_type = False
         self.gene_ID = ""
         self.gene_name = ""
@@ -257,6 +259,7 @@ class variationHandler(object):
                 if "uncertain" in clinical_significance:
                     self.is_uncertain = True
                     self.ct_uncertain += 1
+                    # print('debug: ' + clinical_significance)
                 elif "conflicting" in clinical_significance:
                     self.is_conflicting = True
                     self.ct_conflicting += 1
@@ -334,8 +337,15 @@ class variationHandler(object):
 # return dataframe and write to a csv file
 def readClinVarVariationsXML(input_path, output_path, gene_dict):
     parser = etree.XMLParser(target=VariationHandler(gene_dict))
+    vus_dict = etree.parse(input_path, parser)
+    return vus_dict
+
+# read xml file of variations from ClinVar
+# return dataframe and write to a csv file
+def readClinVarVariationsXML_old(input_path, output_path, gene_dict):
+    parser = etree.XMLParser(target=variationHandler(gene_dict))
     data = etree.parse(input_path, parser)
-    # df = pd.DataFrame(data)
+    df = pd.DataFrame(data)
     # df.to_csv(output_path, index = False, header = True)
     return data
 
