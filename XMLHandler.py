@@ -32,11 +32,12 @@ class VariationHandler(object):
         self.is_conflicting = False
         self.is_not_provided = False
 
-        self.in_GeneList_tag = False
-        self.in_Interpretations_tag = False
-        self.in_Interpretation_tag = False
-        self.in_Description_tag = False
-        self.in_Desc_Hist_tag = False
+        # self.in_GeneList_tag = False
+        # self.in_Interpretations_tag = False
+        # self.in_Interpretation_tag = False
+        # self.in_Description_tag = False
+        # self.in_Desc_Hist_tag = False
+        self.tag_stack = []
         
         self.ct_var = 0
         self.ct_missense_and_type_to_get = 0
@@ -46,17 +47,19 @@ class VariationHandler(object):
         print('debug: start parcing')
 
     def start(self, tag, attrs):
+        self.tag_stack.append(tag)
         if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
             self.is_var_type_to_get = True  # don't forget to reset
             self.clinvar_acc = attrs.get('Accession')
         if self.is_var_type_to_get:
-            if tag == 'GeneList':
-                self.in_GeneList_tag = True  # don't forget to reset
-            elif tag == 'Gene' and self.is_first_gene_tag == True:
+            # if tag == 'GeneList':
+            #     self.in_GeneList_tag = True  # don't forget to reset
+            if tag == 'Gene' and self.is_first_gene_tag == True:
                 self.gene_symbol = attrs.get('Symbol')
                 self.gene_name = attrs.get('FullName')
                 self.is_first_gene_tag = False   # don't forget to reset
-            elif tag == 'SequenceLocation' and self.in_GeneList_tag == False:
+            # elif tag == 'SequenceLocation' and self.in_GeneList_tag == False:
+            elif tag == 'SequenceLocation' and 'GeneList' not in self.tag_stack:
                 if attrs.get('Assembly') == 'GRCh38':
                     self.chr = attrs.get('Chr')
                     self.start_pos = attrs.get('start')
@@ -74,16 +77,17 @@ class VariationHandler(object):
                     self.is_missense = True
                     self.ct_missense_and_type_to_get += 1
                 self.has_mut_type_yet = True  # don't forget to reset
-        if tag == 'Interpretations':  # if we want to skip interpretation of variants we are not interested in, we can nest the following ifs in the above if
-            self.in_Interpretations_tag = True
-        elif tag == 'Interpretation':
-            self.in_Interpretation_tag = True
-        elif tag == 'Description':
-            self.in_Description_tag = True
-        elif tag == 'DescriptionHistory':
-            self.in_Desc_Hist_tag = True
+        # if tag == 'Interpretations':  # if we want to skip interpretation of variants we are not interested in, we can nest the following ifs in the above if
+        #     self.in_Interpretations_tag = True
+        # elif tag == 'Interpretation':
+        #     self.in_Interpretation_tag = True
+        # elif tag == 'Description':
+        #     self.in_Description_tag = True
+        # elif tag == 'DescriptionHistory':
+        #     self.in_Desc_Hist_tag = True
 
     def end(self, tag):
+        self.tag_stack.pop()
         if tag == 'VariationArchive':
             clinical_significance = self.interpretation.lower()
             # print('debug: ' + clinical_significance)
@@ -146,19 +150,19 @@ class VariationHandler(object):
             self.ct_var += 1
             if self.ct_var % 10000 == 0:
                 print(f'counter: {self.ct_var}')
-        elif tag == 'GeneList':
-            self.in_GeneList_tag = False
-        elif tag == 'Interpretations':
-            self.in_Interpretations_tag = False
-        elif tag == 'Interpretation':
-            self.in_Interpretation_tag = False
-        elif tag == 'Description':
-            self.in_Description_tag = False
-        elif tag == 'DescriptionHistory':
-            self.in_Desc_Hist_tag = False
+        # elif tag == 'GeneList':
+        #     self.in_GeneList_tag = False
+        # elif tag == 'Interpretations':
+        #     self.in_Interpretations_tag = False
+        # elif tag == 'Interpretation':
+        #     self.in_Interpretation_tag = False
+        # elif tag == 'Description':
+        #     self.in_Description_tag = False
+        # elif tag == 'DescriptionHistory':
+        #     self.in_Desc_Hist_tag = False
     
     def data(self, data):
-        if self.in_Interpretations_tag and self.in_Interpretation_tag and self.in_Description_tag and (not self.in_Desc_Hist_tag):
+        if 'Interpretations' in self.tag_stack and 'Interpretation' in self.tag_stack and 'Description' in self.tag_stack and 'DescriptionHistory' not in self.tag_stack:
             self.interpretation = data  # needs to check this part 
 
     def close(self):
@@ -172,182 +176,12 @@ class VariationHandler(object):
         return self.vus_dict
 
 
-class variationHandler(object):
-    def __init__(self, genes_dict):
-        self.dictlist = {'gene_ID':[], 'gene_name':[], 'clinical_significance': [], 'EC_number': [], 'missense_variation': [], 'NP_accession': [], 'ClinVar_accession':[], 'Chr': [], 'start':[], 'stop':[], 'referenceAllele':[], 'alternateAllele':[]}
-        self.genes_dict = genes_dict
-        # self.unnecessary_types = ('inversion', 'copy number gain', 'tandem duplication', 'microsatellite', 'copy number loss', 'distinct chromosomes', 'fusion', 'complex', 'duplication', 'translocation')
-        self.unnecessary_types = ('protein only', 'inversion', 'tandem duplication', 'insertion', 'copy number gain', 'microsatellite', 'copy number loss', 'variation', 'diplotype', 'distinct chromosomes', 'fusion', 'complex', 'indel', 'deletion', 'haplotype', 'duplication', 'phase unknown', 'translocation')
-        self.is_type = False
-        self.gene_ID = ""
-        self.gene_name = ""
-        self.clinvar_acc = ""
-        self.np_acc = ""
-        self.change = ""
-        self.chr = ""
-        self.start_num = ""
-        self.stop_num = ""
-        self.referenceAllele = ""
-        self.alternateAllele = ""
-        self.is_GeneList = False
-        self.ct_gene = 0
-        self.check_grch = False
-        self.ct_np = 0
-        self.ct_mc = 0  # counter for Molecular Consequence tag
-        self.is_haplotype = False  # check if a variation is haplotype or not
-        self.is_genotype = False  # check if a variation is genotype or not
-        self.is_missense = False
-        self.is_conflicting = False
-        self.is_not_provided = False
-        self.is_interpretations = False
-        self.is_interpretation = False
-        self.is_description = False
-        self.is_desc_hist = False
-        self.intpn = []
-        self.ct = 0
-        self.ct_missense = 0
-        self.ct_uncertain = 0
-        self.ct_conflicting = 0
-        self.ct_not_provided = 0
-        
-    def start(self, tag, attrs):
-        if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() not in self.unnecessary_types):
-            self.is_type = True
-            if attrs.get('VariationType').lower() == 'haplotype':
-                self.is_haplotype = True
-            if attrs.get('VariationType').lower() == 'compoundheterozygote':
-                self.is_genotype = True
-            self.clinvar_acc = attrs.get('Accession')
-        if self.is_type:
-            if tag == 'GeneList':
-                self.is_GeneList = True
-            elif tag == 'Gene' and self.ct_gene == 0:
-                self.gene_ID = attrs.get('Symbol')
-                self.gene_name = attrs.get('FullName')
-                self.ct_gene += 1
-            elif tag == 'SequenceLocation' and self.is_GeneList == False and self.check_grch == False:
-                if attrs.get('Assembly') == 'GRCh38':
-                    self.chr = attrs.get('Chr')
-                    self.start_num = attrs.get('start')
-                    self.stop_num = attrs.get('stop')
-                    self.referenceAllele = attrs.get('referenceAlleleVCF')
-                    self.alternateAllele = attrs.get('alternateAlleleVCF')
-                    self.check_grch = True
-            elif tag == 'ProteinExpression' and self.ct_np == 0:
-                self.np_acc = attrs.get('sequenceAccessionVersion')
-                self.change = attrs.get('change') 
-                if self.np_acc and self.np_acc.startswith('NP'):            
-                    self.ct_np += 1
-            elif tag == 'MolecularConsequence' and self.ct_mc == 0:
-                if attrs.get('Type') and 'missense' in attrs.get('Type').lower():
-                    self.is_missense = True
-                    self.ct_missense += 1
-                self.ct_mc += 1
-            elif tag == 'Interpretations':
-                self.is_interpretations = True
-            elif tag == 'Interpretation':
-                self.is_interpretation = True
-            elif tag == 'Description':
-                self.is_description = True
-            elif tag == 'DescriptionHistory':
-                self.is_desc_hist = True
-            
-    def end(self, tag):
-        if (tag == 'VariationArchive' and self.is_type) or ((self.is_haplotype or self.is_genotype) and tag == 'SimpleAllele'):
-            if len(self.intpn) == 1:
-                clinical_significance = self.intpn[0].lower()
-                if "uncertain" in clinical_significance:
-                    self.is_uncertain = True
-                    self.ct_uncertain += 1
-                    # print('debug: ' + clinical_significance)
-                elif "conflicting" in clinical_significance:
-                    self.is_conflicting = True
-                    self.ct_conflicting += 1
-                elif "not provided" in clinical_significance:
-                    self.is_not_provided = True
-                    self.ct_not_provided += 1
-            if (self.gene_ID in self.genes_dict.keys()) and self.is_missense and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
-                try:
-                    self.change = self.change.split('p.')[1]
-                    before = aaMapThreeToOne.get(self.change[0:3])
-                    after = aaMapThreeToOne.get(self.change[len(self.change) - 3:len(self.change)])
-                except: 
-                    before = None
-                    after = None
-                if before and after:  # check if both have a value in aa dict
-                    num = self.change[3:len(self.change) - 3]
-                    abbreviated_change = before + num + after
-                    fasta = ''
-                    self.dictlist['gene_ID'].append(self.gene_ID)
-                    self.dictlist['gene_name'].append(self.gene_name)
-                    self.dictlist['clinical_significance'].append(clinical_significance)
-                    self.dictlist['EC_number'].append(self.genes_dict.get(self.gene_ID))
-                    self.dictlist['missense_variation'].append(abbreviated_change)
-                    self.dictlist['NP_accession'].append(self.np_acc)
-                    self.dictlist['ClinVar_accession'].append(self.clinvar_acc)
-                    self.dictlist['Chr'].append(self.chr)
-                    self.dictlist['start'].append(self.start_num)
-                    self.dictlist['stop'].append(self.stop_num)
-                    self.dictlist['referenceAllele'].append(self.referenceAllele)
-                    self.dictlist['alternateAllele'].append(self.alternateAllele)
-            self.ct_gene = 0             
-            self.check_grch = False
-            self.is_missense = False
-            self.is_uncertain = False
-            self.is_conflicting = False
-            self.is_not_provided = False
-            self.ct_np = 0
-            self.ct_mc = 0
-            self.intpn = []
-        if self.is_type:
-            if tag == 'GeneList':
-                self.is_GeneList = False
-            elif tag == 'Interpretations':
-                self.is_interpretations = False
-            elif tag == 'Interpretation':
-                self.is_interpretaion = False
-            elif tag == 'Description':
-                self.is_description = False
-            elif tag == 'DescriptionHistory':
-                self.is_desc_hist = False
-        if tag == 'VariationArchive':
-            self.is_type = False
-            self.is_haplotype = False
-            self.is_genotype = False
-            self.ct +=1
-            if self.ct % 10000 == 0:
-                print(f'counter: {self.ct}')
-                
-    def data(self, data):
-        if self.is_interpretations and self.is_interpretation and self.is_description and (not self.is_desc_hist):
-            self.intpn.append(data)
-            
-    def close(self):
-        print(f"Variations: {self.ct}")
-        print(f"Uncertain Significance: {self.ct_uncertain}")
-        print(f"Conflicting Report: {self.ct_conflicting}")
-        print(f"Not Provided: {self.ct_not_provided}")
-        print(f"Missense: {self.ct_missense}")
-        print(f"Mutations in the list: {len(self.dictlist['gene_ID'])}")
-        print('debug: the file is closed')
-        return self.dictlist
-
-
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
 def readClinVarVariationsXML(input_path, output_path, gene_dict):
     parser = etree.XMLParser(target=VariationHandler(gene_dict))
     vus_dict = etree.parse(input_path, parser)
     return vus_dict
-
-# read xml file of variations from ClinVar
-# return dataframe and write to a csv file
-def readClinVarVariationsXML_old(input_path, output_path, gene_dict):
-    parser = etree.XMLParser(target=variationHandler(gene_dict))
-    data = etree.parse(input_path, parser)
-    df = pd.DataFrame(data)
-    # df.to_csv(output_path, index = False, header = True)
-    return data
 
 
 class variationHandlerSpecific(object):
