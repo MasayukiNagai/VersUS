@@ -1,5 +1,6 @@
 import pandas as pd
 from lxml import etree
+import datetime
 
 aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                    'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
@@ -13,6 +14,7 @@ class VariationHandler(object):
         self.gene_dict = gene_dict
         self.var_types_to_get = ('single nucleotide variant')
         self.is_var_type_to_get = False
+        self.vus_id = 0
         self.clinvar_acc = ''
         self.gene_symbol = ''
         self.gene_name = ''
@@ -109,24 +111,34 @@ class VariationHandler(object):
                     ref = aaMapThreeToOne.get(self.change[0:3])
                     alt = aaMapThreeToOne.get(self.change[len(self.change) - 3:len(self.change)])
                 except:
-                    ref = None
-                    alt = None
-                if ref and alt:
-                    pos = self.change[3:len(self.change) - 3]
-                    change_one_char = ref + pos + alt
+                    ref = ''
+                    alt = ''
+                    # pos = int(self.change.split('_')[0][1:])
+                if ref != '' and alt != '':
+                    try:
+                        pos = int(self.change[3:len(self.change) - 3])
+                    except:
+                        pos = self.change.split('_')[0][3:]
+                        print(pos)
+                    change_one_char = ref + str(pos) + alt
                     # register the variant
-                    self.vus_dict[self.clinvar_acc] = {}
-                    self.vus_dict[self.clinvar_acc]['gene_id'] = self.gene_symbol
-                    self.vus_dict[self.clinvar_acc]['gene_name'] = self.gene_name
-                    self.vus_dict[self.clinvar_acc]['clinical_significance'] = clinical_significance
-                    self.vus_dict[self.clinvar_acc]['EC_number'] = self.gene_dict.get(self.gene_symbol)
-                    self.vus_dict[self.clinvar_acc]['missense_variation'] = change_one_char
-                    self.vus_dict[self.clinvar_acc]['NP_accession'] = self.np_acc
-                    self.vus_dict[self.clinvar_acc]['chr'] = self.chr
-                    self.vus_dict[self.clinvar_acc]['start'] = self.start_pos
-                    self.vus_dict[self.clinvar_acc]['stop'] = self.stop_pos
-                    self.vus_dict[self.clinvar_acc]['referenceAllele'] = self.ref
-                    self.vus_dict[self.clinvar_acc]['alternateAllele'] = self.alt
+                    self.vus_dict[self.vus_id] = {}
+                    self.vus_dict[self.vus_id]['ClinVar_acession'] = self.clinvar_acc
+                    self.vus_dict[self.vus_id]['gene_id'] = self.gene_symbol
+                    self.vus_dict[self.vus_id]['gene_name'] = self.gene_name
+                    self.vus_dict[self.vus_id]['clinical_significance'] = clinical_significance
+                    self.vus_dict[self.vus_id]['EC_number'] = self.gene_dict.get(self.gene_symbol)
+                    self.vus_dict[self.vus_id]['missense_variation'] = change_one_char
+                    self.vus_dict[self.vus_id]['ref'] = ref
+                    self.vus_dict[self.vus_id]['alt'] = alt
+                    self.vus_dict[self.vus_id]['pos'] = pos
+                    self.vus_dict[self.vus_id]['NP_accession'] = self.np_acc
+                    self.vus_dict[self.vus_id]['chr'] = self.chr
+                    self.vus_dict[self.vus_id]['start'] = self.start_pos
+                    self.vus_dict[self.vus_id]['stop'] = self.stop_pos
+                    self.vus_dict[self.vus_id]['referenceAllele'] = self.ref
+                    self.vus_dict[self.vus_id]['alternateAllele'] = self.alt
+                    self.vus_id += 1
             # reset variables
             self.clinvar_acc = ''
             self.gene_symbol = ''
@@ -179,8 +191,13 @@ class VariationHandler(object):
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
 def readClinVarVariationsXML(input_path, output_path, gene_dict):
+    start = datetime.datetime.now()
     parser = etree.XMLParser(target=VariationHandler(gene_dict))
     vus_dict = etree.parse(input_path, parser)
+    end = datetime.datetime.now()
+    time = end - start
+    c = divmod(time.days * 86400 + time.seconds, 60)
+    print(f'Running ClinVarXMLParser took {c[0]} minutes {c[1]} seconds')
     return vus_dict
 
 
@@ -242,73 +259,89 @@ def readClinVarVariationsXMLSpecific(input_path, accession):
 
 class BlastHandler(object):
     def __init__(self):
-        self.dictlist = {'pdb_ID': [], 'BLAST_evalue': [], 'hit_from': [], 'hit_to': []}
-        self.is_hit_id = False
-        self.is_evalue = False
-        self.is_hit_from = False
-        self.is_hit_to = False
-        self.ct_iter = 0
-        self.ct = 0
-        
+        self.blast_results = {}
+        self.blast_id = 0
+        self.tag_stack = []
+        self.info = ('pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+        # self.dictlist = {'pdb_ID': [], 'BLAST_evalue': [], 'hit_from': [], 'hit_to': []}
+        # self.is_hit_id = False
+        # self.is_evalue = False
+        # self.is_hit_from = False
+        # self.is_hit_to = False
+        self.ct_hit = 0
+
     def start(self, tag, attrs):
-        if tag == 'Hit':  # there are a few <Hsp> tags within a <Hit> tag
-            self.ct_iter += 1
-        elif tag == 'Hit_id':
-            self.is_hit_id = True
-        elif tag == 'Hsp_evalue':
-            self.is_evalue = True
-        elif tag == 'Hsp_hit-from':
-            self.is_hit_from = True
-        elif tag == 'Hsp_hit-to':
-            self.is_hit_to = True
+        self.tag_stack.add(tag)
+        if tag == 'Iteration':
+            self.blast_results[self.blast_id] = {}
+        elif tag == 'Hit':  # there are a few <Hsp> tags within a <Hit> tag
+            self.ct_hit += 1
+        # elif tag == 'Hit_id':
+        #     self.is_hit_id = True
+        # elif tag == 'Hsp_evalue':
+        #     self.is_evalue = True
+        # elif tag == 'Hsp_hit-from':
+        #     self.is_hit_from = True
+        # elif tag == 'Hsp_hit-to':
+        #     self.is_hit_to = True
             
     def end(self, tag):
+        self.tag_stack.pop()
         if tag == 'Iteration':
-            if self.ct_iter == 0:  # when there is no hit, add None to each list
-                self.dictlist['pdb_ID'].append(None)
-                self.dictlist['BLAST_evalue'].append(None)
-                self.dictlist['hit_from'].append(None)
-                self.dictlist['hit_to'].append(None)
-            self.ct_iter = 0
-            self.ct += 1
-            if self.ct % 10000 == 0:
-                print(f'coutner: {self.ct}')
-        elif tag == 'Hit_id':
-            self.is_hit_id = False
-        elif tag == 'Hsp_evalue':
-            self.is_evalue = False
-        elif tag == 'Hsp_hit-from':
-            self.is_hit_from = False
-        elif tag == 'Hsp_hit-to':
-            self.is_hit_to = False
+            # if self.ct_hit == 0:  # when there is no hit, add None to each list
+            #     self.blast_results[self.blast_id] = {}
+            #     self.blast_results[self.blast_id]['pdb_ID'] = None
+            #     self.blast_results[self.blast_id]['BLAST_evalue'] = None
+            #     self.blast_results[self.blast_id]['hit_from'] = None
+            #     self.blast_results[self.blast_id]['hit_to'] = None
+            for k in self.info:
+                if self.blast_results[self.blast_id].get(k) == None:
+                    self.blast_results[self.blast_id][k] = None
+            self.blast_id += 1
+            self.ct_hit = 0
+            if self.blast_id % 10000 == 0:
+                print(f'counter: {self.blast_id}')
         elif tag == 'Hsp':
-            self.ct_iter += 1
-        
+            self.ct_hit += 1
+        # elif tag == 'Hit_id':
+        #     self.is_hit_id = False
+        # elif tag == 'Hsp_evalue':
+        #     self.is_evalue = False
+        # elif tag == 'Hsp_hit-from':
+        #     self.is_hit_from = False
+        # elif tag == 'Hsp_hit-to':
+        #     self.is_hit_to = False
+
     def data(self, data):
-        if self.ct_iter == 1:
-            if self.is_hit_id:
+        if self.ct_hit == 1:
+            if 'Hit_id' in self.tag_stack:
                 try:
                     pdb = data.split('pdb|')[1]
                 except: 
-                    print(f'Cannot split pdb {data}')
-                    pdb = None
-                self.dictlist['pdb_ID'].append(pdb)
-            elif self.is_evalue:
-                self.dictlist['BLAST_evalue'].append(data)
-            elif self.is_hit_from:
-                self.dictlist['hit_from'].append(data)
-            elif self.is_hit_to:
-                self.dictlist['hit_to'].append(data)
+                    print(f'Cannot split {data} for pdb, id: {self.blast_id}')
+                    pdb = data
+                self.blast_results[self.blast_id]['pdb_ID'].append(pdb)
+            elif 'Hsp_evalue' in self.tag_stack:
+                self.blast_results[self.blast_id]['BLAST_evalue'].append(data)
+            elif 'Hsp_hit-from' in self.tag_stack:
+                self.blast_results[self.blast_id]['hit_from'].append(data)
+            elif 'Hsp_hit-to' in self.tag_stack:
+                self.blast_results[self.blast_id]['hit_to'].append(data)
     
     def close(self):
-        print('Has completed parsing the blast_result xml')
-        print(f'Total Count: {self.ct}')
-        print(f'Length pdb: {len(self.dictlist["pdb_ID"])}, evalue: {len(self.dictlist["BLAST_evalue"])}, hit_from : {len(self.dictlist["hit_from"])}, hit_to : {len(self.dictlist["hit_to"])}')
-        return self.dictlist
+        print('Completed parsing the blast_result xml')
+        print(f'Total Count: {self.blast_id}')
+        print(f'Length of blast_dict: {len(self.blast_results)}')
+        return self.blast_results
 
 
 def readBlastXML(input_path):
     print('Start parcing')
+    start = datetime.datetime.now()
     parser = etree.XMLParser(target=BlastHandler())
     data = etree.parse(input_path, parser)
+    end = datetime.datetime.now()
+    time = end - start
+    c = divmod(time.days * 86400 + time.seconds, 60)
+    print(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
     return data    
