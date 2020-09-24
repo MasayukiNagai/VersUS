@@ -123,21 +123,19 @@ class VariationHandler(object):
                     change_one_char = ref + str(pos) + alt
                     # register the variant
                     self.vus_dict[self.vus_id] = {}
-                    self.vus_dict[self.vus_id]['ClinVar_acession'] = self.clinvar_acc
+                    self.vus_dict[self.vus_id]['ClinVar_accession'] = self.clinvar_acc
                     self.vus_dict[self.vus_id]['gene_id'] = self.gene_symbol
                     self.vus_dict[self.vus_id]['gene_name'] = self.gene_name
                     self.vus_dict[self.vus_id]['clinical_significance'] = clinical_significance
                     self.vus_dict[self.vus_id]['EC_number'] = self.gene_dict.get(self.gene_symbol)
                     self.vus_dict[self.vus_id]['missense_variation'] = change_one_char
-                    self.vus_dict[self.vus_id]['ref'] = ref
-                    self.vus_dict[self.vus_id]['alt'] = alt
-                    self.vus_dict[self.vus_id]['pos'] = pos
                     self.vus_dict[self.vus_id]['NP_accession'] = self.np_acc
                     self.vus_dict[self.vus_id]['chr'] = self.chr
                     self.vus_dict[self.vus_id]['start'] = self.start_pos
                     self.vus_dict[self.vus_id]['stop'] = self.stop_pos
                     self.vus_dict[self.vus_id]['referenceAllele'] = self.ref
                     self.vus_dict[self.vus_id]['alternateAllele'] = self.alt
+                    self.vus_dict[self.vus_id]['pos'] = pos
                     self.vus_id += 1
             # reset variables
             self.clinvar_acc = ''
@@ -190,10 +188,10 @@ class VariationHandler(object):
 
 # read xml file of variations from ClinVar
 # return dataframe and write to a csv file
-def readClinVarVariationsXML(input_path, output_path, gene_dict):
+def readClinVarVariationsXML(xml_path, gene_dict):
     start = datetime.datetime.now()
     parser = etree.XMLParser(target=VariationHandler(gene_dict))
-    vus_dict = etree.parse(input_path, parser)
+    vus_dict = etree.parse(xml_path, parser)
     end = datetime.datetime.now()
     time = end - start
     c = divmod(time.days * 86400 + time.seconds, 60)
@@ -201,6 +199,7 @@ def readClinVarVariationsXML(input_path, output_path, gene_dict):
     return vus_dict
 
 
+# need to change global WFILE stuff later
 class variationHandlerSpecific(object):
     def __init__(self, accession):
         self.is_accession = False
@@ -339,9 +338,9 @@ def readBlastXML(input_path):
     print('Start parcing')
     start = datetime.datetime.now()
     parser = etree.XMLParser(target=BlastHandler())
-    data = etree.parse(input_path, parser)
+    blast_dict = etree.parse(input_path, parser)
     end = datetime.datetime.now()
     time = end - start
     c = divmod(time.days * 86400 + time.seconds, 60)
     print(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
-    return data    
+    return blast_dict    

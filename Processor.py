@@ -27,7 +27,7 @@ class Processor:
     # makes dictionary of fasta sequences and np number 
     # returns dict{np_num: fasta sequence}
     def make_seq_dict(self, seq_dir_path):
-        fasta_dict = {}
+        seq_dict = {}
         for root, d_names, file_names in os.walk(seq_dir_path):
             for filename in file_names:
                 fname = os.path.join(root, filename)
@@ -37,19 +37,28 @@ class Processor:
                     sequence = ''
                     for line in f:
                         if line[0] == '>':
-                            if sequence != '':
-                                fasta_dict[np_num] = sequence
-                                np_num = ''
-                                sequence = ''                    
-                            i = 1
-                            while line[i] != ' ':
-                                np_num += line[i]
-                                i += 1
+                            try:
+                                np_num = line.split()[0].split('>')[1]
+                                seq_dict[np_num] = ''
+                            except:
+                                print(f'Error: {line}')
+                                return
                         else:
-                            line = line.strip('\n')
-                            sequence += line
-        print(f'The number of items in the fasta dict: {len(fasta_dict)}')
-        return fasta_dict
+                            seq_dict[np_num] += line.strip()
+                        # if line[0] == '>':
+                        #     if sequence != '':
+                        #         seq_dict[np_num] = sequence
+                        #         np_num = ''
+                        #         sequence = ''                    
+                        #     i = 1
+                        #     while line[i] != ' ':
+                        #         np_num += line[i]
+                        #         i += 1
+                        # else:
+                        #     line = line.strip('\n')
+                        #     sequence += line
+        print(f'The number of items in the seq dict: {len(seq_dict)}')
+        return seq_dict
 
 
     # fetches fasta sequences for varinants whose sequences aren't in the imported files
@@ -80,15 +89,15 @@ class Processor:
     
     # add fasta sequence to vus dict
     # return vus dict and unfound_seq set
-    def add_seq_to_dict(self, vus_dict: dict, fasta_dict: dict, seq_range: int):
+    def add_seq_to_dict(self, vus_dict: dict, seq_dict: dict, seq_range: int=12):
         unfound_seq = set()
         seq_list = []
         for vus_id in vus_dict.keys():
-            ref = vus_dict[vus_id]['ref']
-            pos = vus_dict[vus_id]['pos']
+            ref = vus_dict[vus_id]['referenceAllele']
+            pos = vus_dict[vus_id]['alternateAllele']
             np_num = vus_dict[vus_id]['NP_accession']
             try:
-                seq = fasta_dict[np_num]
+                seq = seq_dict[np_num]
                 seq_cropped = self.cropFASTA(seq, pos, ref, seq_range)
             except:
                 seq = ''
@@ -169,10 +178,33 @@ class Processor:
         print(f'Running Vep took {c[0]} minutes {c[1]} seconds')
 
     
-    def cropVepOutput(self, vep_file_path, outfile_path):
+    def crop_vep_output(self, vep_file_path, outfile_path):
         cmd = "cat " + vep_file_path + " | "\
             + "grep -v '##'" + " | "\
             + "sed 's/^#\(.*\)/\\1/'" +  " >| "\
             + outfile_path
         crop_cmd = os.system(cmd)
         print(cmd + ' : ran with exit code %d' %crop_cmd)
+
+    
+    def write_to_csv(self, vus_dict: dict, header: tuple, outfile_path: str):
+        with open(outfile_path, 'w') as f:
+            f.write(','.join(header) + '\n')
+            for vus_id in vus_dict:
+                info = []
+                for item in header:
+                    info.append(str(vus_dict[vus_id][item]))
+                f.write(','.join(info) + '\n')
+
+
+    def read_csv_to_dict(self, csv_path: str):
+        vus_dict = {}
+        with open(csv_path, 'r') as f:
+            header = f.readline().split(',')
+            header = [item.strip() for item in header]
+            for i, line in enumerate(f):
+                vus_dict[i] = {}
+                ls = line.split(',')
+                for j, item in enumerate(header):
+                    vus_dict[i][item] = ls[j].strip()
+        return vus_dict
