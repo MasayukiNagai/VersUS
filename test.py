@@ -40,17 +40,38 @@ genes_dict = readHumanGenesEC(genes_file)
 # outfile_path = './data/VUS.tsv'
 # processor.write_to_tsv(vus_dict, header, outfile_path)
 
+# print('********** read TSV **********')
+# tsv_path = './data/VUS.tsv'
+# vus_dict = processor.read_tsv_to_dict(tsv_path)
+# print(f'The number of VUS: {len(vus_dict)}')
+# print(vus_dict[0])
+
+# print('---------- make a fasta file for blast ----------')
+# fasta_for_blast_path = './data/blast/vus_blast.fasta'
+# processor.make_fasta_for_blast(vus_dict, fasta_for_blast_path)
+# print('Done')
+
+# print('---------- run BLAST ----------')
+# blast_output_path = './data/blast/blast_results.xml'
+# processor.blast_locally(fasta_for_blast_path, blast_output_path)
+
+# print('---------- read BLAST results ----------')
+# blast_results_path = './data/blast/blast_results.xml'
+# blast_dict = readBlastXML(blast_results_path)
+
+# print('---------- add BLAST results to VUS_dict ----------')
+# vus_dict = processor.add_blast_results(vus_dict, blast_dict)
+# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+# vus_blast_path = './data/VUS_with_blast.tsv'
+# processor.write_to_tsv(vus_dict, header, vus_blast_path)
+
 print('********** read TSV **********')
-tsv_path = './data/VUS.tsv'
+tsv_path = './data/VUS_with_blast.tsv'
 vus_dict = processor.read_tsv_to_dict(tsv_path)
 print(f'The number of VUS: {len(vus_dict)}')
 print(vus_dict[0])
 
-print('---------- make a fasta file for blast ----------')
-fasta_for_blast_path = './data/blast/vus_blast.fasta'
-processor.make_fasta_for_blast(vus_dict, fasta_for_blast_path)
+print('---------- make_tsv_for_CADD ----------')
+caddfile_path = './data/CADD/vus_cadd.vcf'
+processor.make_tsv_for_CADD(vus_dict, caddfile_path)
 print('Done')
-
-print('---------- run BLAST ----------')
-blast_output_path = './data/blast/blast_results.fasta'
-processor.blast_locally(fasta_for_blast_path, blast_output_path)

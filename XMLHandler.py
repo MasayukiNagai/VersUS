@@ -269,7 +269,7 @@ class BlastHandler(object):
         self.ct_hit = 0
 
     def start(self, tag, attrs):
-        self.tag_stack.add(tag)
+        self.tag_stack.append(tag)
         if tag == 'Iteration':
             self.blast_results[self.blast_id] = {}
         elif tag == 'Hit':  # there are a few <Hsp> tags within a <Hit> tag
@@ -318,13 +318,13 @@ class BlastHandler(object):
                 except: 
                     print(f'Cannot split {data} for pdb, id: {self.blast_id}')
                     pdb = data
-                self.blast_results[self.blast_id]['pdb_ID'].append(pdb)
+                self.blast_results[self.blast_id]['pdb_ID'] = pdb
             elif 'Hsp_evalue' in self.tag_stack:
-                self.blast_results[self.blast_id]['BLAST_evalue'].append(data)
+                self.blast_results[self.blast_id]['BLAST_evalue'] = data
             elif 'Hsp_hit-from' in self.tag_stack:
-                self.blast_results[self.blast_id]['hit_from'].append(data)
+                self.blast_results[self.blast_id]['hit_from'] = data
             elif 'Hsp_hit-to' in self.tag_stack:
-                self.blast_results[self.blast_id]['hit_to'].append(data)
+                self.blast_results[self.blast_id]['hit_to'] = data
     
     def close(self):
         print('Completed parsing the blast_result xml')

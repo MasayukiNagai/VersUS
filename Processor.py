@@ -138,7 +138,7 @@ class Processor:
     
     
     def add_blast_results(self, vus_dict, blast_dict):
-        if set(vus_dict.keys()) == set(blast_dict.keys()):
+        if vus_dict.keys() != blast_dict.keys():
             print(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(blast_dict)}')
             return None
         for common_id in range(0, len(vus_dict)):
@@ -146,7 +146,7 @@ class Processor:
             vus_dict[common_id]['BLAST_evalue'] = blast_dict[common_id]['BLAST_evalue']
             vus_dict[common_id]['hit_from'] = blast_dict[common_id]['hit_from']
             vus_dict[common_id]['hit_to'] = blast_dict[common_id]['hit_to']
-        return blast_dict
+        return vus_dict
 
 
     def make_tsv_for_vep(self, vus_dict, outfile_path):
@@ -187,6 +187,22 @@ class Processor:
             + outfile_path
         crop_cmd = os.system(cmd)
         print(cmd + ' : ran with exit code %d' %crop_cmd)
+
+    
+    def make_tsv_for_CADD(self, vus_dict, outfile_path):
+        header_info = ('Chrom', 'POS', 'ID', 'REF', 'ALT')
+        header = '#' + '\t'.join(header_info)
+        with open(outfile_path, 'w') as f:
+            f.write(header + '\n')
+            for vus_id in range(len(vus_dict)):
+                chrom = vus_dict[vus_id]['chr']
+                mutation = vus_dict[vus_id]['missense_variation']
+                ref = mutation[0]
+                alt = mutation[-1]
+                pos = mutation[1:-1]
+                info_tup = (chrom, pos, str(vus_id), ref, alt)
+                info = '\t'.join(info_tup)
+                f.write(info + '\n')
 
     
     # def write_to_csv(self, vus_dict: dict, header: tuple, outfile_path: str):
