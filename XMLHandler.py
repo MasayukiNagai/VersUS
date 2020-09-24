@@ -135,7 +135,6 @@ class VariationHandler(object):
                     self.vus_dict[self.vus_id]['stop'] = self.stop_pos
                     self.vus_dict[self.vus_id]['referenceAllele'] = self.ref
                     self.vus_dict[self.vus_id]['alternateAllele'] = self.alt
-                    self.vus_dict[self.vus_id]['pos'] = pos
                     self.vus_id += 1
             # reset variables
             self.clinvar_acc = ''
