@@ -1,5 +1,6 @@
-import csv
 import os
+import csv
+import gzip
 from Bio import Entrez
 from Bio import SeqIO
 import datetime
@@ -206,7 +207,7 @@ class Processor:
 
     def read_CADD_results(self, caddfile_path: str) -> dict:
         cadd_dict = {}
-        with open(caddfile_path, 'r') as f:
+        with gzip.open(caddfile_path, 'rt') as f:
             for line in f:
                 if line.startswith('#'):
                     continue

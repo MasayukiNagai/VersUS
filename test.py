@@ -2,9 +2,11 @@
 from main import *
 from XMLHandler import *
 from Processor import * 
+from WebsiteHandler import *
 
 
 processor = Processor()
+web_handler = WebsiteHandler()
 
 # print('---------- read Gene File ----------')
 # genes_file = './data/gene/HumanEnzWithEC.csv'
@@ -66,20 +68,24 @@ processor = Processor()
 # vus_blast_path = './data/VUS_with_blast.tsv'
 # processor.write_to_tsv(vus_dict, header, vus_blast_path)
 
-# print('********** read TSV **********')
-# tsv_path = './data/VUS_with_blast.tsv'
-# vus_dict = processor.read_tsv_to_dict(tsv_path)
-# print(f'The number of VUS: {len(vus_dict)}')
-# print(vus_dict[0])
+print('********** read TSV **********')
+tsv_path = './data/VUS_with_blast.tsv'
+vus_dict = processor.read_tsv_to_dict(tsv_path)
+print(f'The number of VUS: {len(vus_dict)}')
+print(vus_dict[0])
 
-# print('---------- make_tsv_for_CADD ----------')
-# caddfile_path = './data/CADD/vus_cadd.vcf'
-# processor.make_tsv_for_CADD(vus_dict, caddfile_path)
-# print('Done')
+print('---------- make_tsv_for_CADD ----------')
+caddfile_path = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/vus_cadd.vcf'
+processor.make_tsv_for_CADD(vus_dict, caddfile_path)
+print('Done')
 
-# print('---------- read CADD results ----------')
-# cadd_results = './data/CADD/GRCh38-v1.4.tsv'
-# cadd_dict = processor.read_CADD_results(cadd_results)
+print('---------- get CADD scores from its website ----------')
+cadd_results = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/GRCh38-v1.4.tsv.gz'
+web_handler.get_CADD_scores(caddfile_path, cadd_results)
+
+print('---------- read CADD results ----------')
+cadd_results = './data/CADD/GRCh38-v1.4.tsv.gz'
+cadd_dict = processor.read_CADD_results(cadd_results)
 
 # print('---------- add CADD results ----------')
 # vus_dict, unfound_cadd_dict = processor.add_cadd_results(vus_dict, cadd_dict)

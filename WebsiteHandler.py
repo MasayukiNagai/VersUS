@@ -1,6 +1,5 @@
 from selenium import webdriver
 import urllib.request
-import time
 import datetime
 
 class WebsiteHandler:
@@ -21,10 +20,10 @@ class WebsiteHandler:
         assert 'CADD' in driver.title
         upload = driver.find_element_by_xpath("//input[@type='file']")
         upload.send_keys(cadd_inputfile)
-        version = driver.find_element_by_xpath("//select[@name='version']/option[text()='GRCh37-v1.4']")
+        version = driver.find_element_by_xpath("//select[@name='version']/option[text()='GRCh38-v1.4']")
         version.click()
         submit = driver.find_element_by_xpath("//input[@type='submit']")
-        time.sleep(5)  # test purpose
+        self.driver.implicitly_wait(5)
         submit.click()
 
     def check_CADD_upload_succeeded(self):
@@ -46,7 +45,7 @@ class WebsiteHandler:
             url_link = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
             self.driver.get(url_link)
             if 'recheck' in self.driver.page_source:
-                time.sleep(60)
+                self.driver.implicitly_wait(60)
             elif 'extension' in self.driver.page_source:
                 is_ready = True
                 break
@@ -66,24 +65,9 @@ class WebsiteHandler:
         self.driver.close()
 
 
-    def test(self):
-        # driver = webdriver.Chrome()
-        # driver.get("https://cadd.gs.washington.edu/score")
-        # assert 'CADD' in driver.title
-        # time.sleep(5)
-        # driver.quit()
-        self.setUp()
-        self.upload_CADD_input('/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_input.vcf')
-        self.check_CADD_upload_succeeded()
-        self.driver.get('https://cadd.gs.washington.edu/check_avail/GRCh37-v1.4_d69f42c4a0195bfe2dbad8e98836b67b.tsv.gz')
-        self.donwload_CADD_results('/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/test_results.tsv.gz')
-        self.close()
-
-cadd_inputfile = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_input.vcf'
-cadd_outfile = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/test_results.tsv.gz'
-wh = WebsiteHandler()
-# wh.test()
-wh.get_CADD_scores(cadd_inputfile, cadd_outfile)
-
+# cadd_inputfile = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_input.vcf'
+# cadd_outfile = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/test_results.tsv.gz'
+# wh = WebsiteHandler()
+# wh.get_CADD_scores(cadd_inputfile, cadd_outfile)
 
 # need to make a method to change a relative path to abs path
