@@ -3,11 +3,12 @@ from main import *
 from XMLHandler import *
 from Processor import * 
 
+
 processor = Processor()
 
-print('---------- read Gene File ----------')
-genes_file = './data/gene/HumanEnzWithEC.csv'
-genes_dict = readHumanGenesEC(genes_file)
+# print('---------- read Gene File ----------')
+# genes_file = './data/gene/HumanEnzWithEC.csv'
+# genes_dict = readHumanGenesEC(genes_file)
 
 # print('---------- VariationParser ----------')
 # clinvar_file = './data/clinvar/ClinVarVariationRelease_00-latest_weekly.xml'
@@ -36,7 +37,7 @@ genes_dict = readHumanGenesEC(genes_file)
 # print(f'NP numbers missing their seq {len(unfound_seq)}')
 
 # print('---------- write to CSV ----------')
-# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'sequence')
+# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window')
 # outfile_path = './data/VUS.tsv'
 # processor.write_to_tsv(vus_dict, header, outfile_path)
 
@@ -61,17 +62,28 @@ genes_dict = readHumanGenesEC(genes_file)
 
 # print('---------- add BLAST results to VUS_dict ----------')
 # vus_dict = processor.add_blast_results(vus_dict, blast_dict)
-# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
 # vus_blast_path = './data/VUS_with_blast.tsv'
 # processor.write_to_tsv(vus_dict, header, vus_blast_path)
 
-print('********** read TSV **********')
-tsv_path = './data/VUS_with_blast.tsv'
-vus_dict = processor.read_tsv_to_dict(tsv_path)
-print(f'The number of VUS: {len(vus_dict)}')
-print(vus_dict[0])
+# print('********** read TSV **********')
+# tsv_path = './data/VUS_with_blast.tsv'
+# vus_dict = processor.read_tsv_to_dict(tsv_path)
+# print(f'The number of VUS: {len(vus_dict)}')
+# print(vus_dict[0])
 
-print('---------- make_tsv_for_CADD ----------')
-caddfile_path = './data/CADD/vus_cadd.vcf'
-processor.make_tsv_for_CADD(vus_dict, caddfile_path)
-print('Done')
+# print('---------- make_tsv_for_CADD ----------')
+# caddfile_path = './data/CADD/vus_cadd.vcf'
+# processor.make_tsv_for_CADD(vus_dict, caddfile_path)
+# print('Done')
+
+# print('---------- read CADD results ----------')
+# cadd_results = './data/CADD/GRCh38-v1.4.tsv'
+# cadd_dict = processor.read_CADD_results(cadd_results)
+
+# print('---------- add CADD results ----------')
+# vus_dict, unfound_cadd_dict = processor.add_cadd_results(vus_dict, cadd_dict)
+# print('Unfound cadd: ', unfound_cadd_dict)
+# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+# vus_blast_cadd_path = './data/VUS_with_blast_cadd.tsv'
+# processor.write_to_tsv(vus_dict, header, vus_blast_cadd_path)

@@ -99,19 +99,19 @@ class Processor:
                 unfound_seq.add(np_num)
             if(vus_id==1):
                 print(mutation, ref, pos, np_num, seq)
-            vus_dict[vus_id]['sequence'] = seq_cropped
+            vus_dict[vus_id]['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
 
     
     # make FASTA format text file from dataframe for blast search
     def make_fasta_for_blast(self, vus_dict: dict, outfile_path: str):
-        # info_tup = ('NP_accession', 'gene_id', 'gene_name', 'sequence')
+        # info_tup = ('NP_accession', 'gene_id', 'gene_name', 'FASTA_window')
         with open(outfile_path, 'w') as f:
             for vus_id in range(0, len(vus_dict)):
                 np_acc = vus_dict[vus_id]['NP_accession']
                 gene_id = vus_dict[vus_id]['gene_id']
                 gene_name = vus_dict[vus_id]['gene_name']
-                seq = vus_dict[vus_id]['sequence']
+                seq = vus_dict[vus_id]['FASTA_window']
                 tup = (np_acc, gene_id, gene_name)
                 header = '>' + '\t'.join(tup) + '\n'
                 fasta = seq + '\n'
@@ -190,21 +190,60 @@ class Processor:
 
     
     def make_tsv_for_CADD(self, vus_dict, outfile_path):
-        header_info = ('Chrom', 'POS', 'ID', 'REF', 'ALT')
+        header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
         with open(outfile_path, 'w') as f:
             f.write(header + '\n')
             for vus_id in range(len(vus_dict)):
                 chrom = vus_dict[vus_id]['chr']
-                mutation = vus_dict[vus_id]['missense_variation']
-                ref = mutation[0]
-                alt = mutation[-1]
-                pos = mutation[1:-1]
+                pos = str(vus_dict[vus_id]['start'])
+                ref = vus_dict[vus_id]['referenceAllele']
+                alt = vus_dict[vus_id]['alternateAllele']
                 info_tup = (chrom, pos, str(vus_id), ref, alt)
                 info = '\t'.join(info_tup)
                 f.write(info + '\n')
-
     
+
+    def read_CADD_results(self, caddfile_path: str) -> dict:
+        cadd_dict = {}
+        with open(caddfile_path, 'r') as f:
+            for line in f:
+                if line.startswith('#'):
+                    continue
+                ls = line.split('\t')
+                chrom = ls[0].strip()
+                pos = ls[1].strip()
+                ref = ls[2].strip()
+                alt = ls[3].strip()
+                phred = ls[5].strip()
+                key = ref + pos + alt
+                if chrom not in cadd_dict.keys():
+                    cadd_dict[chrom] = {}
+                cadd_dict[chrom][key] = phred
+        length = 0
+        for chrom in cadd_dict.keys():
+            length += len(cadd_dict[chrom].keys())
+        print(f'Length of CADD dict: {length}')
+        return cadd_dict
+
+    def add_cadd_results(self, vus_dict: dict, cadd_dict: dict):
+        unfound_cadd = {}
+        for vus_id in vus_dict:
+            chrom = vus_dict[vus_id]['chr']
+            ref = vus_dict[vus_id]['referenceAllele']
+            pos = vus_dict[vus_id]['start']
+            alt = vus_dict[vus_id]['alternateAllele']
+            key = ref + pos + alt
+            try:
+                cadd_score = cadd_dict[chrom][key]
+            except:
+                c_acc = vus_dict[vus_id]['ClinVar_accession']
+                unfound_cadd[c_acc] = key
+                cadd_score = None
+            vus_dict[vus_id]['CADD_score'] = cadd_score
+        return vus_dict, unfound_cadd
+            
+
     # def write_to_csv(self, vus_dict: dict, header: tuple, outfile_path: str):
     #     with open(outfile_path, 'w') as f:
     #         f.write(','.join(header) + '\n')
