@@ -1,11 +1,14 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import urllib.request
 import datetime
 
 class WebsiteHandler:
 
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        self.driver = webdriver.Chrome(options = chrome_options)
     
     def get_CADD_scores(self, cadd_inputfile: str, cadd_outfile: str):
         self.setUp()
