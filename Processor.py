@@ -150,28 +150,25 @@ class Processor:
         return vus_dict
 
 
-    def make_tsv_for_vep(self, vus_dict, outfile_path):
+    def make_tsv_for_vep(self, vus_dict: dict, outfile_path: dict):
         with open(outfile_path, 'w') as f:
             for vus_id in range(0, len(vus_dict)):
-                info = (vus_dict[vus_id]['Chr'], vus_dict[vus_id]['start'], vus_dict[vus_id]['stop'], vus_dict[vus_id]['referenceAllele'], vus_dict[vus_id]['alternateAllele'])
+                info = (vus_dict[vus_id]['chr'], vus_dict[vus_id]['start'], vus_dict[vus_id]['stop'], vus_dict[vus_id]['referenceAllele'], vus_dict[vus_id]['alternateAllele'])
                 f.write('\t'.join(info) + '\n')
-        # df_sub = df[['Chr', 'start', 'stop', 'referenceAllele', 'alternateAllele']]
-        # df_sub.to_csv(output_path, sep='\t', index=False, header=False)
-        # return df_sub
     
 
-    def vep_locally(self, vep_input_path, outfile_path):
+    def vep_locally(self, vep_input_path: str, outfile_path: str):
         start = datetime.datetime.now()  # for counting time necessary to run vep
-        cmd1 = '../../ensembl-vep/'  # specify directory
+        cmd1 = '../ensembl-vep/'  # specify directory
         cmd2 = './vep' + ' '\
              + '-i ' + vep_input_path + ' '\
              + '-o ' + outfile_path + ' '\
              + '--cache ' + '--af_gnomad '\
-             + '--appris ' + '--canonical '\
-             + '--sift p ' + '--polyphen p '\
              + '--no_check_variants_order '\
              + '--flag_pick ' + '--tab '\
              + '--force_overwrite'
+            #  + '--appris ' + '--canonical '\
+            #  + '--sift p ' + '--polyphen p '\
         cmd = cmd1 + cmd2
         vep_cmd = os.system(cmd)
         end = datetime.datetime.now()
@@ -181,7 +178,7 @@ class Processor:
         print(f'Running Vep took {c[0]} minutes {c[1]} seconds')
 
     
-    def crop_vep_output(self, vep_file_path, outfile_path):
+    def crop_vep_output(self, vep_file_path: str, outfile_path: str):
         cmd = "cat " + vep_file_path + " | "\
             + "grep -v '##'" + " | "\
             + "sed 's/^#\(.*\)/\\1/'" +  " >| "\

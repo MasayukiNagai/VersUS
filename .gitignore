@@ -17,6 +17,7 @@ pdb_seqres.txt
 *.faa
 *.html
 *.pdf
+*.gz
 
 # blast files
 blast_db
