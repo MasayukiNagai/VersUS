@@ -105,9 +105,20 @@ web_handler = WebsiteHandler()
 # processor.make_tsv_for_vep(vus_dict, vep_input_path)
 # print('Done')
 
-print('---------- run vep ----------')
-vep_output_path = './data/vep/vep_vus_results.tsv'
-vep_input_path = './data/vep/vep_vus_input_short.tsv'
-processor.vep_locally(vep_input_path, vep_output_path)
+## print('---------- run vep ----------')
+## vep_output_path = './data/vep/vep_vus_results.tsv'
+## vep_input_path = './data/vep/vep_vus_input_short.tsv'
+## processor.vep_locally(vep_input_path, vep_output_path)
 
+# print('---------- make ordered_dict for VEP ----------')
+# vus_ordered_dict = processor.make_ordered_vus_dict_for_vep(vus_dict)
 
+# print('---------- make_tsv_ordered_for_VEP ----------')
+# vep_input_path = './data/vep/vep_vus_input_ordered.tsv'
+# processor.make_tsv_ordered_for_vep(vus_ordered_dict, vep_input_path)
+# print('Done')
+
+print('---------- read VEP output ----------')
+vep_output_path = './data/vep/vep_vus_output.txt'
+# vep_output_path = './data/vep/vep_vus_output_short.txt'
+vep_dict = processor.read_vep_output(vep_output_path)

@@ -7,8 +7,9 @@ class WebsiteHandler:
 
     def setUp(self):
         chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(options = chrome_options)
+        # chrome_options.add_argument("--headless")
+        # self.driver = webdriver.Chrome(options = chrome_options)
+        self.driver = webdriver.Chrome()
     
     def get_CADD_scores(self, cadd_inputfile: str, cadd_outfile: str):
         self.setUp()

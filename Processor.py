@@ -148,9 +148,51 @@ class Processor:
             vus_dict[common_id]['hit_from'] = blast_dict[common_id]['hit_from']
             vus_dict[common_id]['hit_to'] = blast_dict[common_id]['hit_to']
         return vus_dict
+        
+
+    def make_ordered_vus_dict_for_vep(self, vus_dict: dict):
+        ordered_dict = {}
+        ct_none = 0
+        print(f'Lenght of original_dict: {len(vus_dict)}')
+        for vus_id in vus_dict.keys():
+            chrom = vus_dict[vus_id]['chr']
+            start = int(vus_dict[vus_id]['start'])
+            stop = int(vus_dict[vus_id]['stop'])
+            ref = vus_dict[vus_id]['referenceAllele']
+            alt = vus_dict[vus_id]['alternateAllele']
+            if start == None or ref == None or alt == None:
+                ct_none += 1
+                continue
+            if chrom not in ordered_dict.keys():
+                ordered_dict[chrom] = {'pos': []}
+            if start not in ordered_dict[chrom].keys():
+                ordered_dict[chrom][start] = [{'ref': ref, 'alt': alt}]
+            else:
+                ordered_dict[chrom][start].append({'ref': ref, 'alt': alt})
+            if start != stop:
+                print(f'Start != Stop: {start}-{stop}')
+        ct = 0
+        for chrom in ordered_dict.keys():
+            for pos in ordered_dict[chrom].keys():
+                ct += len(ordered_dict[chrom][pos])
+        print(f'Length of ordered_dict: {ct}')
+        print(f'Number of vus with any info missing: {ct_none}')
+        return ordered_dict
+
+    
+    def make_tsv_ordered_for_vep(self, vus_ordered_dict:dict, outfile_path: str):
+        chrom_order = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X')
+        with open(outfile_path, 'w') as f:
+            for chrom in chrom_order:
+                if chrom not in vus_ordered_dict.keys():
+                    continue
+                for pos in sorted(vus_ordered_dict[chrom].keys()):
+                    for mut in vus_ordered_dict[chrom][pos]:
+                        info = (chrom, pos, pos, mut['ref'], mut['alt'])
+                        f.write('\t'.join(info) + '\n')    
 
 
-    def make_tsv_for_vep(self, vus_dict: dict, outfile_path: dict):
+    def make_tsv_for_vep(self, vus_dict: dict, outfile_path: str):
         with open(outfile_path, 'w') as f:
             for vus_id in range(0, len(vus_dict)):
                 info = (vus_dict[vus_id]['chr'], vus_dict[vus_id]['start'], vus_dict[vus_id]['stop'], vus_dict[vus_id]['referenceAllele'], vus_dict[vus_id]['alternateAllele'])
@@ -178,14 +220,49 @@ class Processor:
         print(f'Running Vep took {c[0]} minutes {c[1]} seconds')
 
     
-    def crop_vep_output(self, vep_file_path: str, outfile_path: str):
-        cmd = "cat " + vep_file_path + " | "\
-            + "grep -v '##'" + " | "\
-            + "sed 's/^#\(.*\)/\\1/'" +  " >| "\
-            + outfile_path
-        crop_cmd = os.system(cmd)
-        print(cmd + ' : ran with exit code %d' %crop_cmd)
+    # def crop_vep_output(self, vep_file_path: str, outfile_path: str):
+    #     cmd = "cat " + vep_file_path + " | "\
+    #         + "grep -v '##'" + " | "\
+    #         + "sed 's/^#\(.*\)/\\1/'" +  " >| "\
+    #         + outfile_path
+    #     crop_cmd = os.system(cmd)
+    #     print(cmd + ' : ran with exit code %d' %crop_cmd)
 
+
+    def read_vep_output(self, vepfile_path: str) -> dict:
+        vep_dict = {}
+        with open(vepfile_path, 'r') as f:
+            for line in f:
+                line = line.rstrip()
+                if line.startswith('##'):
+                    continue
+                elif line.startswith('#'):
+                    header = line.split('\t')
+                    location_i = header.index('Location')
+                    alt_i = header.index('Allele')
+                    pick_i = header.index('PICK')
+                    gnomadAF_i = header.index('gnomAD_AF')
+                    print(f'Header: {header}')
+                    continue
+                data = line.split('\t')
+                if len(header) != len(data):
+                    print('Error: length of the line is different from that of the header')
+                    continue
+                if data[pick_i] != '1':
+                    continue
+                chrom, pos = data[location_i].split(':')
+                alt = data[alt_i]
+                gnomadAF = data[gnomadAF_i]
+                if chrom not in vep_dict.keys():
+                    vep_dict[chrom] = {}
+                key = pos + '>' + alt
+                vep_dict[chrom][key] = gnomadAF
+        ct = 0
+        for chrom in vep_dict:
+            ct += len(vep_dict[chrom])
+        print(f'Number of items in the vep dict: {ct}')
+        return vep_dict
+                
     
     def make_tsv_for_CADD(self, vus_dict, outfile_path):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
