@@ -264,6 +264,22 @@ class Processor:
         return vep_dict
                 
     
+    def add_vep_output(self, vus_dict: dict, vep_dict: dict):
+        unfound_af = {}
+        for vus in vus_dict.values():
+            chrom = vus['chr']
+            key = str(vus['start']) + '>' + vus['alternateAllele']
+            try:
+                gnomAD_AF = vep_dict[chrom][key]
+            except:
+                gnomAD_AF = None
+                c_acc = vus['ClinVar_accession']
+                unfound_af[c_acc] = chrom + ':' + key
+            vus['gnomAD_AF'] = gnomAD_AF
+        print(f'Unfound gnomAD_AF: {unfound_af}')
+        return vus_dict
+        
+
     def make_tsv_for_CADD(self, vus_dict, outfile_path):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
@@ -301,6 +317,7 @@ class Processor:
         print(f'Length of CADD dict: {length}')
         return cadd_dict
 
+
     def add_cadd_results(self, vus_dict: dict, cadd_dict: dict):
         unfound_cadd = {}
         for vus_id in vus_dict:
@@ -316,7 +333,8 @@ class Processor:
                 unfound_cadd[c_acc] = key
                 cadd_score = None
             vus_dict[vus_id]['CADD_score'] = cadd_score
-        return vus_dict, unfound_cadd
+        print('Unfound cadd: ', unfound_cadd)
+        return vus_dict
             
 
     # def write_to_csv(self, vus_dict: dict, header: tuple, outfile_path: str):
