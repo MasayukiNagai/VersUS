@@ -5,6 +5,8 @@ from Bio import Entrez
 from Bio import SeqIO
 import datetime
 
+Entrez.email = "mnaffairs.intl@gmail.com"
+
 class Processor:
 
     # read csv file of gene names of human enzymes
@@ -81,12 +83,15 @@ class Processor:
             print('Error: crop_seq')
             return None
     
+    
     # add fasta sequence to vus dict
     # return vus dict and unfound_seq set
     def add_seq_to_dict(self, vus_dict: dict, seq_dict: dict, seq_range: int=12):
         unfound_seq = set()
         seq_list = []
         for vus_id in vus_dict.keys():
+            if vus_dict[vus_id].get('FASTA_window') != None:
+                continue
             mutation = vus_dict[vus_id]['missense_variation']
             ref = mutation[0]
             pos = int(mutation[1:-1])
@@ -96,10 +101,10 @@ class Processor:
                 # seq_cropped = ''
                 seq_cropped = self.crop_seq(seq, pos, ref, seq_range)
             except:
-                seq_cropped = ''
+                seq_cropped = None
                 unfound_seq.add(np_num)
-            if(vus_id==1):
-                print(mutation, ref, pos, np_num, seq)
+            # if(vus_id==1):
+            #     print(mutation, ref, pos, np_num, seq)
             vus_dict[vus_id]['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
 
@@ -113,6 +118,7 @@ class Processor:
                 gene_id = vus_dict[vus_id]['gene_id']
                 gene_name = vus_dict[vus_id]['gene_name']
                 seq = vus_dict[vus_id]['FASTA_window']
+                seq = seq if seq != None else ''
                 tup = (np_acc, gene_id, gene_name)
                 header = '>' + '\t'.join(tup) + '\n'
                 fasta = seq + '\n'
@@ -252,7 +258,10 @@ class Processor:
                     continue
                 chrom, pos = data[location_i].split(':')
                 alt = data[alt_i]
-                gnomadAF = data[gnomadAF_i]
+                try:
+                    gnomadAF = float(data[gnomadAF_i])
+                except:
+                    gnomadAF = None
                 if chrom not in vep_dict.keys():
                     vep_dict[chrom] = {}
                 key = pos + '>' + alt

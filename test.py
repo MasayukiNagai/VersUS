@@ -17,8 +17,8 @@ web_handler = WebsiteHandler()
 # # clinvar_file = './data/clinvar/clinvar_tail_5.xml'
 # vus_dict = readClinVarVariationsXML(clinvar_file, genes_dict)
 
-# print('---------- write to CSV ----------')
-# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'pos')
+# print('---------- write to TSV ----------')
+# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele')
 # outfile_path = './data/VUS.tsv'
 # processor.write_to_tsv(vus_dict, header, outfile_path)
 
@@ -36,9 +36,15 @@ web_handler = WebsiteHandler()
 # print('---------- add seq to vus_dict ----------')
 # seq_range = 12
 # vus_dict, unfound_seq = processor.add_seq_to_dict(vus_dict, seq_dict, seq_range)
-# print(f'NP numbers missing their seq {len(unfound_seq)}')
+# print(f'NP numbers missing their seq: {(unfound_seq)}')
 
-# print('---------- write to CSV ----------')
+# print('---------- get unfound sequences ----------')
+# unfound_fasta_dict = processor.get_seq(unfound_seq)
+# seq_dict.update(unfound_fasta_dict)
+# vus_dict, unfound_seq = processor.add_seq_to_dict(vus_dict, seq_dict)
+# print(f'NP numbers missing their seq: {(unfound_seq)}')
+
+# print('---------- write to TSV ----------')
 # header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window')
 # outfile_path = './data/VUS.tsv'
 # processor.write_to_tsv(vus_dict, header, outfile_path)
@@ -68,11 +74,11 @@ web_handler = WebsiteHandler()
 # vus_blast_path = './data/VUS_with_blast.tsv'
 # processor.write_to_tsv(vus_dict, header, vus_blast_path)
 
-# print('********** read TSV **********')
-# tsv_path = './data/VUS_with_blast.tsv'
-# vus_dict = processor.read_tsv_to_dict(tsv_path)
-# print(f'The number of VUS: {len(vus_dict)}')
-# print(vus_dict[0])
+print('********** read TSV **********')
+tsv_path = './data/VUS_with_blast.tsv'
+vus_dict = processor.read_tsv_to_dict(tsv_path)
+print(f'The number of VUS: {len(vus_dict)}')
+print(vus_dict[0])
 
 # print('---------- make_tsv_for_CADD ----------')
 # caddfile_path = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/vus_cadd.vcf'
@@ -83,15 +89,15 @@ web_handler = WebsiteHandler()
 # cadd_results = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/GRCh38-v1.4.tsv.gz'
 # web_handler.get_CADD_scores(caddfile_path, cadd_results)
 
-# print('---------- read CADD results ----------')
-# cadd_results = './data/CADD/GRCh38-v1.4.tsv.gz'
-# cadd_dict = processor.read_CADD_results(cadd_results)
+print('---------- read CADD results ----------')
+cadd_results = './data/CADD/GRCh38-v1.4.tsv.gz'
+cadd_dict = processor.read_CADD_results(cadd_results)
 
-# print('---------- add CADD results ----------')
-# vus_dict, unfound_cadd_dict = processor.add_cadd_results(vus_dict, cadd_dict)
-# header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
-# vus_blast_cadd_path = './data/VUS_with_blast_cadd.tsv'
-# processor.write_to_tsv(vus_dict, header, vus_blast_cadd_path)
+print('---------- add CADD results ----------')
+vus_dict = processor.add_cadd_results(vus_dict, cadd_dict)
+header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+vus_blast_cadd_path = './data/VUS_with_blast_cadd.tsv'
+processor.write_to_tsv(vus_dict, header, vus_blast_cadd_path)
 
 print('********** read TSV **********')
 tsv_path = './data/VUS_with_blast_cadd.tsv'
