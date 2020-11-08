@@ -2,7 +2,8 @@ import os
 import datetime
 
 class VEPHandler:
-    def __init__(self, vep_input, vep_output):
+    def __init__(self, vep_path, vep_input, vep_output):
+        self.vep_path = vep_path
         self.vep_input = vep_input
         self.vep_output = vep_output
         self.vep_dict = {}
@@ -59,7 +60,7 @@ class VEPHandler:
 
     def vep_locally(self):
         start = datetime.datetime.now()  # for counting time necessary to run vep
-        cmd1 = '../ensembl-vep/'  # specify directory
+        cmd1 = self.vep_path 
         cmd2 = './vep' + ' '\
              + '-i ' + self.vep_input + ' '\
              + '-o ' + self.vep_output + ' '\
@@ -69,7 +70,7 @@ class VEPHandler:
              + '--force_overwrite'
             #  + '--appris ' + '--canonical '\
             #  + '--sift p ' + '--polyphen p '\
-        cmd = cmd1 + cmd2
+        cmd = os.path.join(cmd1, cmd2)
         vep_cmd = os.system(cmd)
         end = datetime.datetime.now()
         time = end - start

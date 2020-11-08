@@ -4,7 +4,8 @@ from lxml import etree
 
 class BLASTHandler():
 
-    def __init__(self, blast_input, blast_output):
+    def __init__(self, blast_path, blast_input, blast_output):
+        self.blast_path = blast_path
         self.blast_input = blast_input
         self.blast_output = blast_output
         self.blast_dict = {}
@@ -29,14 +30,14 @@ class BLASTHandler():
 
     def blast_locally(self, evalue: float=10.0):
         start = datetime.datetime.now()
-        cmd1 = './ncbi/blast/bin/'  # be careful for this path
+        cmd1 = self.blast_path
         cmd2 = 'blastp' + ' ' \
                 + '-query ' + self.blast_input + ' '\
                 + '-db ' + cmd1 + 'pdbaa' + ' '\
                 + '-evalue ' + str(evalue) + ' '\
                 + '-outfmt ' + '5' + ' '\
                 + '-out ' + self.blast_output
-        cmd = cmd1 + cmd2
+        cmd = os.path.join(cmd1, cmd2)
         b_cmd = os.system(cmd)
         end = datetime.datetime.now()
         time = end - start
