@@ -1,6 +1,7 @@
 import os
 import datetime
 from lxml import etree
+from logging import getLogger
 
 class BLASTHandler():
 
@@ -9,6 +10,7 @@ class BLASTHandler():
         self.blast_input = blast_input
         self.blast_output = blast_output
         self.blast_dict = {}
+        self.logger = getLogger('versus_logger').getChild(__name__)
 
 
     # make FASTA format text file from dataframe for blast search
@@ -42,20 +44,8 @@ class BLASTHandler():
         end = datetime.datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
-        print(f'Running BLAST took {c[0]} minutes {c[1]} seconds')
-        print(cmd + ' : ran with exit code %d' %b_cmd)
-
-
-    def add_blast_results(self, vus_dict):
-        if vus_dict.keys() != self.blast_dict.keys():
-            print(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
-            return None
-        for common_id in range(0, len(vus_dict)):
-            vus_dict[common_id]['pdb_ID'] = self.blast_dict[common_id]['pdb_ID']
-            vus_dict[common_id]['BLAST_evalue'] = self.blast_dict[common_id]['BLAST_evalue']
-            vus_dict[common_id]['hit_from'] = self.blast_dict[common_id]['hit_from']
-            vus_dict[common_id]['hit_to'] = self.blast_dict[common_id]['hit_to']
-        return vus_dict
+        self.logger.info(f'Running BLAST took {c[0]} minutes {c[1]} seconds')
+        self.logger.info(cmd + ' : ran with exit code %d' %b_cmd)
 
 
     class BlastXMLHandler(object):
@@ -136,7 +126,7 @@ class BLASTHandler():
             return self.blast_results
 
 
-    def readBlastXML(self):
+    def readBlastXML(self) -> dict:
         print('Start parcing')
         start = datetime.datetime.now()
         parser = etree.XMLParser(target=BlastXMLHandler())
@@ -147,3 +137,22 @@ class BLASTHandler():
         print(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
         return blast_dict  
 
+
+    def add_blast_results(self, vus_dict) -> dict:
+        if vus_dict.keys() != self.blast_dict.keys():
+            print(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
+            return None
+        for common_id in range(0, len(vus_dict)):
+            vus_dict[common_id]['pdb_ID'] = self.blast_dict[common_id]['pdb_ID']
+            vus_dict[common_id]['BLAST_evalue'] = self.blast_dict[common_id]['BLAST_evalue']
+            vus_dict[common_id]['hit_from'] = self.blast_dict[common_id]['hit_from']
+            vus_dict[common_id]['hit_to'] = self.blast_dict[common_id]['hit_to']
+        return vus_dict
+
+
+    def run(self, vus_dict, evalue: float=10.0):
+        self.make_fasta_for_blast(vus_dict)
+        self.blast_locally(evalue)
+        blast_dict = self.readBlastXML()
+        vus_dict = self.add_blast_results(vus_dict)
+        return vus_dict

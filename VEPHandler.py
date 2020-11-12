@@ -139,4 +139,12 @@ class VEPHandler:
             vus['gnomAD_AF'] = gnomAD_AF
         print(f'Unfound gnomAD_AF: {unfound_af}')
         return vus_dict
-        
+
+    
+    def run(self, vus_dict):
+        vus_ordered_dict = self.make_ordered_vus_dict_for_vep(vus_dict)
+        self.make_tsv_ordered_for_vep(vus_ordered_dict)
+        self.vep_locally()
+        self.read_vep_output()
+        vus_dict = self.add_vep_output(vus_dict)
+        return vus_dict 

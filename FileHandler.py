@@ -1,20 +1,53 @@
 import os
 import sys
+import configparser
 
-def make_output_dir(outdir: str):
-    if not os.path.exists(outdir):
+def make_dir(dir_path: str):
+    if not os.path.exists(dir_path):
         try:
-            os.makedirs(outdir)
+            os.makedirs(dir_path)
         except OSError:
             sys.exit('Cannot make an output directory.')
     else:
         pass
 
 
-def checkfile(self, filepath):
+def checkpath(filepath):
     if not os.path.exists(filepath):
         errmsg = 'Error: Cannot find "{0}". Exiting.'.format(filepath)
         sys.exit(errmsg)
+
+
+def parse_config(conffile):
+    conf = configparser.ConfigParser()
+    conf.optionxform = str
+    conf.read(conffile, 'UTF-8')
+    general_dict = dict(conf.items('general'))
+    params_dict = dict(conf.items('parameters'))
+    return general_dict, params_dict
+
+
+def check_config_general(general_dict):
+    checkpath(general_dict['genes'])
+    checkpath(general_dict['proteomes'])
+    checkpath(general_dict['variations'])
+    blast = general_dict['blast']
+    if blast != 'None':
+        checkpath(blast)
+    vep = general_dict['vep']
+    if vep != 'None':
+        checkpath(vep)
+
+
+def check_config_params(params_dict):
+    try:
+        int(params_dict['fasta_window'])
+    except:
+        raise ValueError(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
+    try:
+        float(params_dict['evalue'])
+    except:
+        raise ValueError(f'evalue needs to be a float value: {params_dict.get("evalue")}')
 
 
 def write_to_tsv(vus_dict: dict, header: tuple, outfile_path: str):
@@ -27,17 +60,19 @@ def write_to_tsv(vus_dict: dict, header: tuple, outfile_path: str):
             f.write('\t'.join(info) + '\n')  
 
 
-def write_to_csv(self, vus_dict: dict, header: tuple, outfile_path: str):
+def write_to_csv(vus_dict: dict, header: tuple, outfile_path: str):
     with open(outfile_path, 'w') as f:
         f.write(','.join(header) + '\n')
         for vus_id in vus_dict:
             info = []
+            keys = vus_dict[vus_id].keys()
             for item in header:
-                info.append(str(vus_dict[vus_id][item]))
+                if item in keys:
+                    info.append(str(vus_dict[vus_id][item]))
             f.write(','.join(info) + '\n')
 
 
-def read_tsv_to_dict(self, tsv_path: str):
+def read_tsv_to_dict(tsv_path: str):
     vus_dict = {}
     with open(tsv_path, 'r') as f:
         header = f.readline().split('\t')
@@ -54,7 +89,7 @@ def read_tsv_to_dict(self, tsv_path: str):
     return vus_dict 
 
 
-def read_csv_to_dict(self, csv_path: str):
+def read_csv_to_dict(csv_path: str):
     vus_dict = {}
     with open(csv_path, 'r') as f:
         header = f.readline().split(',')

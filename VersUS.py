@@ -2,6 +2,7 @@ import os
 import logging
 import argparse
 from datetime import datetime
+from SeqHandler import *
 from ClinVarHandler import *
 from BLASTHandler import *
 from CADDHandler import *
@@ -35,7 +36,7 @@ class VersUS:
         # creates a file handler that logs messages above INFO level 
         sh = logging.StreamHandler()
         sh.setLevel(logging.INFO)
-        sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s : %(message)s', '%Y-%m-%d %H:%M:%S')
+        sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s : %(message)s', '%Y-%m-%d %H:%M:%S')
         sh.setFormatter(sh_formatter)
         # add the handlers to logger
         logger.addHandler(fh)
@@ -45,9 +46,64 @@ class VersUS:
 
     def run(self, config):
         self.logger.info('Start the process')
+        general_dict, params_dict = parse_config(config)
+
+        # check if config has valid items
+        check_config_general(general_dict)
+        check_config_params(params_dict)
+
+        genes = general_dict['genes']
+        proteomes = general_dict['proteomes']
+        clinvar_variations = general_dict['variations']
+        blast = os.path.abs(general_dict['blast']) if general_dict['blast'] != 'None' else None
+        vep = os.path.abs(general_dict['vep']) if general_dict['vep'] != 'None' else None
+        cadd = True if general_dict['cadd'] == 'True' else False
+
+        # create correpsonding directories
+        intermediates_dir = os.path.abspath(general_dict['intermediates'])
+        make_dir(intermediates_dir)
+        outdir = os.path.abspath(general_dict['outdir'])
+        make_dir(outdir)
+
+        seqHandler = SeqHandler(genes, proteomes)
+        genes_dict = seqHandler.readHumanGenesEC()
+
+        clinvarHandler = ClinVarHandler(clinvar_variations)
+        vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict)
+
+        fasta_window = int(params_dict['fasta_window'])
+        vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
+
+        if blast:
+            blast_input_path = os.path.join(intermediates_dir, 'blast_vus_input.fasta')
+            blast_output_path = os.path.join(intermediates_dir, 'blast_vus_results.xml')
+            blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
+            evalue = float(params_dict['evalue'])
+            vus_dict = blastHandler.run(vus_dict, evalue)
+        
+        if vep:
+            vep_input_path = os.path.join(intermediates_dir, 'vep_vus_input.tsv')
+            vep_output_path = os.path.join(intermediates_dir, 'vep_vus_results.tsv')
+            vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
+            vus_dict = vepHandler.run(vus_dict)
+        
+        if cadd:
+            cadd_input_file = os.path.join(intermediates_dir, 'cadd_vus_input.tsv')
+            cadd_output_file = os.path.join(intermediates_dir, 'cadd_vus_scores.tar.gz')
+            caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
+            vus_dict = caddHandler.run()
+
+        header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+        write_to_csv(vus_dict)
+
+        self.logger.info('Finish the process!')
 
 
     def main(self):
         args = self.argument_parser()
         config = args.config[0]
+
+        checkpath(config)
+
+        self.run(config)
         

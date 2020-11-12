@@ -19,14 +19,6 @@ class CADDHandler:
         # self.driver = webdriver.Chrome(options = chrome_options)
         self.driver = webdriver.Chrome()
 
-    
-    def get_CADD_scores(self):
-        self.setUp()
-        self.upload_CADD_input()
-        self.check_CADD_upload_succeeded()
-        self.donwload_CADD_results()
-        self.close()
-
 
     def upload_CADD_input(self):
         driver = self.driver
@@ -82,7 +74,15 @@ class CADDHandler:
     def close(self):
         self.driver.close()
 
+
+    def get_CADD_scores(self):
+        self.setUp()
+        self.upload_CADD_input()
+        self.check_CADD_upload_succeeded()
+        self.donwload_CADD_results()
+        self.close()
     
+
     def make_tsv_for_CADD(self, vus_dict):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
@@ -138,6 +138,14 @@ class CADDHandler:
         print('Unfound cadd: ', unfound_cadd)
         return vus_dict
 
+    
+    def run(self, vus_dict):
+        self.make_tsv_for_CADD(vus_dict)
+        self.get_CADD_scores()
+        self.read_CADD_results()
+        vus_dict = self.add_cadd_results(vus_dict)
+        return vus_dict
+        
 
 # cadd_input = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_input.vcf'
 # cadd_output = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_scores.tsv.gz'

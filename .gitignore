@@ -28,8 +28,11 @@ ncbi
 data
 configuration
 
-#ipynb
+# ipynb
 .ipynb_checkpoints
 
-#pycache
+# pycache
 __pycache__
+
+# log
+*.log

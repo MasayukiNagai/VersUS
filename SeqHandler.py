@@ -2,16 +2,18 @@ import os
 import csv
 from Bio import Entrez
 from Bio import SeqIO
+from logging import getLogger
 
 Entrez.email = "mnaffairs.intl@gmail.com"
 
 class SeqHandler:
 
-    def __init__(self, gene_file, seq_dir):
+    def __init__(self, gene_file, proteomes_dir):
         self.gene_file = gene_file
         self.genes_dict = {}
-        self.seq_dir = seq_dir
+        self.proteomes_dir = proteomes_dir
         self.seq_dict = {}
+        self.logger = getLogger('versus_logger').getChild(__name__)
 
     
     # read csv file of gene names of human enzymes
@@ -27,7 +29,7 @@ class SeqHandler:
                     dup.add(key)
                 else:
                     self.genes_dict[key] = row[1]
-        print(f'{len(dup)} genes are duplicated: ', dup)  # prints, if any, genes duplicated in the file
+        self.logger.info(f'{len(dup)} genes are duplicated: {dup}')
         return self.genes_dict
 
 
@@ -35,11 +37,11 @@ class SeqHandler:
     # returns dict{np_num: fasta sequence}
     def make_seq_dict(self):
         ct_np = 0
-        for root, d_names, file_names in os.walk(self.seq_dir):
+        for root, d_names, file_names in os.walk(self.proteomes_dir):
             for filename in file_names:
                 fname = os.path.join(root, filename)
                 with open(fname, 'r') as f:
-                    print(f'opened a fasta file: {fname}')
+                    self.logger.debug(f'opend a fasta file: {fname}')
                     np_num = ''
                     for line in f:
                         if '>' in line:
@@ -53,9 +55,9 @@ class SeqHandler:
                             if line[0] != '>':
                                 print(f'Not start with >: {line} in {fname}')
                         else:
-                            seq_dict[np_num] += line.strip()
-        print(f'The number of items in the seq dict: {len(self.seq_dict)}')
-        print(f'The number of np found in the files: {ct_np}')
+                            self.seq_dict[np_num] += line.strip()
+        self.logger.info(f'The number of sequences in the seq dict: {len(self.seq_dict)}')
+        # print(f'The number of np found in the files: {ct_np}')
         return self.seq_dict
 
 
@@ -82,7 +84,7 @@ class SeqHandler:
                 proteinSeq = seq[pos-1-seq_range:pos+seq_range]
             return proteinSeq
         else:
-            print('Error: crop_seq')
+            self.logger.warning('Failed to crop a sequence')
             return None
     
     
@@ -109,3 +111,13 @@ class SeqHandler:
             #     print(mutation, ref, pos, np_num, seq)
             vus_dict[vus_id]['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
+    
+    
+    def get_seq(self, vus_dict, window_size: int=12):
+        self.logger.info('Add sequences to vus_dict')
+        self.make_seq_dict()
+        vus_dict, unfonund_np_ls = self.add_seq_to_dict(vus_dict, window_size)
+        self.fetch_seq(unfonund_np_ls)
+        vus_dict, unfonund_np_ls = self.add_seq_to_dict(vus_dict, window_size)
+        self.logger.info('Finish adding sequences to vus_dict')
+        return vus_dict

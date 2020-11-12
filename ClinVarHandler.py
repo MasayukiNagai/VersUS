@@ -1,5 +1,6 @@
 from lxml import etree
 import datetime
+from logging import getLogger
 
 aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                    'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
@@ -8,8 +9,10 @@ aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
 
 class ClinVarHandler:
 
-    def __init__(self):
-        pass
+    def __init__(self, clinvar_variation):
+        self.clinvar_variation = clinvar_variation
+        self.logger = getLogger('versus_logger').getChild(__name__)
+    
 
     class VariationHandler(object):
         def __init__(self, gene_dict):
@@ -49,7 +52,6 @@ class ClinVarHandler:
             self.ct_uncertain_var = 0
             self.ct_conflicting_var = 0
             self.ct_not_provided_var = 0
-            print('debug: start parcing')
 
         def start(self, tag, attrs):
             self.tag_stack.append(tag)
@@ -190,14 +192,15 @@ class ClinVarHandler:
 
     # read xml file of variations from ClinVar
     # return dataframe and write to a csv file
-    def readClinVarVariationsXML(self, clivar_file, gene_dict):
+    def readClinVarVariationsXML(self, gene_dict):
+        self.logger.info('Start parcing ClinvarVariationsRelease')
         start = datetime.datetime.now()
         parser = etree.XMLParser(target=VariationHandler(gene_dict))
-        vus_dict = etree.parse(clivar_file, parser)
+        vus_dict = etree.parse(self.clinvar_variation, parser)
         end = datetime.datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
-        print(f'Running ClinVarXMLParser took {c[0]} minutes {c[1]} seconds')
+        self.logger.info(f'Running ClinVarXMLParser took {c[0]} minutes {c[1]} seconds')
         return vus_dict
 
 
@@ -252,7 +255,14 @@ class ClinVarHandler:
 
     # read xml file of variations from ClinVar
     # return dataframe and write to a csv file
-    def readClinVarVariationsXMLSpecific(self, input_path, accession):
-        print('Start parcing')
+    def readClinVarVariationsXMLSpecific(self, accession):
+        self.logger.info('Start parcing ClinVarVariations Relase (Specific)')
         parser = etree.XMLParser(target=VariationHandlerSpecific(accession))
-        etree.parse(input_path, parser)
+        etree.parse(self.clinvar_variation, parser)
+
+    
+    def run(self, genes_dict):
+        vus_dict = self.readClinVarVariationsXML(genes_dict)
+        self.logger.info('Finish processing the ClinVarVariationRelease')
+        return vus_dict
+        
