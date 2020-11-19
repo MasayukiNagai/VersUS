@@ -23,7 +23,8 @@ class VersUS:
         parser = argparse.ArgumentParser()
         parser.add_argument('--config', '-c', nargs=1, type=str, required=True,
                             help='Required; Specify a config file.')
-
+        args = parser.parse_args()
+        return args
 
     def setup_logger(self, name: str, logfile: str):
         logger = logging.getLogger(name)

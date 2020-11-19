@@ -1,5 +1,5 @@
 from lxml import etree
-import datetime
+from datetime import datetime
 from logging import getLogger
 
 aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
@@ -194,10 +194,10 @@ class ClinVarHandler:
     # return dataframe and write to a csv file
     def readClinVarVariationsXML(self, gene_dict):
         self.logger.info('Start parcing ClinvarVariationsRelease')
-        start = datetime.datetime.now()
+        start = datetime.now()
         parser = etree.XMLParser(target=VariationHandler(gene_dict))
         vus_dict = etree.parse(self.clinvar_variation, parser)
-        end = datetime.datetime.now()
+        end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running ClinVarXMLParser took {c[0]} minutes {c[1]} seconds')

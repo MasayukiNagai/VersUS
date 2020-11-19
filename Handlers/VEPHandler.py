@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 
 class VEPHandler:
     def __init__(self, vep_path, vep_input, vep_output):
@@ -59,7 +59,7 @@ class VEPHandler:
     
 
     def vep_locally(self):
-        start = datetime.datetime.now()  # for counting time necessary to run vep
+        start = datetime.now()  # for counting time necessary to run vep
         cmd1 = self.vep_path 
         cmd2 = './vep' + ' '\
              + '-i ' + self.vep_input + ' '\
@@ -72,7 +72,7 @@ class VEPHandler:
             #  + '--sift p ' + '--polyphen p '\
         cmd = os.path.join(cmd1, cmd2)
         vep_cmd = os.system(cmd)
-        end = datetime.datetime.now()
+        end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         print(cmd + ' : ran with exit code %d' %vep_cmd)
