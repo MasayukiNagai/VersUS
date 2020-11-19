@@ -9,6 +9,7 @@ from VersUS import *
 
 gene_file = './data/gene/HumanEnzWithEC.csv'
 seq_dir = './data/fasta_sequences'
+blast_path = './ncbi/blast/bin'
 blast_input = './data/blast/vus_blast.fasta'
 blast_output = './data/blast/blast_results.xml'
 cadd_input = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/vus_cadd.vcf'
@@ -16,7 +17,7 @@ cadd_output = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_scores.tar.
 vep_input = './data/vep/vep_vus_input.tsv'
 vep_output = './data/vep/vep_vus_results.tsv'
 
-seqHandler = SeqHandler(gene_file, seq_dir)
+# seqHandler = SeqHandler(gene_file, seq_dir)
 # clinvarHandler = ClinVarHandler()
 # blastHandler = BLASTHandler(blast_input, blast_output)
 # caddHandler = CADDHandler(cadd_input, cadd_output)
@@ -42,10 +43,10 @@ seqHandler = SeqHandler(gene_file, seq_dir)
 # print(f'The number of VUS: {len(vus_dict)}')
 # print(vus_dict[0])
 
-print('---------- make sequence dict ----------')
-seq_dir_path = './data/fasta_sequences'
-seq_dict = seqHandler.make_seq_dict()
-print(next(iter(seq_dict.keys())))
+# print('---------- make sequence dict ----------')
+# seq_dir_path = './data/fasta_sequences'
+# seq_dict = seqHandler.make_seq_dict()
+# print(next(iter(seq_dict.keys())))
 
 # print('---------- add seq to vus_dict ----------')
 # seq_range = 12
@@ -160,3 +161,9 @@ print(next(iter(seq_dict.keys())))
 # from test2 import log
 
 # log()
+
+# blast_input = './data/blast/vus_blast.fasta'
+# blast_output = './data/blast/blast_result_short.xml'
+# blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
+# blast_results = blastHandler.readBlastXML()
+# print(blast_results)

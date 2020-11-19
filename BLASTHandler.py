@@ -12,7 +12,6 @@ class BLASTHandler():
         self.blast_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
 
-
     # make FASTA format text file from dataframe for blast search
     def make_fasta_for_blast(self, vus_dict: dict):
         # info_tup = ('NP_accession', 'gene_id', 'gene_name', 'FASTA_window')
@@ -54,70 +53,77 @@ class BLASTHandler():
             self.blast_id = 0
             self.tag_stack = []
             self.info = ('pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
-            # self.dictlist = {'pdb_ID': [], 'BLAST_evalue': [], 'hit_from': [], 'hit_to': []}
-            # self.is_hit_id = False
-            # self.is_evalue = False
-            # self.is_hit_from = False
-            # self.is_hit_to = False
-            self.ct_hit = 0
+            self.pdb_id = ''
+            self.evalue = 0
+            self.hit_from = ''
+            self.hit_to = ''
+            self.has_got_best_pdb = False
+            self.hsp_num = 0
+            self.is_homo_sapiens = False
+            self.has_got_species = False
+            self.logger = getLogger('versus_logger').getChild(__name__)
 
         def start(self, tag, attrs):
             self.tag_stack.append(tag)
             if tag == 'Iteration':
                 self.blast_results[self.blast_id] = {}
-            elif tag == 'Hit':  # there are a few <Hsp> tags within a <Hit> tag
-                self.ct_hit += 1
-            # elif tag == 'Hit_id':
-            #     self.is_hit_id = True
-            # elif tag == 'Hsp_evalue':
-            #     self.is_evalue = True
-            # elif tag == 'Hsp_hit-from':
-            #     self.is_hit_from = True
-            # elif tag == 'Hsp_hit-to':
-            #     self.is_hit_to = True
                 
         def end(self, tag):
             self.tag_stack.pop()
-            if tag == 'Iteration':
-                # if self.ct_hit == 0:  # when there is no hit, add None to each list
-                #     self.blast_results[self.blast_id] = {}
-                #     self.blast_results[self.blast_id]['pdb_ID'] = None
-                #     self.blast_results[self.blast_id]['BLAST_evalue'] = None
-                #     self.blast_results[self.blast_id]['hit_from'] = None
-                #     self.blast_results[self.blast_id]['hit_to'] = None
+            if tag == 'Hit' and not self.has_got_best_pdb:
+                if (self.blast_results[self.blast_id].get('pdb_ID') == None) or \
+                   ((self.evalue == self.blast_results[self.blast_id]['BLAST_evalue']) and self.is_homo_sapiens):
+                    self.blast_results[self.blast_id]['pdb_ID'] = self.pdb_id
+                    self.blast_results[self.blast_id]['BLAST_evalue'] = self.evalue
+                    self.blast_results[self.blast_id]['hit_from'] = self.hit_from
+                    self.blast_results[self.blast_id]['hit_to'] = self.hit_to
+                    if self.is_homo_sapiens:
+                        self.has_got_best_pdb = True
+                elif self.evalue < self.blast_results[self.blast_id]['BLAST_evalue']:
+                    self.has_got_best_pdb = True
+                self.has_got_species = False
+                
+            elif tag == 'Iteration':
                 for k in self.info:
                     if self.blast_results[self.blast_id].get(k) == None:
                         self.blast_results[self.blast_id][k] = None
                 self.blast_id += 1
-                self.ct_hit = 0
+                self.has_got_best_pdb = False
+                self.hsp_num = 0
+                self.is_homo_sapiens = False
                 if self.blast_id % 10000 == 0:
                     print(f'counter: {self.blast_id}')
-            elif tag == 'Hsp':
-                self.ct_hit += 1
-            # elif tag == 'Hit_id':
-            #     self.is_hit_id = False
-            # elif tag == 'Hsp_evalue':
-            #     self.is_evalue = False
-            # elif tag == 'Hsp_hit-from':
-            #     self.is_hit_from = False
-            # elif tag == 'Hsp_hit-to':
-            #     self.is_hit_to = False
 
         def data(self, data):
-            if self.ct_hit == 1:
-                if 'Hit_id' in self.tag_stack:
+            if not self.has_got_best_pdb:
+                if 'Hit_id' == self.tag_stack[-1]:
                     try:
                         pdb = data.split('pdb|')[1]
                     except: 
-                        print(f'Cannot split {data} for pdb, id: {self.blast_id}')
+                        self.logger.warning(f'Cannot split {data} for pdb, id: {self.blast_id}')
                         pdb = data
-                    self.blast_results[self.blast_id]['pdb_ID'] = pdb
-                elif 'Hsp_evalue' in self.tag_stack:
-                    self.blast_results[self.blast_id]['BLAST_evalue'] = data
-                elif 'Hsp_hit-from' in self.tag_stack:
-                    self.blast_results[self.blast_id]['hit_from'] = data
-                elif 'Hsp_hit-to' in self.tag_stack:
-                    self.blast_results[self.blast_id]['hit_to'] = data
+                    self.pdb_id = pdb
+                elif 'Hit_def' == self.tag_stack[-1] and not self.has_got_species:
+                    try:
+                        species = data.split('[')[1].split(']')[0]
+                    except:
+                        self.logger.warning(f'Cannot identify species {data}')
+                        species = ''
+                    if species.lower() == 'homo sapiens':
+                        self.is_homo_sapiens = True
+                    else:
+                        self.is_homo_sapiens = False
+                    self.has_got_species = True
+                elif 'Hsp_num' == self.tag_stack[-1]:
+                    self.hsp_num = int(data)
+                elif self.hsp_num == 1:
+                    if 'Hsp_evalue' == self.tag_stack[-1]:
+                        self.evalue = float(data)
+                    elif 'Hsp_hit-from' == self.tag_stack[-1]:
+                        self.hit_from = data
+                    elif 'Hsp_hit-to' == self.tag_stack[-1]:
+                        self.hit_to = data
+                        
         
         def close(self):
             print('Completed parsing the blast_result xml')
@@ -129,7 +135,7 @@ class BLASTHandler():
     def readBlastXML(self) -> dict:
         print('Start parcing')
         start = datetime.datetime.now()
-        parser = etree.XMLParser(target=BlastXMLHandler())
+        parser = etree.XMLParser(target=self.BlastXMLHandler())
         blast_dict = etree.parse(self.blast_output, parser)
         end = datetime.datetime.now()
         time = end - start
