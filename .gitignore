@@ -30,6 +30,7 @@ configuration
 
 # ipynb
 .ipynb_checkpoints
+.ipynb
 
 # pycache
 __pycache__

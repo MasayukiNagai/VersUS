@@ -2,12 +2,12 @@ import os
 import logging
 import argparse
 from datetime import datetime
-from SeqHandler import *
-from ClinVarHandler import *
-from BLASTHandler import *
-from CADDHandler import *
-from VEPHandler import *
-from FileHandler import *
+from Handlers.SeqHandler import *
+from Handlers.ClinVarHandler import *
+from Handlers.BLASTHandler import *
+from Handlers.CADDHandler import *
+from Handlers.VEPHandler import *
+from Handlers.FileHandler import *
 
 
 class VersUS:

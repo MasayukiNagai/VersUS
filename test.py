@@ -1,10 +1,11 @@
 # test script
 import logging
-from SeqHandler import *
-from ClinVarHandler import *
-from BLASTHandler import *
-from CADDHandler import *
-from VEPHandler import *
+from Handlers.SeqHandler import *
+from Handlers.ClinVarHandler import *
+from Handlers.BLASTHandler import *
+from Handlers.CADDHandler import *
+from Handlers.VEPHandler import *
+from Handlers.FileHandler import *
 from VersUS import *
 
 gene_file = './data/gene/HumanEnzWithEC.csv'
