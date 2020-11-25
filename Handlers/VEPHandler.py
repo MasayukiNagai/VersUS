@@ -17,11 +17,15 @@ class VEPHandler:
         self.logger.debug(f'Lenght of original_dict: {len(vus_dict)}')
         for vus_id in vus_dict.keys():
             chrom = vus_dict[vus_id]['chr']
-            start = int(vus_dict[vus_id]['start'])
-            stop = int(vus_dict[vus_id]['stop'])
+            try:
+                start = int(vus_dict[vus_id]['start'])
+                stop = int(vus_dict[vus_id]['stop'])
+            except:
+                ct_none += 1
+                continue
             ref = vus_dict[vus_id]['referenceAllele']
             alt = vus_dict[vus_id]['alternateAllele']
-            if start == None or ref == None or alt == None:
+            if ref == None or alt == None:
                 ct_none += 1
                 continue
             if chrom not in ordered_dict.keys():
