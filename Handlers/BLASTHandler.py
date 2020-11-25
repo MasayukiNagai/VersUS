@@ -34,7 +34,7 @@ class BLASTHandler():
         cmd1 = self.blast_path
         cmd2 = 'blastp' + ' ' \
                 + '-query ' + self.blast_input + ' '\
-                + '-db ' + cmd1 + 'pdbaa' + ' '\
+                + '-db ' + cmd1 + '/pdbaa' + ' '\
                 + '-evalue ' + str(evalue) + ' '\
                 + '-outfmt ' + '5' + ' '\
                 + '-out ' + self.blast_output
