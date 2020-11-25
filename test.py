@@ -163,8 +163,8 @@ vep_output = './data/vep/vep_vus_results.tsv'
 
 # log()
 
-# blast_input = './data/blast/vus_blast.fasta'
-# blast_output = './data/blast/blast_result_short.xml'
-# blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
-# blast_results = blastHandler.readBlastXML()
-# print(blast_results)
+blast_input = './data/blast/vus_blast.fasta'
+blast_output = './data/blast/blast_result_short.xml'
+blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
+blast_results = blastHandler.readBlastXML()
+print(blast_results)

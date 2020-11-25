@@ -181,12 +181,12 @@ class ClinVarHandler:
                 self.interpretation = data  # needs to check this part 
 
         def close(self):
-            self.logger.info(f'Finish parsing ClinvarVariaiton\n  \
-                               Total Variations: {self.ct_var}\n \
-                               Uncertain Significance: {self.ct_uncertain_var}\n \
-                               Conflicting Report: {self.ct_conflicting_var}\n \
-                               Not Provided: {self.ct_not_provided_var}\n \
-                               Missense with specified type(s): {self.ct_missense_and_type_to_get}\n \
+            self.logger.info(f'Finish parsing ClinvarVariaiton\n\
+                               Total Variations: {self.ct_var}\n\
+                               Uncertain Significance: {self.ct_uncertain_var}\n\
+                               Conflicting Report: {self.ct_conflicting_var}\n\
+                               Not Provided: {self.ct_not_provided_var}\n\
+                               Missense with specified type(s): {self.ct_missense_and_type_to_get}\n\
                                VUS in the list: {len(self.vus_dict)}')
             # print(f"Total Variations: {self.ct_var}")
             # print(f"Uncertain Significance: {self.ct_uncertain_var}")

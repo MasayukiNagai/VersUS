@@ -62,6 +62,7 @@ class BLASTHandler():
             self.hsp_num = 0
             self.is_homo_sapiens = False
             self.has_got_species = False
+            self.unidentified_species = set()
             self.logger = getLogger('versus_logger').getChild(__name__)
 
         def start(self, tag, attrs):
@@ -108,7 +109,8 @@ class BLASTHandler():
                     try:
                         species = data.split('[')[1].split(']')[0]
                     except:
-                        self.logger.warning(f'Cannot identify species {data}')
+                        # self.logger.warning(f'Cannot identify species {data}')
+                        self.unidentified_species.add(data)
                         species = ''
                     if species.lower() == 'homo sapiens':
                         self.is_homo_sapiens = True
@@ -127,8 +129,9 @@ class BLASTHandler():
                         
         
         def close(self):
-            self.logger.info(f'Finish parsing the BLAST results\n \
-                               Number of sequences processed: {self.blast_id}\n \
+            self.logger.info(f'Could not identify species of the following: {self.unidentified_species}')
+            self.logger.info(f'Finish parsing the BLAST results\n\
+                               Number of sequences processed: {self.blast_id}\n\
                                Length of blast_dict: {len(self.blast_results)}')
             return self.blast_results
             
@@ -160,6 +163,6 @@ class BLASTHandler():
     def run(self, vus_dict, evalue: float=10.0):
         self.make_fasta_for_blast(vus_dict)
         self.blast_locally(evalue)
-        blast_dict = self.readBlastXML()
+        self.blast_dict = self.readBlastXML()
         vus_dict = self.add_blast_results(vus_dict)
         return vus_dict
