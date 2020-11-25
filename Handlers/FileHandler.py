@@ -56,6 +56,12 @@ def check_config_params(params_dict):
         # raise ValueError(f'evalue needs to be a float value: {params_dict.get("evalue")}')
 
 
+def format_header(vus_dict):
+    header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+    formatted_header = [item for item in header if item in vus_dict.keys()]
+    return tuple(formatted_header)
+
+
 def write_to_tsv(vus_dict: dict, header: tuple, outfile_path: str):
     with open(outfile_path, 'w') as f:
         f.write('\t'.join(header) + '\n')

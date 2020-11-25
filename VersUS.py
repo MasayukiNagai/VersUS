@@ -74,7 +74,7 @@ class VersUS:
         
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
-
+        
         if blast:
             blast_input_path = os.path.join(intermediates_dir, 'blast_vus_input.fasta')
             blast_output_path = os.path.join(intermediates_dir, 'blast_vus_results.xml')
@@ -94,8 +94,9 @@ class VersUS:
             caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
             vus_dict = caddHandler.run()
 
-        header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
-        write_to_csv(vus_dict)
+        header = format_header(vus_dict)
+        outpath = os.path.join(outdir, 'VesUS.csv')
+        write_to_csv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')
 

@@ -3,6 +3,8 @@ from selenium.webdriver.chrome.options import Options
 import urllib.request
 import gzip
 from datetime import datetime
+from logging import getLogger
+import sys
 
 class CADDHandler:
 
@@ -11,6 +13,8 @@ class CADDHandler:
         self.cadd_output = cadd_output
         self.cadd_dict = {}
         self.cadd_website_url = "https://cadd.gs.washington.edu/score"
+        self.failed_retrival = False
+        self.logger = getLogger('versus_logger').getChild(__name__)
 
 
     def setUp(self):
@@ -36,15 +40,23 @@ class CADDHandler:
     def check_CADD_upload_succeeded(self):
         if 'success' in self.driver.page_source:
             print('Successfully uploaded a file to CADD')
+            self.logger.info('Upload to CADD was successful')
+            return True
         elif 'fail' in self.driver.page_source:
-            raise NameError('Failed to upload a file to CADD')
+            self.logger.warning('Upload to CADD failed')
+            return False
         else:
-            raise NameError('Cannot tell if a file is successfully uploaded or not')
+            self.logger.warning('Cannot tell if upload is successful or not')
+            return False
 
 
     def donwload_CADD_results(self):
         url_link = self.check_CADD_output_ready()
-        urllib.request.urlretrieve(url_link, self.cadd_output)
+        if url_link:
+            urllib.request.urlretrieve(url_link, self.cadd_output)
+            return True
+        else:
+            return False
 
     
     def check_CADD_output_ready(self):
@@ -59,11 +71,13 @@ class CADDHandler:
                 is_ready = True
                 break
             else:
-                raise NameError('Cannot tell if a file is successfully uploaded or not')
+                self.logger.warning('Cannot tell if CADD results are ready or not. Exiting from CADD.')
+                return None
             lap = datetime.datetime.now()
             time_passed = lap - start
             if time_passed.total_seconds() > 2 * 60 * 60:
-                raise NameError('Two hours have passed without CADD scores retrieved. Kill the process.')
+                self.logger.warning('Two hours have passed without CADD scores retrieved. Exiting from CADD.')
+                return None 
         end = datetime.datetime.now()
         time_passed = end - start
         c = divmod(time_passed.days * 86400 + time_passed.seconds, 60)
@@ -78,8 +92,15 @@ class CADDHandler:
     def get_CADD_scores(self):
         self.setUp()
         self.upload_CADD_input()
-        self.check_CADD_upload_succeeded()
-        self.donwload_CADD_results()
+        is_upload_successful = self.check_CADD_upload_succeeded()
+        if not is_upload_successful:
+            self.close()
+            self.failed_retrival = True
+            return
+        is_download_successful = self.donwload_CADD_results()
+        if not is_download_successful:
+            self.failed_retrival = True
+            return
         self.close()
     
 
@@ -142,8 +163,9 @@ class CADDHandler:
     def run(self, vus_dict):
         self.make_tsv_for_CADD(vus_dict)
         self.get_CADD_scores()
-        self.read_CADD_results()
-        vus_dict = self.add_cadd_results(vus_dict)
+        if not self.failed_retrival:
+            self.read_CADD_results()
+            vus_dict = self.add_cadd_results(vus_dict)
         return vus_dict
         
 
