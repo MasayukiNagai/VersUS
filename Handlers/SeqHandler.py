@@ -40,22 +40,24 @@ class SeqHandler:
         for root, d_names, file_names in os.walk(self.proteomes_dir):
             for filename in file_names:
                 fname = os.path.join(root, filename)
-                with open(fname, 'r') as f:
-                    self.logger.debug(f'opend a fasta file: {fname}')
-                    np_num = ''
-                    for line in f:
-                        if '>' in line:
-                            ct_np += 1
-                            try:
-                                np_num = line.split()[0].split('>')[1]
-                                self.seq_dict[np_num] = ''
-                            except:
-                                print(f'Error: {line}')
-                                return
-                            if line[0] != '>':
-                                print(f'Not start with >: {line} in {fname}')
-                        else:
-                            self.seq_dict[np_num] += line.strip()
+                for record in SeqIO.parse(fname, 'fasta'):
+                    self.seq_dict[record.id] = str(record.seq)
+                # with open(fname, 'r') as f:
+                #     self.logger.debug(f'opend a fasta file: {fname}')
+                #     np_num = ''
+                #     for line in f:
+                #         if '>' in line:
+                #             ct_np += 1
+                #             try:
+                #                 np_num = line.split()[0].split('>')[1]
+                #                 self.seq_dict[np_num] = ''
+                #             except:
+                #                 print(f'Error: {line}')
+                #                 return
+                #             if line[0] != '>':
+                #                 print(f'Not start with >: {line} in {fname}')
+                #         else:
+                #             self.seq_dict[np_num] += line.strip()
         self.logger.info(f'The number of sequences in the seq dict: {len(self.seq_dict)}')
         # print(f'The number of np found in the files: {ct_np}')
         return self.seq_dict
@@ -67,8 +69,7 @@ class SeqHandler:
         for np_num in ls_np:
             handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
             seq_record = SeqIO.read(handle, 'fasta')
-            sequence = seq_record.seq
-            self.seq_dict[np_num] = sequence
+            self.seq_dict[np_num] = str(seq_record.seq)
         return self.seq_dict
 
 

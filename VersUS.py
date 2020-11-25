@@ -46,7 +46,7 @@ class VersUS:
 
 
     def run(self, config):
-        self.logger.info('Start the process')
+        self.logger.info('Start running the process')
         general_dict, params_dict = parse_config(config)
 
         # check if config has valid items
