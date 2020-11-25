@@ -42,12 +42,18 @@ def check_config_general(general_dict):
 def check_config_params(params_dict):
     try:
         int(params_dict['fasta_window'])
-    except:
-        raise ValueError(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
+    except Exception as e:
+        print(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
+        print(e)
+        sys.exit()
+        # raise ValueError(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
     try:
         float(params_dict['evalue'])
-    except:
-        raise ValueError(f'evalue needs to be a float value: {params_dict.get("evalue")}')
+    except Exception as e:
+        print(f'evalue needs to be a float value: {params_dict.get("evalue")}')
+        print(e)
+        sys.exit()
+        # raise ValueError(f'evalue needs to be a float value: {params_dict.get("evalue")}')
 
 
 def write_to_tsv(vus_dict: dict, header: tuple, outfile_path: str):
