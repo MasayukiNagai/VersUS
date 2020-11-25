@@ -29,7 +29,7 @@ class VEPHandler:
                 ct_none += 1
                 continue
             if chrom not in ordered_dict.keys():
-                ordered_dict[chrom] = {'pos': []}
+                ordered_dict[chrom] = {}
             if start not in ordered_dict[chrom].keys():
                 ordered_dict[chrom][start] = [{'ref': ref, 'alt': alt}]
             else:
@@ -54,7 +54,7 @@ class VEPHandler:
                 for pos in sorted(vus_ordered_dict[chrom].keys()):
                     for mut in vus_ordered_dict[chrom][pos]:
                         info = (chrom, pos, pos, mut['ref'], mut['alt'])
-                        f.write('\t'.join(info) + '\n')    
+                        f.write('\t'.join(info) + '\n')
 
 
     def make_tsv_for_vep(self, vus_dict: dict):
