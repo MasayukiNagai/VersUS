@@ -43,22 +43,6 @@ class SeqHandler:
                 fname = os.path.join(root, filename)
                 for record in SeqIO.parse(fname, 'fasta'):
                     self.seq_dict[record.id] = str(record.seq)
-                # with open(fname, 'r') as f:
-                #     self.logger.debug(f'opend a fasta file: {fname}')
-                #     np_num = ''
-                #     for line in f:
-                #         if '>' in line:
-                #             ct_np += 1
-                #             try:
-                #                 np_num = line.split()[0].split('>')[1]
-                #                 self.seq_dict[np_num] = ''
-                #             except:
-                #                 print(f'Error: {line}')
-                #                 return
-                #             if line[0] != '>':
-                #                 print(f'Not start with >: {line} in {fname}')
-                #         else:
-                #             self.seq_dict[np_num] += line.strip()
         self.logger.debug(f'Finish storing {len(self.seq_dict)} sequences')
         # print(f'The number of np found in the files: {ct_np}')
         return self.seq_dict

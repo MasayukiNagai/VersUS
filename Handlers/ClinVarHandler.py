@@ -41,11 +41,6 @@ class ClinVarHandler:
             self.is_conflicting = False
             self.is_not_provided = False
 
-            # self.in_GeneList_tag = False
-            # self.in_Interpretations_tag = False
-            # self.in_Interpretation_tag = False
-            # self.in_Description_tag = False
-            # self.in_Desc_Hist_tag = False
             self.tag_stack = []
             
             self.ct_var = 0
@@ -57,16 +52,13 @@ class ClinVarHandler:
         def start(self, tag, attrs):
             self.tag_stack.append(tag)
             if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
-                self.is_var_type_to_get = True  # don't forget to reset
+                self.is_var_type_to_get = True  
                 self.clinvar_acc = attrs.get('Accession')
             if self.is_var_type_to_get:
-                # if tag == 'GeneList':
-                #     self.in_GeneList_tag = True  # don't forget to reset
                 if tag == 'Gene' and self.is_first_gene_tag == True:
                     self.gene_symbol = attrs.get('Symbol')
                     self.gene_name = attrs.get('FullName')
-                    self.is_first_gene_tag = False   # don't forget to reset
-                # elif tag == 'SequenceLocation' and self.in_GeneList_tag == False:
+                    self.is_first_gene_tag = False  
                 elif tag == 'SequenceLocation' and 'GeneList' not in self.tag_stack:
                     if attrs.get('Assembly') == 'GRCh38':
                         self.chr = attrs.get('Chr')
@@ -79,20 +71,12 @@ class ClinVarHandler:
                     if (np_acc is not None) and np_acc.startswith('NP'):
                         self.np_acc = np_acc
                         self.change = attrs.get('change') 
-                        self.has_np_yet = True  # don't forget to reset
+                        self.has_np_yet = True  
                 elif tag == 'MolecularConsequence' and self.has_np_yet == True and self.has_mut_type_yet == False:
                     if (attrs.get('Type') is not None) and 'missense' in attrs.get('Type').lower():
                         self.is_missense = True
                         self.ct_missense_and_type_to_get += 1
-                    self.has_mut_type_yet = True  # don't forget to reset
-            # if tag == 'Interpretations':  # if we want to skip interpretation of variants we are not interested in, we can nest the following ifs in the above if
-            #     self.in_Interpretations_tag = True
-            # elif tag == 'Interpretation':
-            #     self.in_Interpretation_tag = True
-            # elif tag == 'Description':
-            #     self.in_Description_tag = True
-            # elif tag == 'DescriptionHistory':
-            #     self.in_Desc_Hist_tag = True
+                    self.has_mut_type_yet = True  
 
         def end(self, tag):
             self.tag_stack.pop()
@@ -165,16 +149,6 @@ class ClinVarHandler:
                 self.ct_var += 1
                 if self.ct_var % 10000 == 0:
                     print(f'counter: {self.ct_var}')
-            # elif tag == 'GeneList':
-            #     self.in_GeneList_tag = False
-            # elif tag == 'Interpretations':
-            #     self.in_Interpretations_tag = False
-            # elif tag == 'Interpretation':
-            #     self.in_Interpretation_tag = False
-            # elif tag == 'Description':
-            #     self.in_Description_tag = False
-            # elif tag == 'DescriptionHistory':
-            #     self.in_Desc_Hist_tag = False
         
         def data(self, data):
             if 'Interpretations' in self.tag_stack and 'Interpretation' in self.tag_stack and 'Description' in self.tag_stack and 'DescriptionHistory' not in self.tag_stack:
@@ -188,13 +162,6 @@ class ClinVarHandler:
                                Not Provided: {self.ct_not_provided_var}\n\
                                Missense with specified type(s): {self.ct_missense_and_type_to_get}\n\
                                VUS in the list: {len(self.vus_dict)}')
-            # print(f"Total Variations: {self.ct_var}")
-            # print(f"Uncertain Significance: {self.ct_uncertain_var}")
-            # print(f"Conflicting Report: {self.ct_conflicting_var}")
-            # print(f"Not Provided: {self.ct_not_provided_var}")
-            # print(f"Missense and Type to get: {self.ct_missense_and_type_to_get}")
-            # print(f"VUS in the list: {len(self.vus_dict)}")
-            # print('debug: the file is closed')
             return self.vus_dict
 
 
