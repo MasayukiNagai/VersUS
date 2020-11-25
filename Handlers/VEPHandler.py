@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from logging import getLogger
 
 class VEPHandler:
     def __init__(self, vep_path, vep_input, vep_output):
@@ -7,12 +8,13 @@ class VEPHandler:
         self.vep_input = vep_input
         self.vep_output = vep_output
         self.vep_dict = {}
+        self.logger = getLogger('versus_logger').getChild(__name__)
 
 
     def make_ordered_vus_dict_for_vep(self, vus_dict: dict):
         ordered_dict = {}
         ct_none = 0
-        print(f'Lenght of original_dict: {len(vus_dict)}')
+        self.logger.debug(f'Lenght of original_dict: {len(vus_dict)}')
         for vus_id in vus_dict.keys():
             chrom = vus_dict[vus_id]['chr']
             start = int(vus_dict[vus_id]['start'])
@@ -34,8 +36,8 @@ class VEPHandler:
         for chrom in ordered_dict.keys():
             for pos in ordered_dict[chrom].keys():
                 ct += len(ordered_dict[chrom][pos])
-        print(f'Length of ordered_dict: {ct}')
-        print(f'Number of vus with any info missing: {ct_none}')
+        self.logger.debug(f'Length of ordered_dict: {ct}')
+        self.logger.debug(f'Number of vus with any info missing: {ct_none}')
         return ordered_dict
 
     
@@ -59,6 +61,7 @@ class VEPHandler:
     
 
     def vep_locally(self):
+        self.logger.info('Start running VEP')
         start = datetime.now()  # for counting time necessary to run vep
         cmd1 = self.vep_path 
         cmd2 = './vep' + ' '\
@@ -75,8 +78,8 @@ class VEPHandler:
         end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
-        print(cmd + ' : ran with exit code %d' %vep_cmd)
-        print(f'Running Vep took {c[0]} minutes {c[1]} seconds')
+        self.logger.info(cmd + ' : ran with exit code %d' %vep_cmd)
+        self.logger.info(f'Running Vep took {c[0]} minutes {c[1]} seconds')
 
     
     # def crop_vep_output(self, vep_file_path: str, outfile_path: str):

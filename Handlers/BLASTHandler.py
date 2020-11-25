@@ -30,6 +30,7 @@ class BLASTHandler():
 
 
     def blast_locally(self, evalue: float=10.0):
+        self.logger.info('Start running BLAST')
         start = datetime.datetime.now()
         cmd1 = self.blast_path
         cmd2 = 'blastp' + ' ' \
@@ -126,27 +127,27 @@ class BLASTHandler():
                         
         
         def close(self):
-            print('Completed parsing the blast_result xml')
-            print(f'Total Count: {self.blast_id}')
-            print(f'Length of blast_dict: {len(self.blast_results)}')
+            self.logger.info(f'Finish parsing the BLAST results\n \
+                               Number of sequences processed: {self.blast_id}\n \
+                               Length of blast_dict: {len(self.blast_results)}')
             return self.blast_results
-
+            
 
     def readBlastXML(self) -> dict:
-        print('Start parcing')
+        self.logger.info('Start parcing BLAST results')
         start = datetime.datetime.now()
         parser = etree.XMLParser(target=self.BlastXMLHandler())
         blast_dict = etree.parse(self.blast_output, parser)
         end = datetime.datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
-        print(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
+        self.logger.info(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
         return blast_dict  
 
 
     def add_blast_results(self, vus_dict) -> dict:
         if vus_dict.keys() != self.blast_dict.keys():
-            print(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
+            self.logger.warning(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
             return None
         for common_id in range(0, len(vus_dict)):
             vus_dict[common_id]['pdb_ID'] = self.blast_dict[common_id]['pdb_ID']

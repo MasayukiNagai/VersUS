@@ -36,6 +36,7 @@ class SeqHandler:
     # makes dictionary of fasta sequences and np number 
     # returns dict{np_num: fasta sequence}
     def make_seq_dict(self):
+        self.logger.debug(f'Open sequence files')
         ct_np = 0
         for root, d_names, file_names in os.walk(self.proteomes_dir):
             for filename in file_names:
@@ -58,7 +59,7 @@ class SeqHandler:
                 #                 print(f'Not start with >: {line} in {fname}')
                 #         else:
                 #             self.seq_dict[np_num] += line.strip()
-        self.logger.info(f'The number of sequences in the seq dict: {len(self.seq_dict)}')
+        self.logger.debug(f'Finish storing {len(self.seq_dict)} sequences')
         # print(f'The number of np found in the files: {ct_np}')
         return self.seq_dict
 

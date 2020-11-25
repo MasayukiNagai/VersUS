@@ -36,7 +36,7 @@ class VersUS:
         fh.setFormatter(fh_formatter)
         # creates a file handler that logs messages above INFO level 
         sh = logging.StreamHandler()
-        sh.setLevel(logging.INFO)
+        sh.setLevel(logging.DEBUG)
         sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s : %(message)s', '%Y-%m-%d %H:%M:%S')
         sh.setFormatter(sh_formatter)
         # add the handlers to logger
@@ -71,7 +71,7 @@ class VersUS:
 
         clinvarHandler = ClinVarHandler(clinvar_variations)
         vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict)
-
+        
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
 

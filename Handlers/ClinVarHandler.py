@@ -16,6 +16,7 @@ class ClinVarHandler:
 
     class VariationHandler(object):
         def __init__(self, gene_dict):
+            self.logger = getLogger('versus_logger').getChild(__name__)
             self.vus_dict = {}
             self.gene_dict = gene_dict
             self.var_types_to_get = ('single nucleotide variant')
@@ -180,13 +181,20 @@ class ClinVarHandler:
                 self.interpretation = data  # needs to check this part 
 
         def close(self):
-            print(f"Total Variations: {self.ct_var}")
-            print(f"Uncertain Significance: {self.ct_uncertain_var}")
-            print(f"Conflicting Report: {self.ct_conflicting_var}")
-            print(f"Not Provided: {self.ct_not_provided_var}")
-            print(f"Missense and Type to get: {self.ct_missense_and_type_to_get}")
-            print(f"VUS in the list: {len(self.vus_dict)}")
-            print('debug: the file is closed')
+            self.logger.info(f'Finish parsing ClinvarVariaiton\n  \
+                               Total Variations: {self.ct_var}\n \
+                               Uncertain Significance: {self.ct_uncertain_var}\n \
+                               Conflicting Report: {self.ct_conflicting_var}\n \
+                               Not Provided: {self.ct_not_provided_var}\n \
+                               Missense with specified type(s): {self.ct_missense_and_type_to_get}\n \
+                               VUS in the list: {len(self.vus_dict)}')
+            # print(f"Total Variations: {self.ct_var}")
+            # print(f"Uncertain Significance: {self.ct_uncertain_var}")
+            # print(f"Conflicting Report: {self.ct_conflicting_var}")
+            # print(f"Not Provided: {self.ct_not_provided_var}")
+            # print(f"Missense and Type to get: {self.ct_missense_and_type_to_get}")
+            # print(f"VUS in the list: {len(self.vus_dict)}")
+            # print('debug: the file is closed')
             return self.vus_dict
 
 
