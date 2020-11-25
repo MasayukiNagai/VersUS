@@ -101,12 +101,18 @@ class VersUS:
 
 
     def main(self):
+        start = datetime.now()
         args = self.argument_parser()
         config = args.config[0]
 
         checkpath(config)
 
         self.run(config)
+
+        end = datetime.now()
+        time = end - start
+        c = divmod(time.days * 86400 + time.seconds, 60)
+        self.logger.info(f'Running VersUS took {c[0]} minutes {c[1]} seconds')
         
 if __name__ == '__main__':
     versus = VersUS()
