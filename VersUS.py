@@ -108,3 +108,6 @@ class VersUS:
 
         self.run(config)
         
+if __name__ == '__main__':
+    versus = VersUS()
+    versus.main()
