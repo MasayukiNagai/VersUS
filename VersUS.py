@@ -56,8 +56,8 @@ class VersUS:
         genes = general_dict['genes']
         proteomes = general_dict['proteomes']
         clinvar_variations = general_dict['variations']
-        blast = os.path.abs(general_dict['blast']) if general_dict['blast'] != 'None' else None
-        vep = os.path.abs(general_dict['vep']) if general_dict['vep'] != 'None' else None
+        blast = os.path.abspath(general_dict['blast']) if general_dict['blast'] != 'None' else None
+        vep = os.path.abspath(general_dict['vep']) if general_dict['vep'] != 'None' else None
         cadd = True if general_dict['cadd'] == 'True' else False
 
         # create correpsonding directories

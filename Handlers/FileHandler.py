@@ -43,7 +43,7 @@ def check_config_params(params_dict):
     try:
         int(params_dict['fasta_window'])
     except Exception as e:
-        print(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
+        print(f'fastaw_window needs to be an integer {params_dict.get("fasta_window")}')
         print(e)
         sys.exit()
         # raise ValueError(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
