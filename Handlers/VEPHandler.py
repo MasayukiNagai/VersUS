@@ -53,7 +53,7 @@ class VEPHandler:
                     continue
                 for pos in sorted(vus_ordered_dict[chrom].keys()):
                     for mut in vus_ordered_dict[chrom][pos]:
-                        info = (chrom, pos, pos, mut['ref'], mut['alt'])
+                        info = (chrom, str(pos), str(pos), mut['ref'], mut['alt'])
                         f.write('\t'.join(info) + '\n')
 
 
