@@ -136,8 +136,8 @@ class VEPHandler:
         unfound_af = {}
         for vus in vus_dict.values():
             chrom = vus['chr']
-            key = str(vus['start']) + '>' + vus['alternateAllele']
             try:
+                key = str(vus['start']) + '>' + vus['alternateAllele']
                 gnomAD_AF = self.vep_dict[chrom][key]
             except:
                 gnomAD_AF = None
