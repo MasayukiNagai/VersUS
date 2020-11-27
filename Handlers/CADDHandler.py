@@ -1,7 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import chromedriver_binary
-import urllib.request
+# import urllib.request
+import wget
 import gzip
 from datetime import datetime
 from logging import getLogger
@@ -53,7 +54,8 @@ class CADDHandler:
     def donwload_CADD_results(self):
         url_link = self.check_CADD_output_ready()
         if url_link:
-            urllib.request.urlretrieve(url_link, self.cadd_output)
+            # urllib.request.urlretrieve(url_link, self.cadd_output)
+            wget(url_link, self.cadd_output)
             return True
         else:
             return False
