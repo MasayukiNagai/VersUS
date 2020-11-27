@@ -114,8 +114,8 @@ class CADDHandler:
             for vus_id in range(len(vus_dict)):
                 chrom = vus_dict[vus_id]['chr']
                 pos = str(vus_dict[vus_id]['start'])
-                ref = vus_dict[vus_id]['referenceAllele']
-                alt = vus_dict[vus_id]['alternateAllele']
+                ref = vus_dict[vus_id]['referenceAllele'] if vus_dict[vus_id]['referenceAllele'] else ''
+                alt = vus_dict[vus_id]['alternateAllele'] if vus_dict[vus_id]['alternateAllele'] else ''
                 info_tup = (chrom, pos, str(vus_id), ref, alt)
                 info = '\t'.join(info_tup)
                 f.write(info + '\n')
