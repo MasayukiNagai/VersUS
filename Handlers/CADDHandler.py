@@ -55,7 +55,7 @@ class CADDHandler:
         url_link = self.check_CADD_output_ready()
         if url_link:
             # urllib.request.urlretrieve(url_link, self.cadd_output)
-            wget(url_link, self.cadd_output)
+            wget.download(url_link, self.cadd_output)
             return True
         else:
             return False
