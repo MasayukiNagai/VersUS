@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import chromedriver_binary
 import urllib.request
 import gzip
 from datetime import datetime
@@ -39,7 +40,6 @@ class CADDHandler:
 
     def check_CADD_upload_succeeded(self):
         if 'success' in self.driver.page_source:
-            print('Successfully uploaded a file to CADD')
             self.logger.info('Upload to CADD was successful')
             return True
         elif 'fail' in self.driver.page_source:
@@ -61,7 +61,7 @@ class CADDHandler:
     
     def check_CADD_output_ready(self):
         is_ready = False
-        start = datetime.datetime.now()
+        start = datetime.now()
         while(not is_ready):
             url_link = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
             self.driver.get(url_link)
@@ -73,15 +73,15 @@ class CADDHandler:
             else:
                 self.logger.warning('Cannot tell if CADD results are ready or not. Exiting from CADD.')
                 return None
-            lap = datetime.datetime.now()
+            lap = datetime.now()
             time_passed = lap - start
             if time_passed.total_seconds() > 2 * 60 * 60:
                 self.logger.warning('Two hours have passed without CADD scores retrieved. Exiting from CADD.')
                 return None 
-        end = datetime.datetime.now()
+        end = datetime.now()
         time_passed = end - start
         c = divmod(time_passed.days * 86400 + time_passed.seconds, 60)
-        print(f'Getting CADD output took {c[0]} minutes {c[1]} seconds')
+        self.logger.info(f'Getting CADD output took {c[0]} minutes {c[1]} seconds')
         return url_link
 
 
@@ -137,7 +137,7 @@ class CADDHandler:
         length = 0
         for chrom in self.cadd_dict.keys():
             length += len(self.cadd_dict[chrom].keys())
-        print(f'Length of CADD dict: {length}')
+        self.logger.debug(f'Length of CADD dict: {length}')
         return self.cadd_dict
 
 
@@ -156,7 +156,7 @@ class CADDHandler:
                 unfound_cadd[c_acc] = key
                 cadd_score = None
             vus_dict[vus_id]['CADD_score'] = cadd_score
-        print('Unfound cadd: ', unfound_cadd)
+        self.logger.debug('Unfound cadd: ', unfound_cadd)
         return vus_dict
 
     
@@ -167,11 +167,3 @@ class CADDHandler:
             self.read_CADD_results()
             vus_dict = self.add_cadd_results(vus_dict)
         return vus_dict
-        
-
-# cadd_input = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_input.vcf'
-# cadd_output = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_sample_scores.tsv.gz'
-# ch = CADDHandler(cadd_input, cadd_output)
-# ch.get_CADD_scores()
-
-# need to make a method to change a relative path to abs path
