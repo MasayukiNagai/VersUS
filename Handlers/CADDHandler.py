@@ -156,7 +156,7 @@ class CADDHandler:
                 unfound_cadd[c_acc] = key
                 cadd_score = None
             vus_dict[vus_id]['CADD_score'] = cadd_score
-        self.logger.debug('Unfound cadd: ', unfound_cadd)
+        self.logger.debug(f'Unfound cadd: {unfound_cadd}')
         return vus_dict
 
     
