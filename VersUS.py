@@ -92,7 +92,7 @@ class VersUS:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_vus_input.tsv')
             cadd_output_file = os.path.join(intermediates_dir, 'cadd_vus_scores.tar.gz')
             caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
-            vus_dict = caddHandler.run()
+            vus_dict = caddHandler.run(vus_dict)
 
         header = format_header(vus_dict)
         outpath = os.path.join(outdir, 'VesUS.csv')

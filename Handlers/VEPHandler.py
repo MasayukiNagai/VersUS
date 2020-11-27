@@ -107,11 +107,11 @@ class VEPHandler:
                     alt_i = header.index('Allele')
                     pick_i = header.index('PICK')
                     gnomadAF_i = header.index('gnomAD_AF')
-                    print(f'Header: {header}')
+                    self.logger.debug(f'VEP output header: {header}')
                     continue
                 data = line.split('\t')
                 if len(header) != len(data):
-                    print('Error: length of the line is different from that of the header')
+                    self.logger.warning('Error: length of the line is different from that of the header')
                     continue
                 if data[pick_i] != '1':
                     continue
@@ -128,7 +128,7 @@ class VEPHandler:
         ct = 0
         for chrom in self.vep_dict:
             ct += len(self.vep_dict[chrom])
-        print(f'Number of items in the vep dict: {ct}')
+        self.logger.debug(f'Number of items in the vep dict: {ct}')
         return self.vep_dict
                 
     
@@ -144,7 +144,7 @@ class VEPHandler:
                 c_acc = vus['ClinVar_accession']
                 unfound_af[c_acc] = chrom + ':' + key
             vus['gnomAD_AF'] = gnomAD_AF
-        print(f'Unfound gnomAD_AF: {unfound_af}')
+        self.logger.debug(f'Unfound gnomAD_AF: {unfound_af}')
         return vus_dict
 
     

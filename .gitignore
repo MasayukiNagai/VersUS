@@ -12,9 +12,11 @@ pdb_seqres.txt
 # sample file
 *.txt
 *.csv
+*.tsv
 *.xlsx
 *.xml
 *.faa
+*.fasta
 *.html
 *.pdf
 *.gz
@@ -26,6 +28,7 @@ pdb_seqres.txt
 # folders
 ncbi
 data
+intermediates
 configuration
 
 # ipynb
