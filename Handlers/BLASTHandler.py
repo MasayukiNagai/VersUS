@@ -94,7 +94,7 @@ class BLASTHandler():
                 self.hsp_num = 0
                 self.is_homo_sapiens = False
                 if self.blast_id % 10000 == 0:
-                    print(f'counter: {self.blast_id}')
+                    print(f'{self.blast_id} variations have been processed')
 
         def data(self, data):
             if not self.has_got_best_pdb:

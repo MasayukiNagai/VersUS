@@ -147,8 +147,8 @@ class ClinVarHandler:
                 self.is_conflicting = False
                 self.is_not_provided = False
                 self.ct_var += 1
-                if self.ct_var % 10000 == 0:
-                    print(f'counter: {self.ct_var}')
+                if self.ct_var % 100000 == 0:
+                    print(f'{self.ct_var} variations have been processed')
         
         def data(self, data):
             if 'Interpretations' in self.tag_stack and 'Interpretation' in self.tag_stack and 'Description' in self.tag_stack and 'DescriptionHistory' not in self.tag_stack:
