@@ -22,10 +22,10 @@ class CADDHandler:
 
 
     def setUp(self):
-        # chrome_options = Options()
-        # chrome_options.add_argument("--headless")
-        # self.driver = webdriver.Chrome(options = chrome_options)
-        self.driver = webdriver.Chrome()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        self.driver = webdriver.Chrome(options = chrome_options)
+        # self.driver = webdriver.Chrome()
 
 
     def upload_CADD_input(self):
