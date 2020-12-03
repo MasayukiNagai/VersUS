@@ -146,7 +146,7 @@ class CADDHandler:
 
 
     def add_cadd_results(self, vus_dict: dict):
-        unfound_cadd = {}
+        unfound_cadd = set()
         for vus_id in vus_dict:
             chrom = vus_dict[vus_id]['chr']
             ref = vus_dict[vus_id]['referenceAllele']
