@@ -152,12 +152,11 @@ class CADDHandler:
             ref = vus_dict[vus_id]['referenceAllele']
             pos = vus_dict[vus_id]['start']
             alt = vus_dict[vus_id]['alternateAllele']
-            key = ref + pos + alt
             try:
+                key = ref + pos + alt
                 cadd_score = self.cadd_dict[chrom][key]
             except:
-                c_acc = vus_dict[vus_id]['ClinVar_accession']
-                unfound_cadd[c_acc] = key
+                unfound_cadd.add(vus_dict[vus_id]['ClinVar_accession'])
                 cadd_score = None
             vus_dict[vus_id]['CADD_score'] = cadd_score
         self.logger.debug(f'Unfound cadd: {unfound_cadd}')
