@@ -4,9 +4,11 @@ import chromedriver_binary
 # import urllib.request
 import wget
 import gzip
+import sys
+import time
 from datetime import datetime
 from logging import getLogger
-import sys
+
 
 class CADDHandler:
 
@@ -20,10 +22,10 @@ class CADDHandler:
 
 
     def setUp(self):
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(options = chrome_options)
-        # self.driver = webdriver.Chrome()
+        # chrome_options = Options()
+        # chrome_options.add_argument("--headless")
+        # self.driver = webdriver.Chrome(options = chrome_options)
+        self.driver = webdriver.Chrome()
 
 
     def upload_CADD_input(self):
@@ -35,15 +37,15 @@ class CADDHandler:
         version = driver.find_element_by_xpath("//select[@name='version']/option[text()='GRCh38-v1.4']")
         version.click()
         submit = driver.find_element_by_xpath("//input[@type='submit']")
-        self.driver.implicitly_wait(5)
         submit.click()
 
 
     def check_CADD_upload_succeeded(self):
-        if 'success' in self.driver.page_source:
+        self.driver.implicitly_wait(10)
+        if 'success' in self.driver.page_source.lower():
             self.logger.info('Upload to CADD was successful')
             return True
-        elif 'fail' in self.driver.page_source:
+        elif 'fail' in self.driver.page_source.lower():
             self.logger.warning('Upload to CADD failed')
             return False
         else:
@@ -67,9 +69,9 @@ class CADDHandler:
         while(not is_ready):
             url_link = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
             self.driver.get(url_link)
-            if 'recheck' in self.driver.page_source:
-                self.driver.implicitly_wait(60)
-            elif 'extension' in self.driver.page_source:
+            if 'recheck' in self.driver.page_source.lower():
+                time.sleep(60)
+            elif 'extension' in self.driver.page_source.lower():
                 is_ready = True
                 break
             else:

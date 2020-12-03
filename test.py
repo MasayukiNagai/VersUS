@@ -1,4 +1,5 @@
 # test script
+import os
 import logging
 from Handlers.SeqHandler import *
 from Handlers.ClinVarHandler import *
@@ -163,8 +164,13 @@ vep_output = './data/vep/vep_vus_results.tsv'
 
 # log()
 
-blast_input = './data/blast/vus_blast.fasta'
-blast_output = './data/blast/blast_result_short.xml'
-blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
-blast_results = blastHandler.readBlastXML()
-print(blast_results)
+# blast_input = './data/blast/vus_blast.fasta'
+# blast_output = './data/blast/blast_result_short.xml'
+# blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
+# blast_results = blastHandler.readBlastXML()
+# print(blast_results)
+
+cadd_input = os.path.abspath('./data/CADD/CADD_sample_input.vcf')
+cadd_output = os.path.abspath('./data/CADD/CADD_sample_output.vcf')
+caddHandler = CADDHandler(cadd_input, cadd_output)
+caddHandler.get_CADD_scores()
