@@ -5,9 +5,10 @@ VersUS provides a list of promising leads in the area of rare disease research b
 
 ## Requirements
 
+**Python 3**
+
 ### Tools
 
-- Python 3
 - [BLAST+](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download) 
 - [Ensemble Variant Effect Predictor (VEP)](https://asia.ensembl.org/info/docs/tools/vep/index.html)
 
@@ -51,8 +52,6 @@ cadd=True
 outdir=./result
 # directory to store intermediate files
 intermediates=./intermediates
-
-verbose=True
 
 [parameters]
 fasta_window=12
