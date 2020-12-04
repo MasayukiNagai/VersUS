@@ -12,6 +12,7 @@ class BLASTHandler():
         self.blast_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
 
+
     # make FASTA format text file from dataframe for blast search
     def make_fasta_for_blast(self, vus_dict: dict):
         # info_tup = ('NP_accession', 'gene_id', 'gene_name', 'FASTA_window')
@@ -126,8 +127,7 @@ class BLASTHandler():
                         self.hit_from = data
                     elif 'Hsp_hit-to' == self.tag_stack[-1]:
                         self.hit_to = data
-                        
-        
+                           
         def close(self):
             self.logger.info(f'Could not identify species of the following: {self.unidentified_species}')
             self.logger.info(f'Finish parsing the BLAST results\n\
@@ -166,3 +166,4 @@ class BLASTHandler():
         self.blast_dict = self.readBlastXML()
         vus_dict = self.add_blast_results(vus_dict)
         return vus_dict
+        
