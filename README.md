@@ -23,7 +23,7 @@ VersUS provides a list of promising leads in the area of rare disease research b
 * **wget** (for retriving CADD scores)
 
 ## Usage
-```bash
+```shell
 $ python VersUS.py -c config.conf
 ```
 
@@ -66,6 +66,7 @@ evalue=10.0
 result
 ├── versus_logger.log
 └── VersUS.csv
+
 intermediates
 ├── blast_vus_input.fasta
 ├── blast_vus_results.xml
