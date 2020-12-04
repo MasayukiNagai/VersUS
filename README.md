@@ -15,8 +15,11 @@ VersUS provides a list of promising leads in the area of rare disease research b
 
 `pip install` the following
 
-* selenium
-* etc. 
+* **lxml**
+* **Bio**
+* **selenium** (for retriving CADD scores)
+* **chromedriver_binary** (for retriving CADD scores)
+* **wget** (for retriving CADD scores)
 
 ## Usage
 ```bash
