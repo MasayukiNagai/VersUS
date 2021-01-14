@@ -81,4 +81,4 @@ intermediates
 
 ## Acknowledgement
 
-This project has been done under the supervision of Professor. Daniel Gurnon and Professor. Chad Byers at DePauw University. 
+This project has been done under Professor. Daniel Gurnon and Professor. Chad Byers at DePauw University. 
