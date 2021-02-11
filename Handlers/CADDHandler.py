@@ -66,13 +66,12 @@ class CADDHandler:
     def check_CADD_output_ready(self):
         is_ready = False
         start = datetime.now()
-        while(not is_ready):
-            url_link = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
-            self.driver.get(url_link)
-            if 'recheck' in self.driver.page_source.lower():
+        while True:
+            new_url = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
+            if 'check_avail' in new_url:
                 time.sleep(60)
-            elif 'extension' in self.driver.page_source.lower():
-                is_ready = True
+                self.driver.get(url_refresh)
+            elif 'finished' in new_url:
                 break
             else:
                 self.logger.warning('Cannot tell if CADD results are ready or not. Exiting from CADD.')
@@ -81,7 +80,7 @@ class CADDHandler:
             time_passed = lap - start
             if time_passed.total_seconds() > 2 * 60 * 60:
                 self.logger.warning('Two hours have passed without CADD scores retrieved. Exiting from CADD.')
-                return None 
+                return None
         end = datetime.now()
         time_passed = end - start
         c = divmod(time_passed.days * 86400 + time_passed.seconds, 60)
