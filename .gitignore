@@ -14,12 +14,14 @@ pdb_seqres.txt
 *.csv
 *.tsv
 *.xlsx
+*.xsl
 *.xml
 *.faa
 *.fasta
 *.html
 *.pdf
 *.gz
+*.drawio
 
 # blast files
 blast_db
@@ -40,3 +42,5 @@ __pycache__
 
 # log
 *.log
+
+.python-version

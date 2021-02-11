@@ -26,6 +26,7 @@ class VersUS:
         args = parser.parse_args()
         return args
 
+
     def setup_logger(self, name: str, logfile: str):
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
@@ -114,6 +115,7 @@ class VersUS:
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running VersUS took {c[0]} minutes {c[1]} seconds')
+        
         
 if __name__ == '__main__':
     versus = VersUS()
