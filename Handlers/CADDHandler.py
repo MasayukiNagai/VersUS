@@ -85,7 +85,7 @@ class CADDHandler:
         time_passed = end - start
         c = divmod(time_passed.days * 86400 + time_passed.seconds, 60)
         self.logger.info(f'Getting CADD output took {c[0]} minutes {c[1]} seconds')
-        return url_link
+        return new_url
 
 
     def close(self):
