@@ -1,0 +1,23 @@
+<h1>Gene Table</h1>
+{% if gene_list %}
+    <table>
+        <tr>
+            <th>Gene ID</th>
+            <th>Gene Name (Short)</th>
+            <th>Gene Name (Full)</th>
+            <th>Chrom</th>
+            <th>EC Number</th>
+        </tr>
+        {% for gene in gene_list %}
+        <tr> 
+            <td>{{ gene.gene_id }}</td>
+            <td><a href="{%url 'myapp:gene_detail' gene.gene_id%}">{{ gene.gene_name_short }}</a></td>
+            <td>{{ gene.gene_name }}</td>
+            <td>{{ gene.chrom }}</td>
+            <td>{{ gene.ec_number }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No Gene data are available.</p>
+{% endif %}
