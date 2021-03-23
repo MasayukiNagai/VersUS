@@ -96,7 +96,7 @@ class VersUS:
             vus_dict = caddHandler.run(vus_dict)
 
         header = format_header(vus_dict)
-        outpath = os.path.join(outdir, 'VesUS.csv')
+        outpath = os.path.join(outdir, 'VersUS.csv')
         write_to_csv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')

@@ -70,7 +70,7 @@ class CADDHandler:
             new_url = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
             if 'check_avail' in new_url:
                 time.sleep(60)
-                self.driver.get(url_refresh)
+                self.driver.get(new_url)
             elif 'finished' in new_url:
                 break
             else:
