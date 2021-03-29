@@ -53,7 +53,8 @@ class ClinVarHandler:
             self.tag_stack.append(tag)
             if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
                 self.is_var_type_to_get = True  
-                self.clinvar_acc = attrs.get('Accession')
+                # self.clinvar_acc = attrs.get('Accession')
+                self.clinvar_acc = attrs.get('VariationID')
             if self.is_var_type_to_get:
                 if tag == 'Gene' and self.is_first_gene_tag == True:
                     self.gene_symbol = attrs.get('Symbol')
