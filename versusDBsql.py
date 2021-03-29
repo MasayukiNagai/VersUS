@@ -1,5 +1,12 @@
 import mysql.connector
 
+aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys', 
+                   'E': 'Glu', 'Q': 'Gln', 'G': 'Gly', 'H': 'His', 'I': 'Ile', 
+                   'L': 'Leu', 'K': 'Lys', 'M': 'Met', 'F': 'Phe', 'P': 'Pro', 
+                   'S': 'Ser', 'T': 'Thr', 'W': 'Trp', 'Y': 'Tyr', 'V': 'Val'}
+
+cinvar_link_variation = 'https://www.ncbi.nlm.nih.gov/clinvar/variation/'
+
 class DataBaseEditor:
     def __init__(self, user, passwd, dbname):
         self.host = 'localhost'
@@ -25,6 +32,7 @@ class DataBaseEditor:
     
     
     def close(self):
+        self.cur.close()
         self.cnx.close()
 
 
@@ -54,22 +62,12 @@ class DataBaseEditor:
         nn = 'NOT NULL'
         name_type_dict = {'mutation_id': 'SERIAL PRIMARY KEY',
                           'gene_id': 'INT ' + nn,
-                          'ref': 'CHAR(1) ' + nn,
-                          'alt': 'CHAR(1) ' + nn,
-                          'pos': 'INT ' + nn,
-                          'clinical_significance_id': 'INT ' + nn,
-                          'NP_accession': 'VARCHAR(255)',
-                          'Clinvar_accession': 'VARCHAR(255) ' + nn,
-                          'vcf_ref': 'CHAR(1) ' + nn,
-                          'vcf_alt': 'CHAR(1) ' + nn,
-                          'vcf_pos': 'INT ' + nn,
-                          'gnomAD_AF': 'FLOAT',
+                          'ref_pos_alt': 'VARCHAR(20)' + nn,
+                          'clinvar_link': 'VARCHAR(255)' + nn,
+                          'clinical_significance': 'VARCHAR(255)' + nn,
                           'CADD_score': 'FLOAT',
-                          'BLAST_evalue': 'FLOAT',
-                          'pdb_id': 'INT',
-                          'hit_from': 'INT',
-                          'hit_to': 'INT',
-                          'FASTA_window': 'VARCHAR(255)'}
+                          'gnomAD_AF': 'FLOAT',
+                          'pdb': 'VARCHAR(20)'}
         self.create_table(self.mutation_table, name_type_dict)
     
 
@@ -94,6 +92,7 @@ class DataBaseEditor:
         body2 = ', '.join(values_query_list) + ';'
         query = query1 + body1 + body2
         self.cur.execute(query)
+        self.cnx.commit()
         print(query)
     
 
@@ -106,14 +105,6 @@ class DataBaseEditor:
             return str(strings)
     
 
-    # def get_tuplist_for_vus(self, keytup, vus_dictlist):
-    #     tuplist = []
-    #     for vus_dict in vus_dictlist:
-    #         tup = tuple([vus_dict[key] for key in keytup])
-    #         tuplist.append(tup)
-    #     return tuplist
-
-
     def get_tuplist_for_gene(self, keytup, gene_dict):
         tuplist = []
         for gene_id in gene_dict.keys():
@@ -122,31 +113,70 @@ class DataBaseEditor:
         return tuplist
 
 
+    def get_tuplist_for_mut(self, keytup, mutation_dict):
+        tuplist = []
+        for gene_id in mutation_dict.keys():
+            for mutation in mutation_dict[gene_id]:
+                tup = tuple([self.str_editor(mutation[key]) for key in keytup])
+                tuplist.append(tup)
+        return tuplist
+
+
     def register_vus(self, vus_tsv):
         vus_dictlist = self.parse_vus_data(vus_tsv)
+        self.register_genes(vus_dictlist)
+        self.register_mutations(vus_dictlist)
 
 
-    # def register_mutations(self):
-    #     # Keys for items to be registered (excluded FASTA window)
-    #     keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
-    #     vus_values = self.get_tuplist_for_vus(keytup, vus_dictlist)
-    #     self.insert_items(self.mutation_table)
-
-    
     def register_genes(self, vus_dictlist):
         gene_dict = dict()
         for vus_dict in vus_dictlist:
             if vus_dict['gene_id'] not in gene_dict.keys():
-                gene_dict[vus_dict['gene_id']] = {}
-                gene_dict[vus_dict['gene_id']]['gene_name_short'] = vus_dict['gene_id']
-                gene_dict[vus_dict['gene_id']]['gene_name_full'] = vus_dict['gene_name']
-                gene_dict[vus_dict['gene_id']]['chrom'] = vus_dict['chr']
-                gene_dict[vus_dict['gene_id']]['EC_number'] = vus_dict['EC_number']
+                gene_dict[vus_dict['gene_id']] = {'gene_name_short': vus_dict['gene_id'],
+                                                  'gene_name_full': vus_dict['gene_name'],
+                                                  'chrom': vus_dict['chr'],
+                                                  'EC_number': vus_dict['EC_number']}
         keytup = ('gene_name_short', 'gene_name_full', 'chrom', 'EC_number')
         gene_values = self.get_tuplist_for_gene(keytup, gene_dict)
         self.insert_items(self.gene_table, keytup, gene_values)
-  
+
+
+    def register_mutations(self, vus_dictlist):
+        mutation_dict = dict()
+        for vus_dict in vus_dictlist:
+            if vus_dict['gene_id'] not in mutation_dict.keys():
+                mutation_dict[vus_dict['gene_id']] = []
+            mutation_dict[vus_dict['gene_id']].append(self.make_mut_dict(vus_dict))
+        keytup = ('gene_id', 'ref_pos_alt', 'clinvar_link', 'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb')
+        vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
+        self.insert_items(self.mutation_table, keytup, vus_values)
+
     
+    def make_mut_dict(self, vus_dict):
+        gene_id = self.get_gene_id(vus_dict['gene_id'])
+        ref_pos_alt = vus_dict['missense_variation']
+        # ref_pos_alt = aaMapOneToThree(vus_dict['ref']) + vus_dict['pos'] +  aaMapOneToThree(vus_dict['alt'])
+        clinvar_link = cinvar_link_variation + vus_dict['ClinVar_accession']
+        mut = {'gene_id': gene_id,
+               'ref_pos_alt': ref_pos_alt, 
+               'clinvar_link': clinvar_link,
+               'clinical_significance': vus_dict['clinical_significance'],
+               'CADD_score': vus_dict['CADD_score'],
+               'gnomAD_AF': vus_dict['gnomAD_AF'],
+               'pdb': vus_dict['pdb_ID']}
+        return mut
+
+
+    def get_gene_id(self, gene_name):
+        query = 'SELECT gene_id FROM ' + self.gene_table\
+               + ' WHERE gene_name_short = ' + self.str_editor(gene_name)
+        self.cur.execute(query)
+        gene_id_list = self.cur.fetchall()
+        assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table'
+        gene_id = gene_id_list[0][0]
+        return gene_id
+
+
     def parse_vus_data(self, vus_tsv):
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip()
@@ -172,9 +202,13 @@ def main():
     DBE = DataBaseEditor(user, password, dbname)
     DBE.prepare()
     DBE.create_gene_table()
+    DBE.create_mutation_table()
     path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
-    vus_dictlist = DBE.parse_vus_data(path)
+    DBE.register_vus(path)
+    # vus_dictlist = DBE.parse_vus_data(path)
     # DBE.register_genes(vus_dictlist)
+    # gene_name = 'POLG'
+    # DBE.get_gene_id(gene_name)
     DBE.close()
 
 
