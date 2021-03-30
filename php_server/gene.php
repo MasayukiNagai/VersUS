@@ -6,7 +6,7 @@
   <select id="search_by" name="search_by">
     <option value="gene_name_short">Gene ID</option>
     <option value="uniprot_id">Uniprot ID</option>
-    <option value="keywords">Keywords</option>
+    <option value="keywords">Keyword</option>
   </select>
   <input type="text" id="keyword" name="keyword">
   <input type="submit" name="submit" value="Search">
@@ -18,7 +18,14 @@ if(!isset($_POST['submit'])){
     require "config.php";
     require "common.php";
     $connection = new PDO($dsn, $username, $password, $options);
-    $sql = "SELECT * FROM Gene LIMIT 50";
+    $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+                   COUNT(m.mutation_id) AS num_vus, 
+                   MAX(m.CADD_score) AS max_cadd, 
+                   g.EC_number
+            FROM Gene as g
+            LEFT JOIN Mutation AS m USING(gene_id)
+            GROUP BY g.gene_id
+            LIMIT 50";
     $statement = $connection->prepare($sql);
     $statement->execute();
     $result = $statement->fetchAll();
@@ -35,16 +42,43 @@ else{
     $keyword = $_POST['keyword'];
     if ($search_by == 'gene_name_short'){
       // search by Gene ID
-      $sql = "SELECT * FROM Gene WHERE $search_by = :keyword LIMIT 50";
+      // $sql = "SELECT * FROM Gene WHERE $search_by = :keyword LIMIT 50";
+      $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+                     COUNT(m.mutation_id) AS num_vus, 
+                     MAX(m.CADD_score) AS max_cadd, 
+                     g.EC_number
+              FROM Gene as g
+              LEFT JOIN Mutation AS m USING(gene_id)
+              GROUP BY g.gene_id
+              HAVING g.gene_name_short = :keyword
+              LIMIT 50";
     }
     elseif($search_by == 'uniprot_id'){
       // search by Uniprot ID
-      $sql = "SELECT * FROM Gene WHERE $search_by = :keyword LIMIT 50";
+      $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+                     COUNT(m.mutation_id) AS num_vus, 
+                     MAX(m.CADD_score) AS max_cadd, 
+                     g.EC_number
+              FROM Gene as g
+              LEFT JOIN Mutation AS m USING(gene_id)
+              GROUP BY g.gene_id
+              HAVING g.uniprot_id = :keyword 
+              LIMIT 50";
     }
     else{ // search by keywords
-      $sql = "SELECT * FROM Gene WHERE (gene_name_short LIKE :keyword
-                                         OR gene_name_full LIKE :keyword)
-                                        LIMIT 50";
+      $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+                     COUNT(m.mutation_id) AS num_vus, 
+                     MAX(m.CADD_score) AS max_cadd, 
+                     g.EC_number
+              FROM Gene as g
+              LEFT JOIN Mutation AS m USING(gene_id)
+              GROUP BY g.gene_id
+              HAVING (gene_name_short LIKE :keyword
+                   OR gene_name_full LIKE :keyword)
+              LIMIT 50";
+      // $sql = "SELECT * FROM Gene WHERE (gene_name_short LIKE :keyword
+      //                                    OR gene_name_full LIKE :keyword)
+      //                                   LIMIT 50";
       $keyword = "%$keyword%";
     }
     $statement = $connection->prepare($sql);
@@ -65,20 +99,22 @@ if ($result && $statement->rowCount() > 0) { ?>
     <table>
       <thead>
 <tr>
-  <th>#</th>
+  <!-- <th>#</th> -->
   <th>Gene ID</th>
   <th>Enzyme Name</th>
-  <th>Chromosome</th>
-  <th>EC Number</th>
+  <th># missense VUS</th>
+  <th>Highest CADD score</th>
+  <th>EC #</th>
 </tr>
       </thead>
       <tbody>
   <?php foreach ($result as $row) { ?>
       <tr>
-<td><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_id"]); ?></a></td>
-<td><?php echo escape($row["gene_name_short"]); ?></td>
+      <!-- <?php print_r(array_keys($row))?> -->
+<td><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_name_short"]); ?></a></td>
 <td><?php echo escape($row["gene_name_full"]); ?></td>
-<td><?php echo escape($row["chrom"]); ?></td>
+<td><?php echo escape($row["num_vus"]); ?></td>
+<td><?php echo escape($row["max_cadd"]); ?></td>
 <td><?php echo escape($row["EC_number"]); ?></td>
       </tr>
     <?php } ?>

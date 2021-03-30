@@ -166,6 +166,14 @@ class DataBaseEditor:
                'pdb': vus_dict['pdb_ID']}
         return mut
 
+    
+    def join_gene_mut_tables(self):
+        query = 'SELECT g.gene_name_short, g.gene_name_full, COUNT(m.mutation_id), max(m.CADD_score), g.EC_number'\
+               f'FROM {self.gene_table} AS g'\
+               f'LEFT JOIN {self.mutation_table} AS m USING(gene_id)'\
+                'GROUP BY g.gene_id'\
+        
+
 
     def get_gene_id(self, gene_name):
         query = 'SELECT gene_id FROM ' + self.gene_table\
