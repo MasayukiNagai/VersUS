@@ -13,7 +13,7 @@ class DataBaseEditor:
         self.user = user
         self.passwd = passwd
         self.dbname = dbname
-        self.gene_table = 'Gene2'
+        self.gene_table = 'Gene'
         self.mutation_table = 'Mutation'
         # self.clinical_significance = 'Clinical_Significane'
         # self.pdb = 'PDB'
