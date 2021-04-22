@@ -158,7 +158,7 @@ class CADDHandler:
                 unfound_cadd.add(vus_dict[vus_id]['ClinVar_accession'])
                 cadd_score = None
             vus_dict[vus_id]['CADD_score'] = cadd_score
-        self.logger.debug(f'Unfound cadd: {unfound_cadd}')
+        self.logger.debug(f'CADD Scores were not found for {len(unfound_cadd)}/{len(vus_dict)} mutations')
         return vus_dict
 
     
