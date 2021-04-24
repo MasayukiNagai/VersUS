@@ -82,12 +82,20 @@ class VersUS:
             blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
             evalue = float(params_dict['evalue'])
             vus_dict = blastHandler.run(vus_dict, evalue)
+            
+            header = format_header(vus_dict)
+            outpath = os.path.join(intermediates_dir, 'vus_blast.tsv')
+            write_to_tsv(vus_dict, header, outpath)
         
         if vep:
             vep_input_path = os.path.join(intermediates_dir, 'vep_vus_input.tsv')
             vep_output_path = os.path.join(intermediates_dir, 'vep_vus_results.tsv')
             vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
             vus_dict = vepHandler.run(vus_dict)
+
+            header = format_header(vus_dict)
+            outpath = os.path.join(intermediates_dir, 'vus_vep.tsv')
+            write_to_tsv(vus_dict, header, outpath)
         
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_vus_input.tsv')

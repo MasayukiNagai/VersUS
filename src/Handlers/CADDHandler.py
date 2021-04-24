@@ -122,6 +122,37 @@ class CADDHandler:
                 f.write(info + '\n')
     
 
+    def make_tsv_for_CADD2(self, vus_dict):
+        cadd_dict = {}
+        for vus_id in vus_dict.keys():
+            chrom = vus_dict[vus_id]['chr']
+            ref = vus_dict[vus_id]['referenceAllele']
+            pos = int(vus_dict[vus_id]['start'])
+            alt = vus_dict[vus_id]['alternateAllele']
+            if chrom not in cadd_dict.keys():
+                cadd_dict[chrom] =  {}
+            if pos not in cadd_dict[chrom].keys():
+                cadd_dict[chrom][pos] = {'ref': ref, 'alt': []}
+            cadd_dict[chrom][pos]['alt'].append(alt)
+        header_info = ('CHROM', 'POS', 'REF', 'ALT')
+        header = '#' + '\t'.join(header_info)
+        chroms = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                  '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'.
+                  '21', '22', 'X')
+        with open(self.cadd_input, 'w') as f:
+            f.write(header + '\n')
+            for chrom in chroms:
+                if chrom not in cadd_dict.keys():
+                    continue
+                positions = cadd_dict[chrom].keys()
+                for pos in sorted(positions):
+                    ref = cadd_dict[chrom][pos]['ref']
+                    for alt in cadd_dict[chrom][pos]['alt']:
+                        info_tup = (chrom, pos, ref, alt)
+                        info = '\t'.join(info_tup)
+                        f.write(infor + '\n')
+
+
     def read_CADD_results(self):
         with gzip.open(self.cadd_output, 'rt') as f:
             for line in f:
