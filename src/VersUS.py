@@ -76,6 +76,10 @@ class VersUS:
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
         
+        header = format_header(vus_dict)
+        outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
+        write_to_tsv(vus_dict, header, outpath)
+        
         if blast:
             blast_input_path = os.path.join(intermediates_dir, 'blast_vus_input.fasta')
             blast_output_path = os.path.join(intermediates_dir, 'blast_vus_results.xml')
@@ -84,7 +88,7 @@ class VersUS:
             vus_dict = blastHandler.run(vus_dict, evalue)
             
             header = format_header(vus_dict)
-            outpath = os.path.join(intermediates_dir, 'vus_blast.tsv')
+            outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
             write_to_tsv(vus_dict, header, outpath)
         
         if vep:
@@ -94,7 +98,7 @@ class VersUS:
             vus_dict = vepHandler.run(vus_dict)
 
             header = format_header(vus_dict)
-            outpath = os.path.join(intermediates_dir, 'vus_vep.tsv')
+            outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
             write_to_tsv(vus_dict, header, outpath)
         
         if cadd:

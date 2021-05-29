@@ -54,8 +54,12 @@ class DataBaseEditor:
                           'gene_name_short': 'VARCHAR(10) ' + nn,
                           'gene_name_full': 'VARCHAR(255) ' + nn,
                           'chrom': 'VARCHAR(20) ' + nn,
-                          'EC_number': 'VARCHAR(20) ' + nn}
-                        #   'EC_id': 'VARCHAR(20) ' + nn
+                          'EC_number': 'VARCHAR(100) ' + nn,
+                          'ec_1': 'INT ' + nn, 
+                          'ec_2': 'INT', 'ec_3': 'INT', 'ec_4': 'INT',
+                          'EC_number2': 'VARCHAR(100)',
+                          'ec2_1': 'INT', 
+                          'ec2_2': 'INT', 'ec2_3': 'INT', 'ec2_4': 'INT'}
         self.create_table(self.gene_table, name_type_dict)
     
 
@@ -77,7 +81,9 @@ class DataBaseEditor:
         name_type_dict = {'ec_id': 'SERIAL PRIMARY KEY',
                           'ec_number': 'VARCHAR(20)' + nn,
                           'description': 'VARCHAR(500)' + nn,
-                          'class': 'INT' + nn}
+                          'class': 'INT ' + nn,
+                          'ec_1': 'INT ' + nn,
+                          'ec_2': 'INT', 'ec_3': 'INT', 'ec_4': 'INT'}
         self.create_table(self.ec_table, name_type_dict)
 
 
@@ -87,12 +93,17 @@ class DataBaseEditor:
         # create tables
         self.create_gene_table()
         self.create_mutation_table()
-        self.ec_table()
+        self.create_ec_table()
+        self.create_ec_table()
         self.close()
         # close connection
         self.close()
 
     
+    def drop_all_tables(self):
+        pass
+    
+
     # def insert_items(self, table, keytup, values_tuplist):
     #     query1 = 'INSERT INTO ' + table + ' '
     #     body1 = '(' + ', '.join(keytup) + ') VALUES '
@@ -110,14 +121,15 @@ class DataBaseEditor:
     def insert_items(self, table, keytup, values_tuplist):
         query1 = 'INSERT INTO ' + table + ' '
         body1 = '(' + ', '.join(keytup) + ') VALUES '
-        values_query_list = []
-        for values in values_tuplist:
-            val_q = '(' + ', '.join(values) + ')'
-            values_query_list.append(val_q)
+        # values_query_list = []
+        # for values in values_tuplist:
+        #     val_q = '(' + ', '.join(values) + ')'
+        #     values_query_list.append(val_q)
         params = ['%s'] * len(keytup)
         body2 = '(' + ', '.join(params) + ')'
         query = query1 + body1 + body2
         print(query)
+        # print(values_tuplist)
         self.cur.executemany(query, values_tuplist)
         self.cnx.commit() 
 
@@ -129,6 +141,8 @@ class DataBaseEditor:
         #     return '"' + strings + '"'
         if type(strings) is str:
             return strings
+        elif strings is None:
+            return None
         else:
             return str(strings)
     
@@ -153,9 +167,7 @@ class DataBaseEditor:
     def get_tuplist_for_ec(self, keytup, ec_dict):
         tuplist = []
         for ec_number, item in ec_dict.items():
-            desc = item['description']
-            class_level = item['class']
-            tup = tuple([self.str_editor(ec_number), self.str_editor(desc), self.str_editor(class_level)])
+            tup = tuple([ec_number] + [self.str_editor(item[key]) for key in keytup[1:]])
             tuplist.append(tup)
         return tuplist
 
@@ -172,11 +184,47 @@ class DataBaseEditor:
             if vus_dict['gene_id'] not in gene_dict.keys():
                 gene_dict[vus_dict['gene_id']] = {'gene_name_short': vus_dict['gene_id'],
                                                   'gene_name_full': vus_dict['gene_name'],
-                                                  'chrom': vus_dict['chr'],
-                                                  'EC_number': vus_dict['EC_number']}
-        keytup = ('gene_name_short', 'gene_name_full', 'chrom', 'EC_number')
+                                                  'chrom': vus_dict['chr']}
+                ec_dict = self.get_ec_info(vus_dict['EC_number'])
+                gene_dict[vus_dict['gene_id']].update(ec_dict)
+        keytup = ('gene_name_short', 'gene_name_full', 'chrom', 
+                  'EC_number', 'ec_1', 'ec_2', 'ec_3', 'ec_4',
+                  'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4')
         gene_values = self.get_tuplist_for_gene(keytup, gene_dict)
         self.insert_items(self.gene_table, keytup, gene_values)
+
+
+    def get_ec_info(self, ec_number):
+        ec_numbers = ec_number.split(';')
+        ec1 = ec_numbers[0]
+        ec1_levels = ec1.split('.')
+        assert len(ec1_levels) == 4, ec1_levels
+        ec_1 = int(ec1_levels[0])
+        ec_2 = int(ec1_levels[1]) if self.is_integer(ec1_levels[1]) else -1
+        ec_3 = int(ec1_levels[2]) if self.is_integer(ec1_levels[2]) else -1
+        ec_4 = int(ec1_levels[3]) if self.is_integer(ec1_levels[3]) else -1
+        if len(ec_numbers) > 1:
+            ec2 = ec_numbers[1].strip()
+            ec2_levels = ec2.split('.')
+            assert len(ec2_levels) == 4, ec2_levels
+            ec2_1 = int(ec2_levels[0])
+            ec2_2 = int(ec2_levels[1]) if self.is_integer(ec2_levels[1]) else -1
+            ec2_3 = int(ec2_levels[2]) if self.is_integer(ec2_levels[2]) else -1
+            ec2_4 = int(ec2_levels[3]) if self.is_integer(ec2_levels[3]) else -1
+        else:
+            ec2, ec2_1, ec2_2, ec2_3, ec2_4 = None, None, None, None, None
+        ec_dict = {'EC_number': ec1, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4,
+                   'EC_number2': ec2, 'ec2_1': ec2_1, 'ec2_2': ec2_2, 'ec2_3': ec2_3, 'ec2_4': ec2_4}
+        return ec_dict
+
+    
+    def is_integer(self, n):
+        try:
+            int(n)
+        except ValueError:
+            return False
+        else:
+            return True
 
 
     def register_mutations(self, vus_dictlist):
@@ -189,9 +237,14 @@ class DataBaseEditor:
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
         self.insert_items(self.mutation_table, keytup, vus_values)
 
+    
+    def register_ec(self, ec_file):
+        ec_dict = self.parse_EC_numbers(ec_file)
+        self.register_ec_numbers(ec_dict)
+
 
     def register_ec_numbers(self, ec_dict):
-        keytup = ('ec_number', 'description', 'class')
+        keytup = ('ec_number', 'description', 'class', 'ec_1', 'ec_2', 'ec_3', 'ec_4')
         ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
         self.insert_items(self.ec_table, keytup, ec_values)
 
@@ -221,10 +274,10 @@ class DataBaseEditor:
 
     def get_gene_id(self, gene_name):
         query = 'SELECT gene_id FROM ' + self.gene_table\
-               + ' WHERE gene_name_short = ' + self.str_editor(gene_name)
-        self.cur.execute(query)
+               + ' WHERE gene_name_short = ' + '%s'
+        self.cur.execute(query, (gene_name,))
         gene_id_list = self.cur.fetchall()
-        assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table'
+        assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table or the Table may have duplicates'
         gene_id = gene_id_list[0][0]
         return gene_id
 
@@ -242,7 +295,8 @@ class DataBaseEditor:
                 vus_dict = dict(zip(keytup, data))
                 for key in keytup:
                     if vus_dict[key] == 'None':
-                        vus_dict[key] = 'NULL'
+                        vus_dict[key] = None
+                    # elif key = 'EC_number':
                 vus_dictlist.append(vus_dict)
         return vus_dictlist
 
@@ -254,8 +308,15 @@ class DataBaseEditor:
                 data = line.rstrip().split()
                 ec = data[0]
                 desc = ' '.join(data[1:])
-                class_level = 1 + ec.count('.')
-                ec_dict[ec] = {'description': desc, 'class': class_level}
+                if "undefined" in desc:
+                    continue
+                ec_levels = ec.split('.')
+                class_level = len(ec_levels)
+                ec_1 = int(ec_levels[0])
+                ec_2 = int(ec_levels[1]) if class_level > 1 else None
+                ec_3 = int(ec_levels[2]) if class_level > 2 else None
+                ec_4 = int(ec_levels[3]) if class_level > 3 else None
+                ec_dict[ec] = {'description': desc, 'class': class_level, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4}
         return ec_dict
 
 
@@ -297,10 +358,10 @@ def test():
     DBE.prepare()
     # DBE.create_gene_table()
     # DBE.create_mutation_table()
-    # path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
-    # DBE.register_vus(path)
-    # vus_dictlist = DBE.parse_vus_data(path)
-    # DBE.register_genes(vus_dictlist)
+    path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
+    DBE.register_vus(path)
+    vus_dictlist = DBE.parse_vus_data(path)
+    DBE.register_genes(vus_dictlist)
     # gene_name = 'POLG'
     # DBE.get_gene_id(gene_name)
     # ec_subclass = '/Users/moon/DePauw/ITAP/VersUS/ec_subclass.dat'
@@ -316,9 +377,29 @@ def test():
     
 
 def main():
-    pass
+    user = 'test_user'
+    password = 'test_password'
+    dbname = 'versus_db'
+    DBE = DataBaseEditor(user, password, dbname)
 
+    DBE.create_all_tables()
+
+    DBE.prepare()
+    vus_file = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
+    DBE.register_vus(vus_file)
+    ec_file = '/Users/moon/DePauw/ITAP/VersUS/eCNumbersHTML_cleaned.txt'
+    DBE.register_ec(ec_file)
+    DBE.close()
+
+def testing():
+    pass
+r1 = 0.3 + 0.4 * 0.126
+r2 = 0.3 + 0.4 * (-0.423)
+r3 = 0.3 + 0.4 * 0.387
+
+t0 = 0.3 - 0.2/3 * (r1 - 0.098 + r2 - (-0.129) + r3 - 0.381)
+t1 = 0.4 - 0.2/3 * ((r1 - 0.098)*0.126 + (r2 - (-0.129))*(-0.423) + (r3 - 0.381) * 0.387)
 
 if __name__ == '__main__':
-    test()
-    # main()
+    # test()
+    main()

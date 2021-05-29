@@ -168,10 +168,10 @@ class CADDHandler:
                 if chrom not in self.cadd_dict.keys():
                     self.cadd_dict[chrom] = {}
                 self.cadd_dict[chrom][key] = phred
-        length = 0
+        ct = 0
         for chrom in self.cadd_dict.keys():
-            length += len(self.cadd_dict[chrom].keys())
-        self.logger.debug(f'Length of CADD dict: {length}')
+            ct += len(self.cadd_dict[chrom].keys())
+        self.logger.debug(f'Length of CADD dict: {ct}')
         return self.cadd_dict
 
 
@@ -192,7 +192,7 @@ class CADDHandler:
         self.logger.debug(f'CADD Scores were found for {len(vus_dict)-len(unfound_cadd)}/{len(vus_dict)} mutations')
         return vus_dict
 
-    
+
     def run(self, vus_dict):
         self.make_tsv_for_CADD(vus_dict)
         self.get_CADD_scores()
