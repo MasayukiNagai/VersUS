@@ -94,14 +94,25 @@ class DataBaseEditor:
         self.create_gene_table()
         self.create_mutation_table()
         self.create_ec_table()
-        self.create_ec_table()
-        self.close()
         # close connection
         self.close()
 
-    
+
+    def drop_table(self, table_name):
+        query = 'DROP TABLE ' + table_name
+        self.cur.execute(query)
+
+
     def drop_all_tables(self):
-        pass
+        # connect to mysql database
+        self.prepare()
+        # create tables
+        self.drop_table(self.gene_table)
+        self.drop_table(self.mutation_table)
+        self.drop_table(self.ec_table)
+        print('---------- Dropped all tables ----------')
+        # close connection
+        self.close()
     
 
     # def insert_items(self, table, keytup, values_tuplist):
@@ -382,6 +393,7 @@ def main():
     dbname = 'versus_db'
     DBE = DataBaseEditor(user, password, dbname)
 
+    DBE.drop_all_tables()
     DBE.create_all_tables()
 
     DBE.prepare()
