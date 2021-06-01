@@ -99,7 +99,7 @@ class DataBaseEditor:
 
 
     def drop_table(self, table_name):
-        query = 'DROP TABLE ' + table_name
+        query = 'DROP TABLE IF EXISTS ' + table_name
         self.cur.execute(query)
 
 
