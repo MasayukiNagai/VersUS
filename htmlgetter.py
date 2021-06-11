@@ -12,7 +12,7 @@ def write_html(url, path):
 
 def test():
     url = "http://localhost:8888/tree.php"
-    path = './test.html'
+    path = './php_server/tree.html'
     write_html(url, path)
 
 

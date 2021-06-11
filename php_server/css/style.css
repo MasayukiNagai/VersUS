@@ -105,6 +105,7 @@ table{
     border: solid 2px purple;
     /* font-family: -apple-system; */
     font-size: 15px;
+    width: 700px;
 }
 
 table th, table td {
@@ -134,23 +135,31 @@ table td {
 } */
 
 #header_mutation{
-    height: 50px;
-    text-align: center;
+    height: 60px;
+    max-width: 700px;
+    text-align: left;
     display: block;
-    margin: 0 300px 10px auto;
+    margin: 0 auto 5px auto;    
     /* border: 1px solid #000; */
-    /* font-size: 16px; */
 }
+
+/* #header_mutation{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+  
+    right: 10px;
+    margin: auto;
+    width: 200px;
+    height: 50px;
+    border: 1px solid #000;
+} */
 
 .gene_name_short, .gene_name_full{
     margin: 0 auto;
-    /* text-align: left; */
-    /* margin-left: 100px; */
-    /* display: block;
-    margin-block-start: 0.67em;
-    margin-block-end: 0.67em;
-    margin-inline-start: 0px;
-    margin-inline-end: 0px; */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
 .gene_info{
