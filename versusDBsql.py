@@ -292,7 +292,7 @@ class DataBaseEditor:
 
 
     def add_index_mutation(self):
-        query = f'ALTER TABLE {self.mutation_table} ADD INDEX gene_cadd_idx(gene_id, CADD_score);'
+        query = f'ALTER TABLE {self.mutation_table} ADD INDEX gene_cadd_idx(gene_id, CADD_score DESC);'
         self.cur.execute(query)
 
 

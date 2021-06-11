@@ -34,9 +34,9 @@ if(!isset($_POST['submit'])){
     $statement = $connection->prepare($sql);
     $statement->bindParam(':start', $start, PDO::PARAM_INT);
     $statement->execute();
-    $result = $statement->fetchAll();
+    $results = $statement->fetchAll();
 
-    $sql2 = "SELECT COUNT(*) from Gene";
+    $sql2 = "SELECT COUNT(*) FROM Gene";
     $statement2 = $connection->prepare($sql2);
     $statement2->execute();
     $result2 = $statement2->fetch();
@@ -49,22 +49,24 @@ else{
   try{
     require "config.php";
     require "common.php";
+    $current_page_count = $_GET['page'];
+    $num_per_page = 50;
+    $start = ($current_page_count - 1) * $num_per_page;
     $connection = new PDO($dsn, $username, $password, $options);
     $search_by = $_POST['search_by'];
     $keyword = $_POST['keyword'];
     if ($search_by == 'gene_name_short'){
       // search by Gene ID
-      // $sql = "SELECT * FROM Gene WHERE $search_by = :keyword LIMIT 50";
       $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
                      COUNT(m.mutation_id) AS num_vus, 
                      MAX(m.CADD_score) AS max_cadd, 
                      g.EC_number
-              FROM Gene as g
+              FROM (SELECT * FROM Gene WHERE gene_name_short LIKE :keyword) AS g
               LEFT JOIN Mutation AS m USING(gene_id)
               GROUP BY g.gene_id
-              HAVING g.gene_name_short LIKE :keyword
               LIMIT 50";
       $keyword = "$keyword%";
+      $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_name_short LIKE :keyword";
     }
     elseif($search_by == 'uniprot_id'){
       // search by Uniprot ID
@@ -72,31 +74,39 @@ else{
                      COUNT(m.mutation_id) AS num_vus, 
                      MAX(m.CADD_score) AS max_cadd, 
                      g.EC_number
-              FROM Gene as g
+              FROM (SELECT * FROM Gene WHERE uniprot_id = :keyword) AS g
               LEFT JOIN Mutation AS m USING(gene_id)
               GROUP BY g.gene_id
-              HAVING g.uniprot_id = :keyword 
               LIMIT 50";
+      $sql2 = "SELECT COUNT(*) FROM Gene WHERE uniprot_id = :keyword";
     }
     else{ // search by keywords
       $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
                      COUNT(m.mutation_id) AS num_vus, 
                      MAX(m.CADD_score) AS max_cadd, 
                      g.EC_number
-              FROM Gene as g
+              FROM (SELECT * FROM Gene
+                    WHERE gene_name_short LIKE :keyword
+                       OR gene_name_full LIKE :keyword
+                       OR EC_number LIKE :keyword) AS g
               LEFT JOIN Mutation AS m USING(gene_id)
               GROUP BY g.gene_id
-              HAVING (gene_name_short LIKE :keyword
-                   OR gene_name_full LIKE :keyword
-                   OR EC_number LIKE :keyword)
               LIMIT 50";
       $keyword = "%$keyword%";
+      $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_name_short LIKE :keyword
+                                         OR gene_name_full LIKE :keyword
+                                         OR EC_number LIKE :keyword";
     }
     $statement = $connection->prepare($sql);
     $statement->bindParam(':keyword', $keyword, PDO::PARAM_STR);
     $statement->execute();
-    $result = $statement->fetchAll();
-    // echo $sql . "<br>" .$search_by .$keyword. "<br>" ;
+    $results = $statement->fetchAll();
+    
+    $statement2 = $connection->prepare($sql2);
+    $statement2->bindParam(':keyword', $keyword, PDO::PARAM_STR);
+    $statement2->execute();
+    $value2 = $statement2->fetch();
+    $total_page_count = ceil($value2[0]/$num_per_page);
   }catch(PDOException $error) {
     echo $sql . "<br>" . $error->getMessage();
   }
@@ -105,7 +115,7 @@ else{
 ?>
 
 <?php
-if ($result && $statement->rowCount() > 0) { ?>
+if ($results && $statement->rowCount() > 0) { ?>
 <table>
 　<thead>
     <tr>
@@ -118,10 +128,10 @@ if ($result && $statement->rowCount() > 0) { ?>
     </tr>
   </thead>
   <tbody>
-  <?php foreach ($result as $row) { ?>
+  <?php foreach ($results as $row) { ?>
     <tr>
       <!-- <?php print_r(array_keys($row))?> -->
-      <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_name_short"]); ?></a></td>
+      <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=1"><?php echo escape($row["gene_name_short"]); ?></a></td>
       <td class="enzyme_name"><?php echo escape($row["gene_name_full"]); ?></td>
       <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
       <td class="cadd_score"><?php echo escape($row["max_cadd"]); ?></td>
@@ -131,9 +141,6 @@ if ($result && $statement->rowCount() > 0) { ?>
       </tbody>
 </table>
   
-<!-- <p><?php print_r(array_values($result2));?></p>
-<p><?php echo escape($total_page_count);?></p> -->
-
 
 <div class="pagination">
   <?php 
@@ -157,7 +164,7 @@ if ($result && $statement->rowCount() > 0) { ?>
 
 <?php
 if (isset($_POST['submit'])){?>
-  <a href="gene.php">Reset</a>
+  <a href="gene.php?page=1">Reset</a>
 <?php } ?>
 
 </div>

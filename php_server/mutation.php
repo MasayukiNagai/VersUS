@@ -6,7 +6,11 @@ try{
   require "config.php";
   require "common.php";
   $gene_id = $_GET['gene_id'];
+  $current_page_count = $_GET['page'];
+  $num_per_page = 50;
+  $start = ($current_page_count - 1) * $num_per_page;
   $connection = new PDO($dsn, $username, $password, $options);
+
   $sql1 = "SELECT gene_name_short, gene_name_full, EC_number
            FROM Gene WHERE gene_id = $gene_id LIMIT 1";
   $statement1 = $connection->prepare($sql1);
@@ -15,12 +19,23 @@ try{
   $gene_name_short = $value['gene_name_short'];
   $gene_name_full = $value['gene_name_full'];
   $ec_number = $value['EC_number'];
-  $sql = "SELECT * FROM Mutation WHERE gene_id = $gene_id LIMIT 50";
-  $statement = $connection->prepare($sql);
-  $statement->execute();
-  $result = $statement->fetchAll();
+
+  $sql2 = "SELECT * FROM Mutation WHERE gene_id = $gene_id 
+           ORDER BY CADD_score DESC
+           LIMIT :start, $num_per_page";
+  $statement2 = $connection->prepare($sql2);
+  $statement2->bindParam(':start', $start, PDO::PARAM_INT);
+  $statement2->execute();
+  $results = $statement2->fetchAll();
+
+  $sql3 = "SELECT COUNT(*) FROM Mutation WHERE gene_id = $gene_id";
+  $statement3 = $connection->prepare($sql3);
+  $statement3->execute();
+  $value3 = $statement3->fetch();
+  $total_page_count = ceil($value3[0]/$num_per_page);
+  
 }catch(PDOException $error) {
-  echo $sql . "<br>" . $error->getMessage();
+  echo $sql2 . "<br>" . $error->getMessage();
 }?>
 
 <div id="mutations">
@@ -31,9 +46,8 @@ try{
 </div>
 
 
-
 <?php
-if ($result && $statement->rowCount() > 0) { ?>
+if ($results && $statement2->rowCount() > 0) { ?>
 <table>
   <thead>
     <tr>
@@ -45,7 +59,7 @@ if ($result && $statement->rowCount() > 0) { ?>
     </tr>
   </thead>
   <tbody>
-    <?php foreach ($result as $row) { ?>
+    <?php foreach ($results as $row) { ?>
     <tr>
       <td class="variation"><?php echo escape($row["ref_pos_alt"]); ?></td>
       <td class="clinvar_link"><a href=<?php echo $row["clinvar_link"] ?>>link</a></td>
@@ -56,11 +70,27 @@ if ($result && $statement->rowCount() > 0) { ?>
     <?php } ?>
   </tbody>
 </table>
-  <?php } else { ?>
-    > No results are available.
-  <?php } ?>
 
+<div class="pagination">
+  <?php 
+  
+  if($current_page_count > 1){?>
+  <a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=<?php echo $current_page_count-1 ?>">&laquo;</a>
+  <?php }
+  $page_count = 1;
+  while($page_count <= $total_page_count){?>
+  <a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=<?php echo $page_count ?>"><?php echo escape($page_count) ?></a>
+  <?php $page_count++;
+  } 
+  if($current_page_count < $total_page_count){?>
+  <a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=<?php echo $current_page_count+1 ?>">&raquo;</a>
+  <?php }?> 
 </div>
 
+<?php } else { ?>
+  > No resultss are available.
+<?php } ?>
+
+</div>
 </div>
 <?php require "templates/footer.php"; ?>
