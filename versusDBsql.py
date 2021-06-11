@@ -186,7 +186,9 @@ class DataBaseEditor:
     def register_vus(self, vus_tsv):
         vus_dictlist = self.parse_vus_data(vus_tsv)
         self.register_genes(vus_dictlist)
+        self.add_index_gene()
         self.register_mutations(vus_dictlist)
+        self.add_index_mutation()
 
 
     def register_genes(self, vus_dictlist):
@@ -248,18 +250,7 @@ class DataBaseEditor:
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
         self.insert_items(self.mutation_table, keytup, vus_values)
 
-    
-    def register_ec(self, ec_file):
-        ec_dict = self.parse_EC_numbers(ec_file)
-        self.register_ec_numbers(ec_dict)
 
-
-    def register_ec_numbers(self, ec_dict):
-        keytup = ('ec_number', 'description', 'class', 'ec_1', 'ec_2', 'ec_3', 'ec_4')
-        ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
-        self.insert_items(self.ec_table, keytup, ec_values)
-
-    
     def make_mut_dict(self, vus_dict):
         gene_id = self.get_gene_id(vus_dict['gene_id'])
         ref_pos_alt = vus_dict['missense_variation']
@@ -275,14 +266,6 @@ class DataBaseEditor:
         return mut
 
     
-    def join_gene_mut_tables(self):
-        query = 'SELECT g.gene_name_short, g.gene_name_full, COUNT(m.mutation_id), max(m.CADD_score), g.EC_number'\
-               f'FROM {self.gene_table} AS g'\
-               f'LEFT JOIN {self.mutation_table} AS m USING(gene_id)'\
-                'GROUP BY g.gene_id'\
-        
-
-
     def get_gene_id(self, gene_name):
         query = 'SELECT gene_id FROM ' + self.gene_table\
                + ' WHERE gene_name_short = ' + '%s'
@@ -291,6 +274,26 @@ class DataBaseEditor:
         assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table or the Table may have duplicates'
         gene_id = gene_id_list[0][0]
         return gene_id
+
+    
+    def register_ec(self, ec_file):
+        ec_dict = self.parse_EC_numbers(ec_file)
+        self.register_ec_numbers(ec_dict)
+
+
+    def register_ec_numbers(self, ec_dict):
+        keytup = ('ec_number', 'description', 'class', 'ec_1', 'ec_2', 'ec_3', 'ec_4')
+        ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
+        self.insert_items(self.ec_table, keytup, ec_values)
+
+        
+    def add_index_gene(self):
+        query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_name_short, gene_id);'
+
+
+    def add_index_mutation(self):
+        query = f'ALTER TABLE {self.mutation_table} ADD INDEX gene_cadd_idx(gene_id, CADD_score);'
+        self.cur.execute(query)
 
 
     def parse_vus_data(self, vus_tsv):
@@ -329,36 +332,6 @@ class DataBaseEditor:
                 ec_4 = int(ec_levels[3]) if class_level > 3 else None
                 ec_dict[ec] = {'description': desc, 'class': class_level, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4}
         return ec_dict
-
-
-    # def parse_EC_subclass(self, enzyme_file):
-    #     ec_dict = {}
-    #     class_level = 4
-    #     with open(enzyme_file, 'r') as f:
-    #         sep = '   '  # three spaces
-    #         for line in f:
-    #             data = line.rstrip().split(sep)
-    #             if data[0] == 'ID':
-    #                 ec = data[1]
-    #             elif data[0] == 'DE':
-    #                 desc = data[1][:-1]  # remove period (the last char)
-    #                 ec_dict[ec] = {'description': desc, 'class': class_level}
-    #     return ec_dict
-
-
-    # def parse_EC_class(self, ec_file):
-    #     ec_dict = {}
-    #     with open(ec_file, 'r') as f:
-    #         sep = '    '
-    #         for line in f:
-    #             data = line.rstrip().split(sep)
-    #             if len(data) != 2:
-    #                 continue
-    #             ec = data[0].replace(' ', '')
-    #             desc = data[1][:-1]
-    #             class_level = 4 - ec.count('-')
-    #             ec_dict[ec] = {'description': desc, 'class': class_level}
-    #     return ec_dict
 
 
 def test():

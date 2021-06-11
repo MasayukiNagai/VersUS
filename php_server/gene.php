@@ -27,11 +27,10 @@ if(!isset($_POST['submit'])){
                    COUNT(m.mutation_id) AS num_vus, 
                    MAX(m.CADD_score) AS max_cadd, 
                    g.EC_number
-            FROM Gene as g
+            FROM (SELECT * FROM Gene 
+                  ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) as g
             LEFT JOIN Mutation AS m USING(gene_id)
-            GROUP BY g.gene_id
-            ORDER BY g.gene_name_short ASC
-            LIMIT :start, $num_per_page";
+            GROUP BY g.gene_id";
     $statement = $connection->prepare($sql);
     $statement->bindParam(':start', $start, PDO::PARAM_INT);
     $statement->execute();

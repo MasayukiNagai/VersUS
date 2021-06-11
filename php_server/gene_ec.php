@@ -51,11 +51,11 @@ if(!isset($_POST['submit'])){
                    MAX(m.CADD_score) AS max_cadd, 
                    g.EC_number
             FROM Gene as g
+            FROM (SELECT * FROM Gene WHERE $condition 
+                  ORDER BY EC_number ASC LIMIT :start, $num_per_page) as g
             LEFT JOIN Mutation AS m USING(gene_id)
             WHERE $condition
-            GROUP BY g.gene_id
-            ORDER BY g.EC_number ASC
-            LIMIT :start, $num_per_page";
+            GROUP BY g.gene_id";
     $statement = $connection->prepare($sql);
     $statement->bindParam(':start', $start, PDO::PARAM_INT);
     // $statement->bindParam(':condition', $condition, PDO::PARAM_STR);
