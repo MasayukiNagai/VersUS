@@ -22,7 +22,10 @@
               <option value="uniprot_id">Uniprot ID</option>
               <option value="keywords">Keyword</option>
             </select>
-            <input type="text" id="textbox" name="keyword">
+            <?php 
+            $search = (isset($_POST['keyword'])) ? htmlentities($_POST['keyword']) : '';
+            ?>
+            <input type="text" id="textbox" name="keyword" value="<?= $search ?>">
             <input type="submit" name="submit" id="sbtn" value="Search">
           </form>
         </div>
