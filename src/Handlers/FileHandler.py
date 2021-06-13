@@ -27,18 +27,6 @@ def parse_config(conffile):
     return general_dict, params_dict
 
 
-def check_config_general(general_dict):
-    checkpath(general_dict['genes'])
-    checkpath(general_dict['proteomes'])
-    checkpath(general_dict['variations'])
-    blast = general_dict['blast']
-    if blast != 'None':
-        checkpath(blast)
-    vep = general_dict['vep']
-    if vep != 'None':
-        checkpath(vep)
-
-
 def check_config_params(params_dict):
     try:
         int(params_dict['fasta_window'])

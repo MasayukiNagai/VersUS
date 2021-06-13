@@ -23,8 +23,10 @@ class VersUS:
         parser = argparse.ArgumentParser()
         parser.add_argument('--config', '-c', nargs=1, type=str, required=True,
                             dest='config', help='Required; Specify a config file.')
-        parser.add_argument('--id', '-i', nargs=1, type=str, required=True,
-                            dest='id', help='Required; Specify analysis-ID that is added to the end of outputs.')
+        parser.add_argument('--input', '-i', nargs=1, type=str, required=True,
+                            dest='input', help='Required; Specify a ClinVarVariation xml file.')        
+        parser.add_argument('--name', '-n', nargs=1, type=str, required=True,
+                            dest='name', help='Required; Specify analysis-ID that is added to the end of outputs.')
         args = parser.parse_args()
         return args
 
@@ -48,20 +50,21 @@ class VersUS:
         return logger
 
 
-    def run(self, config, analysis_id):
+    def run(self, config, clinvar_file, analysis_id):
         self.logger.info('Start running the process')
         general_dict, params_dict = parse_config(config)
 
         # check if config has valid items
-        check_config_general(general_dict)
         check_config_params(params_dict)
 
         genes = general_dict['genes']
         proteomes = general_dict['proteomes']
-        clinvar_variations = general_dict['variations']
         blast = os.path.abspath(general_dict['blast']) if general_dict['blast'] != 'None' else None
         vep = os.path.abspath(general_dict['vep']) if general_dict['vep'] != 'None' else None
         cadd = True if general_dict['cadd'] == 'True' else False
+        for path in [genes, proteomes, blast, vep]:
+            if path != None:
+                checkpath(path)
 
         # create correpsonding directories
         intermediates_dir = os.path.abspath(general_dict['intermediates'])
@@ -73,7 +76,7 @@ class VersUS:
         genes_dict = seqHandler.readUniprot_GeneId_EC()
 
         # parse a ClinvarVariation XML file 
-        clinvarHandler = ClinVarHandler(clinvar_variations)
+        clinvarHandler = ClinVarHandler(clinvar_file)
         vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict.keys())
 
         # add EC number and Uniprot id
@@ -87,8 +90,8 @@ class VersUS:
         write_to_tsv(vus_dict, header, intermediate_output)
         
         if blast:
-            blast_input_path = os.path.join(intermediates_dir, 'blast_vus_input.fasta')
-            blast_output_path = os.path.join(intermediates_dir, 'blast_vus_results.xml')
+            blast_input_path = os.path.join(intermediates_dir, 'blast_input.fasta')
+            blast_output_path = os.path.join(intermediates_dir, 'blast_results.xml')
             blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
             evalue = float(params_dict['evalue'])
             vus_dict = blastHandler.run(vus_dict, evalue)
@@ -97,8 +100,8 @@ class VersUS:
             write_to_tsv(vus_dict, header, intermediate_output)
         
         if vep:
-            vep_input_path = os.path.join(intermediates_dir, 'vep_vus_input.tsv')
-            vep_output_path = os.path.join(intermediates_dir, 'vep_vus_results.tsv')
+            vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
+            vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
             vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
             vus_dict = vepHandler.run(vus_dict)
 
@@ -106,13 +109,13 @@ class VersUS:
             write_to_tsv(vus_dict, header, intermediate_output)
         
         if cadd:
-            cadd_input_file = os.path.join(intermediates_dir, 'cadd_vus_input.tsv')
-            cadd_output_file = os.path.join(intermediates_dir, 'cadd_vus_scores.tsv.gz')
+            cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
+            cadd_output_file = os.path.join(intermediates_dir, 'cadd_scores.tsv.gz')
             caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
             vus_dict = caddHandler.run(vus_dict)
 
         header = format_header(vus_dict)
-        outpath = os.path.join(outdir, f'VersUS-{analysis_id}.tsv')
+        outpath = os.path.join(outdir, f'vus-{analysis_id}.tsv')
         write_to_tsv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')
@@ -122,18 +125,20 @@ class VersUS:
         start = datetime.now()
         args = self.argument_parser()
         config = args.config[0]
-        analysis_id = args.id[0]
+        clinvar_file = args.input[0]
+        analysis_id = args.name[0]
 
         checkpath(config)
 
-        self.run(config, analysis_id)
+        self.run(config, clinvar_file, analysis_id)
 
         end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running VersUS took {c[0]} minutes {c[1]} seconds')
-        
-        
+
+
+
 if __name__ == '__main__':
     versus = VersUS()
     versus.main()
