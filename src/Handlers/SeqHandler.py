@@ -14,24 +14,36 @@ class SeqHandler:
         self.proteomes_dir = proteomes_dir
         self.seq_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
-
+        
     
-    # read csv file of gene names of human enzymes
-    # return dict{gene_names: EC number}
-    def readHumanGenesEC(self):
+    # read tsv file of entry(uniprot_id) - gene id - ec number
+    # return dict {gene_id: 'ec': ec number, 'uniprot_id': uniprot_id}
+    def readUniprot_GeneId_EC(self):
         dup = set()
         with open(self.gene_file, 'r') as f:
-            f.readline()
-            reader = csv.reader(f)
-            for row in reader:
-                key = row[0]
-                if key in self.genes_dict.keys():
-                    dup.add(key)
+            f.readline()  # skips the header
+            for line in f:
+                data = line.rstrip().split('\t')
+                uniprot_id = data[0]
+                gene_id = data[1]
+                ec = data[2]
+                if gene_id in self.genes_dict.keys():
+                    dup.add(gene_id)
                 else:
-                    self.genes_dict[key] = row[1]
+                    self.genes_dict[gene_id] = {'ec': ec, 'uniprot_id': uniprot_id}
         self.logger.info(f'{len(dup)} genes are duplicated: {dup}')
         return self.genes_dict
 
+    
+    def add_uniprotId_EC(self, vus_dict):
+        for mut in vus_dict.values():
+            gene_id = mut['gene_id']
+            uniprot_id = self.genes_dict[gene_id]['uniprot_id']
+            ec = self.genes_dict[gene_id]['ec']
+            mut['uniprot_id'] = uniprot_id
+            mut['EC_number'] = ec
+        return vus_dict
+            
 
     # makes dictionary of fasta sequences and np number 
     # returns dict{np_num: fasta sequence}
@@ -88,13 +100,10 @@ class SeqHandler:
             np_num = vus_dict[vus_id]['NP_accession']
             try:
                 seq = self.seq_dict[np_num]
-                # seq_cropped = ''
                 seq_cropped = self.crop_seq(seq, pos, ref, seq_range)
             except:
                 seq_cropped = None
                 unfound_seq.add(np_num)
-            # if(vus_id==1):
-            #     print(mutation, ref, pos, np_num, seq)
             vus_dict[vus_id]['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
     

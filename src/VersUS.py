@@ -22,7 +22,9 @@ class VersUS:
     def argument_parser(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--config', '-c', nargs=1, type=str, required=True,
-                            help='Required; Specify a config file.')
+                            dest='config', help='Required; Specify a config file.')
+        parser.add_argument('--id', '-i', nargs=1, type=str, required=True,
+                            dest='id', help='Required; Specify analysis-ID that is added to the end of outputs.')
         args = parser.parse_args()
         return args
 
@@ -46,7 +48,7 @@ class VersUS:
         return logger
 
 
-    def run(self, config):
+    def run(self, config, analysis_id):
         self.logger.info('Start running the process')
         general_dict, params_dict = parse_config(config)
 
@@ -68,17 +70,21 @@ class VersUS:
         make_dir(outdir)
 
         seqHandler = SeqHandler(genes, proteomes)
-        genes_dict = seqHandler.readHumanGenesEC()
+        genes_dict = seqHandler.readUniprot_GeneId_EC()
 
+        # parse a ClinvarVariation XML file 
         clinvarHandler = ClinVarHandler(clinvar_variations)
-        vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict)
-        
+        vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict.keys())
+
+        # add EC number and Uniprot id
+        vus_dict = seqHandler.add_uniprotId_EC(vus_dict)
+
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
         
         header = format_header(vus_dict)
-        outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
-        write_to_tsv(vus_dict, header, outpath)
+        intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
+        write_to_tsv(vus_dict, header, intermediate_output)
         
         if blast:
             blast_input_path = os.path.join(intermediates_dir, 'blast_vus_input.fasta')
@@ -88,18 +94,16 @@ class VersUS:
             vus_dict = blastHandler.run(vus_dict, evalue)
             
             header = format_header(vus_dict)
-            outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
-            write_to_tsv(vus_dict, header, outpath)
+            write_to_tsv(vus_dict, header, intermediate_output)
         
-        if vep:
-            vep_input_path = os.path.join(intermediates_dir, 'vep_vus_input.tsv')
-            vep_output_path = os.path.join(intermediates_dir, 'vep_vus_results.tsv')
-            vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
-            vus_dict = vepHandler.run(vus_dict)
+        # if vep:
+        #     vep_input_path = os.path.join(intermediates_dir, 'vep_vus_input.tsv')
+        #     vep_output_path = os.path.join(intermediates_dir, 'vep_vus_results.tsv')
+        #     vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
+        #     vus_dict = vepHandler.run(vus_dict)
 
-            header = format_header(vus_dict)
-            outpath = os.path.join(intermediates_dir, 'vus_intermediate.tsv')
-            write_to_tsv(vus_dict, header, outpath)
+        #     header = format_header(vus_dict)
+        #     write_to_tsv(vus_dict, header, intermediate_output)
         
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_vus_input.tsv')
@@ -108,7 +112,7 @@ class VersUS:
             vus_dict = caddHandler.run(vus_dict)
 
         header = format_header(vus_dict)
-        outpath = os.path.join(outdir, 'VersUS.tsv')
+        outpath = os.path.join(outdir, f'VersUS-{analysis_id}.tsv')
         write_to_tsv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')
@@ -118,10 +122,11 @@ class VersUS:
         start = datetime.now()
         args = self.argument_parser()
         config = args.config[0]
+        analysis_id = args.id[0]
 
         checkpath(config)
 
-        self.run(config)
+        self.run(config, analysis_id)
 
         end = datetime.now()
         time = end - start

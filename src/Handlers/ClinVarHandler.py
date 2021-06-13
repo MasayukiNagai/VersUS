@@ -15,10 +15,10 @@ class ClinVarHandler:
     
 
     class VariationHandler(object):
-        def __init__(self, gene_dict):
+        def __init__(self, gene_set):
             self.logger = getLogger('versus_logger').getChild(__name__)
             self.vus_dict = {}
-            self.gene_dict = gene_dict
+            self.gene_set = gene_set
             self.var_types_to_get = ('single nucleotide variant')
             self.is_var_type_to_get = False
             self.vus_id = 0
@@ -94,9 +94,9 @@ class ClinVarHandler:
                     self.is_not_provided = True
                     self.ct_not_provided_var += 1
                 if self.is_var_type_to_get \
-                and (self.gene_symbol in self.gene_dict.keys())\
-                and self.is_missense \
-                and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
+                   and (self.gene_symbol in self.gene_set)\
+                   and self.is_missense\
+                   and (self.is_uncertain or self.is_conflicting or self.is_not_provided):
                     try:
                         self.change = self.change.split('p.')[1]
                         ref = aaMapThreeToOne.get(self.change[0:3])
@@ -118,7 +118,6 @@ class ClinVarHandler:
                         self.vus_dict[self.vus_id]['gene_id'] = self.gene_symbol
                         self.vus_dict[self.vus_id]['gene_name'] = self.gene_name
                         self.vus_dict[self.vus_id]['clinical_significance'] = clinical_significance
-                        self.vus_dict[self.vus_id]['EC_number'] = self.gene_dict.get(self.gene_symbol)
                         self.vus_dict[self.vus_id]['missense_variation'] = change_one_char
                         self.vus_dict[self.vus_id]['NP_accession'] = self.np_acc
                         self.vus_dict[self.vus_id]['chr'] = self.chr
@@ -168,10 +167,10 @@ class ClinVarHandler:
 
     # read xml file of variations from ClinVar
     # return dataframe and write to a csv file
-    def readClinVarVariationsXML(self, gene_dict):
+    def readClinVarVariationsXML(self, gene_set):
         self.logger.info('Start parcing ClinvarVariationsRelease')
         start = datetime.now()
-        parser = etree.XMLParser(target=self.VariationHandler(gene_dict))
+        parser = etree.XMLParser(target=self.VariationHandler(gene_set))
         vus_dict = etree.parse(self.clinvar_variation, parser)
         end = datetime.now()
         time = end - start
