@@ -6,7 +6,7 @@ if(isset($_GET['term']) && (empty($_GET['term']) || ctype_space($_GET['term'])))
 }
 ?>
 
-<?php require "templates/header2.php"; ?>
+<?php require "templates/header.php"; ?>
 <div class="content">
 
 <?php
@@ -23,7 +23,7 @@ try{
                     MAX(m.CADD_score) AS max_cadd, 
                     g.EC_number
                 FROM (SELECT * FROM Gene 
-                      ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) as g
+                      ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) AS g
                 LEFT JOIN Mutation AS m USING(gene_id)
                 GROUP BY g.gene_id";
         $statement = $connection->prepare($sql);
@@ -46,10 +46,10 @@ try{
                          COUNT(m.mutation_id) AS num_vus, 
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
-                  FROM (SELECT * FROM Gene WHERE gene_name_short LIKE :keyword) AS g
+                  FROM (SELECT * FROM Gene WHERE gene_name_short LIKE :keyword
+                        ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) AS g
                   LEFT JOIN Mutation AS m USING(gene_id)
-                  GROUP BY g.gene_id
-                  LIMIT 50";
+                  GROUP BY g.gene_id";
           $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_name_short LIKE :keyword";
           $keyword = "$term%";
         }
@@ -59,7 +59,8 @@ try{
                          COUNT(m.mutation_id) AS num_vus, 
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
-                  FROM (SELECT * FROM Gene WHERE uniprot_id = :keyword) AS g
+                  FROM (SELECT * FROM Gene WHERE uniprot_id = :keyword
+                        ORDER BY uniprot_id ASC LIMIT :start, $num_per_page ) AS g
                   LEFT JOIN Mutation AS m USING(gene_id)
                   GROUP BY g.gene_id
                   LIMIT 50";
@@ -73,9 +74,9 @@ try{
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
                   FROM (SELECT * FROM Gene
-                        WHERE gene_name_short LIKE :keyword
-                           OR gene_name_full LIKE :keyword
-                           OR EC_number LIKE :keyword) AS g
+                        WHERE gene_name_full LIKE :keyword
+                           OR EC_number LIKE :keyword
+                           LIMIT :start, $num_per_page) AS g
                   LEFT JOIN Mutation AS m USING(gene_id)
                   GROUP BY g.gene_id
                   LIMIT 50";
@@ -85,6 +86,7 @@ try{
           $keyword = "%$term%";
         }
         $statement = $connection->prepare($sql);
+        $statement->bindParam(':start', $start, PDO::PARAM_INT);
         $statement->bindParam(':keyword', $keyword, PDO::PARAM_STR);
         $statement->execute();
         $results = $statement->fetchAll();
