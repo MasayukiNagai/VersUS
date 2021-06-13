@@ -46,18 +46,16 @@ def check_config_params(params_dict):
         print(f'fastaw_window needs to be an integer {params_dict.get("fasta_window")}')
         print(e)
         sys.exit()
-        # raise ValueError(f'fastaw_window needs to be an integer: {params_dict.get("fasta_window")}')
     try:
         float(params_dict['evalue'])
     except Exception as e:
         print(f'evalue needs to be a float value: {params_dict.get("evalue")}')
         print(e)
         sys.exit()
-        # raise ValueError(f'evalue needs to be a float value: {params_dict.get("evalue")}')
 
 
 def format_header(vus_dict):
-    header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+    header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
     formatted_header = [item for item in header if item in vus_dict[0].keys()]
     return tuple(formatted_header)
 
