@@ -10,23 +10,21 @@
 
   <body>
     <div>
-      <!-- <div id="headinfo">
-        <a href="gene.php?page=1">Home</a>
-      </div> -->
       <div id="header">
         <h1 id="title-image"><a href="gene.php?page=1"><img src="images/versus_logo.png" alt="versus" /></a></h1>
         <div id="queryContainer">
-          <form action="gene.php?page=1", method="post" id="search-bar">
+          <form action="gene.php", method="get" id="search-bar">
             <select id="search_by" name="search_by">
-              <option value="gene_name_short">Gene ID</option>
-              <option value="uniprot_id">Uniprot ID</option>
+              <option value="gene">Gene ID</option>
+              <option value="uniprotID">Uniprot ID</option>
               <option value="keywords">Keyword</option>
             </select>
             <?php 
-            $search = (isset($_POST['keyword'])) ? htmlentities($_POST['keyword']) : '';
+            $search = (isset($_GET['term'])) ? htmlentities($_GET['term']) : '';
             ?>
-            <input type="text" id="textbox" name="keyword" value="<?= $search ?>">
-            <input type="submit" name="submit" id="sbtn" value="Search">
+            <input type="text" id="textbox" name="term" value="<?= $search ?>">
+            <!-- <input type="submit" name="submit" id="sbtn" value="Search"> -->
+            <button id="sbtn">Search</button>
           </form>
         </div>
       </div>
