@@ -14,15 +14,15 @@ seq_dir = './data/fasta_sequences'
 blast_path = './ncbi/blast/bin'
 blast_input = './data/blast/vus_blast.fasta'
 blast_output = './data/blast/blast_results.xml'
-cadd_input = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/vus_cadd.vcf'
-cadd_output = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/CADD_scores.tar.gz'
+cadd_input = '/Users/moon/DePauw/ITAP/VersUS/src/data/CADD/cadd_input.vcf.gz'
+cadd_output = '/Users/moon/DePauw/ITAP/VersUS/src/data/CADD/CADD_scores.tar.gz'
 vep_input = './data/vep/vep_vus_input.tsv'
 vep_output = './data/vep/vep_vus_results.tsv'
 
 # seqHandler = SeqHandler(gene_file, seq_dir)
 # clinvarHandler = ClinVarHandler()
 # blastHandler = BLASTHandler(blast_input, blast_output)
-# caddHandler = CADDHandler(cadd_input, cadd_output)
+caddHandler = CADDHandler(cadd_input, cadd_output)
 # vepHandler = VEPHandler(vep_input, vep_output)
 # versus = VersUS()
 
@@ -87,15 +87,15 @@ vep_output = './data/vep/vep_vus_results.tsv'
 # vus_blast_path = './data/VUS_with_blast.tsv'
 # versus.write_to_tsv(vus_dict, header, vus_blast_path)
 
-# print('********** read TSV **********')
-# tsv_path = './data/VUS_with_blast.tsv'
-# vus_dict = versus.read_tsv_to_dict(tsv_path)
-# print(f'The number of VUS: {len(vus_dict)}')
-# print(vus_dict[0])
+print('********** read TSV **********')
+tsv_path = './data/VUS_with_blast.tsv'
+vus_dict = read_tsv_to_dict(tsv_path)
+print(f'The number of VUS: {len(vus_dict)}')
+print(vus_dict[0])
 
-# print('---------- make_tsv_for_CADD ----------')
-# caddHandler.make_tsv_for_CADD(vus_dict)
-# print('Done')
+print('---------- make_tsv_for_CADD ----------')
+caddHandler.make_tsv_for_CADD(vus_dict)
+print('Done')
 
 # print('---------- get CADD scores from its website ----------')
 # cadd_results = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/GRCh38-v1.4.tsv.gz'
@@ -170,7 +170,7 @@ vep_output = './data/vep/vep_vus_results.tsv'
 # blast_results = blastHandler.readBlastXML()
 # print(blast_results)
 
-cadd_input = os.path.abspath('./data/CADD/CADD_sample_input.vcf')
-cadd_output = os.path.abspath('./data/CADD/CADD_sample_output.vcf')
-caddHandler = CADDHandler(cadd_input, cadd_output)
-caddHandler.get_CADD_scores()
+# cadd_input = os.path.abspath('./data/CADD/CADD_sample_input.vcf')
+# cadd_output = os.path.abspath('./data/CADD/CADD_sample_output.vcf')
+# caddHandler = CADDHandler(cadd_input, cadd_output)
+# caddHandler.get_CADD_scores()

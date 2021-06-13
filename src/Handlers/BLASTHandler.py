@@ -131,8 +131,7 @@ class BLASTHandler():
         def close(self):
             self.logger.info(f'Could not identify species of the following: {self.unidentified_species}')
             self.logger.info(f'Finish parsing the BLAST results\n\
-                               Number of sequences processed: {self.blast_id}\n\
-                               Length of blast_dict: {len(self.blast_results)}')
+                               {len(self.blast_results)}/{self.blast_id} found')
             return self.blast_results
             
 
