@@ -110,8 +110,8 @@ class CADDHandler:
     def make_tsv_for_CADD(self, vus_dict):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
-        with open(self.cadd_input, 'w') as f:
-            f.write(header + '\n')
+        with gzip.open(self.cadd_input, 'wb') as f:
+            f.write((header + '\n').encode())
             for vus_id in range(len(vus_dict)):
                 chrom = vus_dict[vus_id]['chr']
                 pos = str(vus_dict[vus_id]['start'])
@@ -119,7 +119,7 @@ class CADDHandler:
                 alt = vus_dict[vus_id]['alternateAllele'] if vus_dict[vus_id]['alternateAllele'] else ''
                 info_tup = (chrom, pos, str(vus_id), ref, alt)
                 info = '\t'.join(info_tup)
-                f.write(info + '\n')
+                f.write((info + '\n').encode())
     
 
     def make_tsv_for_CADD2(self, vus_dict):
