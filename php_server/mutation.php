@@ -11,13 +11,13 @@ try{
   $start = ($current_page_count - 1) * $num_per_page;
   $connection = new PDO($dsn, $username, $password, $options);
 
-  $sql1 = "SELECT gene_name_short, gene_name_full, EC_number
+  $sql1 = "SELECT gene_symbol, gene_full_name, EC_number
            FROM Gene WHERE gene_id = $gene_id LIMIT 1";
   $statement1 = $connection->prepare($sql1);
   $statement1->execute();
   $value = $statement1->fetch();
-  $gene_name_short = $value['gene_name_short'];
-  $gene_name_full = $value['gene_name_full'];
+  $gene_symbol = $value['gene_symbol'];
+  $gene_full_name = $value['gene_full_name'];
   $ec_number = $value['EC_number'];
 
   $sql2 = "SELECT * FROM Mutation WHERE gene_id = $gene_id 
@@ -41,8 +41,8 @@ try{
 <div id="mutations">
 
 <div id="header_mutation">
-  <h1 class="gene_name_short"><?php echo escape($gene_name_short); ?></h1>
-  <h2 class="gene_name_full"><?php echo escape($gene_name_full); ?></h2>
+  <h1 class="gene_symbol"><?php echo escape($gene_symbol); ?></h1>
+  <h2 class="gene_full_name"><?php echo escape($gene_full_name); ?></h2>
 </div>
 
 

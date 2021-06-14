@@ -18,12 +18,12 @@ try{
     $num_per_page = 50;
     $start = ($current_page_count - 1) * $num_per_page;
     if(!isset($_GET['term'])){
-        $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+        $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
                     COUNT(m.mutation_id) AS num_vus, 
                     MAX(m.CADD_score) AS max_cadd, 
                     g.EC_number
                 FROM (SELECT * FROM Gene 
-                      ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) AS g
+                      ORDER BY gene_symbol ASC LIMIT :start, $num_per_page) AS g
                 LEFT JOIN Mutation AS m USING(gene_id)
                 GROUP BY g.gene_id";
         $statement = $connection->prepare($sql);
@@ -42,20 +42,20 @@ try{
         $term = rtrim($_GET['term']);
         if ($search_by == 'gene'){
           // search by Gene ID
-          $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
                          COUNT(m.mutation_id) AS num_vus, 
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
-                  FROM (SELECT * FROM Gene WHERE gene_name_short LIKE :keyword
-                        ORDER BY gene_name_short ASC LIMIT :start, $num_per_page) AS g
+                  FROM (SELECT * FROM Gene WHERE gene_symbol LIKE :keyword
+                        ORDER BY gene_symbol ASC LIMIT :start, $num_per_page) AS g
                   LEFT JOIN Mutation AS m USING(gene_id)
                   GROUP BY g.gene_id";
-          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_name_short LIKE :keyword";
+          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_symbol LIKE :keyword";
           $keyword = "$term%";
         }
         elseif($search_by == 'uniprotID'){
           // search by Uniprot ID
-          $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
                          COUNT(m.mutation_id) AS num_vus, 
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
@@ -69,19 +69,19 @@ try{
         }
         else{ 
           // search by keywords
-          $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
                          COUNT(m.mutation_id) AS num_vus, 
                          MAX(m.CADD_score) AS max_cadd, 
                          g.EC_number
                   FROM (SELECT * FROM Gene
-                        WHERE gene_name_full LIKE :keyword
+                        WHERE gene_full_name LIKE :keyword
                            OR EC_number LIKE :keyword
                            LIMIT :start, $num_per_page) AS g
                   LEFT JOIN Mutation AS m USING(gene_id)
                   GROUP BY g.gene_id
                   LIMIT 50";
-          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_name_short LIKE :keyword
-                                             OR gene_name_full LIKE :keyword
+          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_symbol LIKE :keyword
+                                             OR gene_full_name LIKE :keyword
                                              OR EC_number LIKE :keyword";
           $keyword = "%$term%";
         }
@@ -118,8 +118,8 @@ if ($results && $statement->rowCount() > 0) { ?>
       <tbody>
       <?php foreach ($results as $row) { ?>
         <tr>
-        <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=1"><?php echo escape($row["gene_name_short"]); ?></a></td>
-        <td class="enzyme_name"><?php echo escape($row["gene_name_full"]); ?></td>
+        <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=1"><?php echo escape($row["gene_symbol"]); ?></a></td>
+        <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
         <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
         <td class="cadd_score"><?php echo escape($row["max_cadd"]); ?></td>
         <td class="EC_number"><?php echo escape($row["EC_number"]); ?></td>

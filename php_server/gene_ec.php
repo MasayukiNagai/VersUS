@@ -7,7 +7,7 @@
   <label for="search_id">Search by: </label>
   <select id="search_by" name="search_by">
     <option value="keywords">Keyword</option>
-    <option value="gene_name_short">Gene ID</option>
+    <option value="gene_symbol">Gene ID</option>
     <option value="uniprot_id">Uniprot ID</option>
   </select>
   <input type="text" id="keyword" name="keyword">
@@ -46,7 +46,7 @@ if(!isset($_POST['submit'])){
     $num_per_page = 50;
     $start = ($current_page_count - 1) * $num_per_page;
     $connection = new PDO($dsn, $username, $password, $options);
-    $sql = "SELECT g.gene_id, g.gene_name_short, g.gene_name_full, 
+    $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
                    COUNT(m.mutation_id) AS num_vus, 
                    MAX(m.CADD_score) AS max_cadd, 
                    g.EC_number
@@ -92,8 +92,8 @@ if ($result && $statement->rowCount() > 0) { ?>
   <?php foreach ($result as $row) { ?>
     <tr>
       <!-- <?php print_r(array_keys($row))?> -->
-      <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_name_short"]); ?></a></td>
-      <td class="enzyme_name"><?php echo escape($row["gene_name_full"]); ?></td>
+      <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_symbol"]); ?></a></td>
+      <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
       <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
       <td class="cadd_score"><?php echo escape($row["max_cadd"]); ?></td>
       <td class="EC_number"><?php echo escape($row["EC_number"]); ?></td>

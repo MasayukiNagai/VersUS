@@ -51,8 +51,9 @@ class DataBaseEditor:
     def create_gene_table(self):
         nn = 'NOT NULL'
         name_type_dict = {'gene_id': 'SERIAL PRIMARY KEY',
-                          'gene_name_short': 'VARCHAR(10) ' + nn,
-                          'gene_name_full': 'VARCHAR(255) ' + nn,
+                          'gene_symbol': 'VARCHAR(10) ' + nn,
+                          'gene_full_name': 'VARCHAR(255) ' + nn,
+                          'uniprot_id': 'VARCHAR(20)' + nn,
                           'chrom': 'VARCHAR(20) ' + nn,
                           'EC_number': 'VARCHAR(100) ' + nn,
                           'ec_1': 'INT ' + nn, 
@@ -195,12 +196,13 @@ class DataBaseEditor:
         gene_dict = dict()
         for vus_dict in vus_dictlist:
             if vus_dict['gene_id'] not in gene_dict.keys():
-                gene_dict[vus_dict['gene_id']] = {'gene_name_short': vus_dict['gene_id'],
-                                                  'gene_name_full': vus_dict['gene_name'],
+                gene_dict[vus_dict['gene_id']] = {'gene_symbol': vus_dict['gene_id'],
+                                                  'gene_full_name': vus_dict['gene_name'],
+                                                  'uniprot_id': vus_dict['uniprot_id'],
                                                   'chrom': vus_dict['chr']}
                 ec_dict = self.get_ec_info(vus_dict['EC_number'])
                 gene_dict[vus_dict['gene_id']].update(ec_dict)
-        keytup = ('gene_name_short', 'gene_name_full', 'chrom', 
+        keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom', 
                   'EC_number', 'ec_1', 'ec_2', 'ec_3', 'ec_4',
                   'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4')
         gene_values = self.get_tuplist_for_gene(keytup, gene_dict)
@@ -268,7 +270,7 @@ class DataBaseEditor:
     
     def get_gene_id(self, gene_name):
         query = 'SELECT gene_id FROM ' + self.gene_table\
-               + ' WHERE gene_name_short = ' + '%s'
+               + ' WHERE gene_symbol = ' + '%s'
         self.cur.execute(query, (gene_name,))
         gene_id_list = self.cur.fetchall()
         assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table or the Table may have duplicates'
@@ -288,7 +290,7 @@ class DataBaseEditor:
 
         
     def add_index_gene(self):
-        query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_name_short, gene_id);'
+        query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_symbol, gene_id);'
 
 
     def add_index_mutation(self):
@@ -300,7 +302,7 @@ class DataBaseEditor:
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip()
             keys = header.split('\t')
-            keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+            keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
             assert len(keys) == len(keytup)
             vus_dictlist = []
             for line in f:
@@ -310,10 +312,18 @@ class DataBaseEditor:
                 for key in keytup:
                     if vus_dict[key] == 'None':
                         vus_dict[key] = None
-                    # elif key = 'EC_number':
+                    elif key == 'missense_variation':
+                        vus_dict[key] = self.map_aa_one_to_three(vus_dict[key])
                 vus_dictlist.append(vus_dict)
         return vus_dictlist
 
+    
+    def map_aa_one_to_three(self, missense):
+        ref = aaMapOneToThree[missense[0]]
+        alt = aaMapOneToThree[missense[-1]]
+        pos = missense[1:-1]
+        return ref + pos + alt
+            
     
     def parse_EC_numbers(self, ec_file):
         ec_dict = {}
@@ -342,9 +352,11 @@ def test():
     DBE.prepare()
     # DBE.create_gene_table()
     # DBE.create_mutation_table()
-    path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
-    DBE.register_vus(path)
+    # path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
+    path = '/Users/moon/DePauw/ITAP/VersUS/src/results/VersUS-test.tsv'
     vus_dictlist = DBE.parse_vus_data(path)
+    print(vus_dictlist)
+    breakpoint()
     DBE.register_genes(vus_dictlist)
     # gene_name = 'POLG'
     # DBE.get_gene_id(gene_name)
@@ -370,9 +382,9 @@ def main():
     DBE.create_all_tables()
 
     DBE.prepare()
-    vus_file = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
+    vus_file = '/Users/moon/DePauw/ITAP/VersUS/results/vus-06132021.tsv'
     DBE.register_vus(vus_file)
-    ec_file = '/Users/moon/DePauw/ITAP/VersUS/eCNumbersHTML_cleaned.txt'
+    ec_file = '/Users/moon/DePauw/ITAP/VersUS/ecNumbersHTML.txt'
     DBE.register_ec(ec_file)
     DBE.close()
 

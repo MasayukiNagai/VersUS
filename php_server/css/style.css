@@ -156,7 +156,7 @@ table td {
     border: 1px solid #000;
 } */
 
-.gene_name_short, .gene_name_full{
+.gene_symbol, .gene_full_name{
     margin: 0 auto;
     white-space:nowrap;
     overflow:hidden;
