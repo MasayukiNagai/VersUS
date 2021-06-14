@@ -18,85 +18,53 @@ try{
     $num_per_page = 50;
     $start = ($current_page_count - 1) * $num_per_page;
     if(!isset($_GET['term'])){
-        $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
-                    COUNT(m.mutation_id) AS num_vus, 
-                    MAX(m.CADD_score) AS max_cadd, 
-                    g.EC_number
-                FROM (SELECT * FROM Gene 
-                      ORDER BY gene_symbol ASC LIMIT :start, $num_per_page) AS g
-                LEFT JOIN Mutation AS m USING(gene_id)
-                GROUP BY g.gene_id";
-        $statement = $connection->prepare($sql);
-        $statement->bindParam(':start', $start, PDO::PARAM_INT);
-        $statement->execute();
-        $results = $statement->fetchAll();
-
-        $sql2 = "SELECT COUNT(*) FROM Gene";
-        $statement2 = $connection->prepare($sql2);
-        $statement2->execute();
-        $result2 = $statement2->fetch();
-        $total_page_count = ceil($result2[0]/$num_per_page);        
+        $condition = "";
+        $order = "ORDER BY gene_symbol ASC";
     }
     else{
         $search_by = $_GET['search_by'];
         $term = rtrim($_GET['term']);
         if ($search_by == 'gene'){
           // search by Gene ID
-          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
-                         COUNT(m.mutation_id) AS num_vus, 
-                         MAX(m.CADD_score) AS max_cadd, 
-                         g.EC_number
-                  FROM (SELECT * FROM Gene WHERE gene_symbol LIKE :keyword
-                        ORDER BY gene_symbol ASC LIMIT :start, $num_per_page) AS g
-                  LEFT JOIN Mutation AS m USING(gene_id)
-                  GROUP BY g.gene_id";
-          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_symbol LIKE :keyword";
+          $condition = "WHERE gene_symbol LIKE :keyword";
+          $order = "ORDER BY gene_symbol ASC";
           $keyword = "$term%";
         }
         elseif($search_by == 'uniprotID'){
           // search by Uniprot ID
-          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
-                         COUNT(m.mutation_id) AS num_vus, 
-                         MAX(m.CADD_score) AS max_cadd, 
-                         g.EC_number
-                  FROM (SELECT * FROM Gene WHERE uniprot_id = :keyword
-                        ORDER BY uniprot_id ASC LIMIT :start, $num_per_page ) AS g
-                  LEFT JOIN Mutation AS m USING(gene_id)
-                  GROUP BY g.gene_id
-                  LIMIT 50";
-          $sql2 = "SELECT COUNT(*) FROM Gene WHERE uniprot_id = :keyword";
+          $condition = "WHERE uniprot_id = :keyword";
+          $order = "ORDER BY uniprot_id ASC";
           $keyword = "$term";
         }
         else{ 
           // search by keywords
-          $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
-                         COUNT(m.mutation_id) AS num_vus, 
-                         MAX(m.CADD_score) AS max_cadd, 
-                         g.EC_number
-                  FROM (SELECT * FROM Gene
-                        WHERE gene_full_name LIKE :keyword
-                           OR EC_number LIKE :keyword
-                           LIMIT :start, $num_per_page) AS g
-                  LEFT JOIN Mutation AS m USING(gene_id)
-                  GROUP BY g.gene_id
-                  LIMIT 50";
-          $sql2 = "SELECT COUNT(*) FROM Gene WHERE gene_symbol LIKE :keyword
-                                             OR gene_full_name LIKE :keyword
-                                             OR EC_number LIKE :keyword";
+          $condition = "WHERE gene_full_name LIKE :keyword
+                           OR EC_number LIKE :keyword";
+          $order = "";
           $keyword = "%$term%";
         }
-        $statement = $connection->prepare($sql);
-        $statement->bindParam(':start', $start, PDO::PARAM_INT);
-        $statement->bindParam(':keyword', $keyword, PDO::PARAM_STR);
-        $statement->execute();
-        $results = $statement->fetchAll();
-        
-        $statement2 = $connection->prepare($sql2);
-        $statement2->bindParam(':keyword', $keyword, PDO::PARAM_STR);
-        $statement2->execute();
-        $value2 = $statement2->fetch();
-        $total_page_count = ceil($value2[0]/$num_per_page);
     }
+    $limit = "LIMIT :start, :num_per_page";
+    # query to get gene items
+    $sql = get_query($condition, $order, $limit);
+    $statement = $connection->prepare($sql);
+    $statement->bindParam(':start', $start, PDO::PARAM_INT);
+    $statement->bindParam(':num_per_page', $num_per_page, PDO::PARAM_INT);
+    if(isset($_GET['term'])){
+        $statement->bindParam(':keyword', $keyword, PDO::PARAM_STR);
+    }
+    $statement->execute();
+    $results = $statement->fetchAll();
+    
+    # query to get the number of results 
+    $sql2 = "SELECT COUNT(*) FROM Gene {$condition}";
+    $statement2 = $connection->prepare($sql2);
+    if(isset($_GET['term'])){
+        $statement2->bindParam(':keyword', $keyword, PDO::PARAM_STR);
+    }
+    $statement2->execute();
+    $num_results = $statement2->fetch()[0]; 
+    $total_page_count = ceil($num_results/$num_per_page);
 }catch(PDOException $error) {
     echo $error->getMessage();
 }
@@ -110,6 +78,7 @@ if ($results && $statement->rowCount() > 0) { ?>
         <tr>
         <th class="gene_id">Gene ID</th>
         <th class="enzyme_name">Enzyme Name</th>
+        <th class="uniprot_id">Uniprot ID</th>
         <th class="num_vus"># Missense VUS</th>
         <th class="cadd_score">Highest CADD score</th>
         <th class="EC_number">EC #</th>
@@ -120,6 +89,7 @@ if ($results && $statement->rowCount() > 0) { ?>
         <tr>
         <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=1"><?php echo escape($row["gene_symbol"]); ?></a></td>
         <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
+        <td class="uniprot_id"><a href=<?php echo get_uniprot_url($row["uniprot_id"]) ?>><?php echo escape($row["uniprot_id"]) ?></a></td>
         <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
         <td class="cadd_score"><?php echo escape($row["max_cadd"]); ?></td>
         <td class="EC_number"><?php echo escape($row["EC_number"]); ?></td>

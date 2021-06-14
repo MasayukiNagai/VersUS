@@ -12,3 +12,19 @@ function escape($html) {
 function Get($index, $defaultValue) {
   return isset($_GET[$index]) ? $_GET[$index] : $defaultValue;
 }
+
+function get_uniprot_url($uniprot_id) {
+  $url = "https://www.uniprot.org/uniprot/";
+  return $url . $uniprot_id;
+}
+
+function get_query($condition, $order, $limit){
+  $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
+                 g.uniprot_id, g.EC_number,
+                 COUNT(m.mutation_id) AS num_vus,
+                 MAX(m.CADD_score) AS max_cadd
+          FROM (SELECT * FROM Gene {$condition} {$order} {$limit}) AS g
+          LEFT JOIN Mutation AS m USING(gene_id)
+          GROUP BY g.gene_id";
+  return $sql;
+}
