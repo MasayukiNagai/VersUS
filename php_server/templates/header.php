@@ -14,10 +14,13 @@
         <h1 id="title-image"><a href="gene.php?page=1"><img src="images/versus_logo.png" alt="versus" /></a></h1>
         <div id="queryContainer">
           <form action="gene.php", method="get" id="search-bar">
+            <?php 
+            $search_by = (isset($_GET['search_by'])) ? htmlentities($_GET['search_by']) : '';
+            ?>
             <select id="search_by" name="search_by">
-              <option value="gene">Gene ID</option>
-              <option value="uniprotID">Uniprot ID</option>
-              <option value="keywords">Keyword</option>
+              <option <?php if ($_GET['search_by'] == 'gene') { ?>selected="true" <?php }; ?> value="gene">Gene ID</option>
+              <option <?php if ($_GET['search_by'] == 'uniprotID') { ?>selected="true" <?php }; ?> value="uniprotID">Uniprot ID</option>
+              <option <?php if ($_GET['search_by'] == 'keywords') { ?>selected="true" <?php }; ?> value="keywords">Keyword</option>
             </select>
             <?php 
             $search = (isset($_GET['term'])) ? htmlentities($_GET['term']) : '';
