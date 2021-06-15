@@ -95,18 +95,68 @@ h2{
     color:#666;
 }
 
+
+/*
+  Result Header
+*/
+
+#result_header{
+    margin: 0;
+    height: 30px;
+    /* border: solid 1px black; */
+}
+
+.result_count{
+    position: absolute;
+    left: 5%;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.pageforms{
+    position: absolute;
+    right: 5%;
+    display: inline-block;
+    vertical-align: bottom;
+    margin: 5px auto;
+}
+
+.pageform{
+    display: inline-block;
+}
+
+.page_button, #jump_button{
+    cursor: pointer;
+}
+
+.page_button:disabled{
+    cursor: auto;
+}
+
+#view_page{
+    /* height:15px; */
+    width: 20px;
+    padding:0 auto; 
+    position:relative; 
+    margin: 0 2px;
+    /* top:0;  */
+    border-radius:2px;
+    /* outline:0; */
+    background:white;
+    border: solid 1px black;
+}
+
 /* 
   Gene Table
 */
 table{
     /* padding: 10px; */
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
     border-collapse: collapse;
     border: solid 2px purple;
     /* font-family: -apple-system; */
     font-size: 15px;
-    width: 700px;
+    width: 90%;
 }
 
 table th, table td {
@@ -123,38 +173,36 @@ table td {
     padding: 2px 0px 2px 3px; /* top right bottom left */
 }
 
-.enzyme_name {
-    width: 200px;
+.count, .num_vus, .cadd_score{
+    text-align: center;
 }
+
+/* .enzyme_name {
+    width: 200px;
+} */
 
 /* 
   Mutation Table
 */
 
-/* #mutations{
-    margin: 30px auto;
-} */
-
 #header_mutation{
     height: 60px;
-    max-width: 700px;
-    text-align: left;
-    display: block;
-    margin: 0 auto 5px auto;    
-    /* border: 1px solid #000; */
+    width: 100%;
+    position: relative;
+    border-top: 5px solid purple;
+    border-bottom: 5px solid purple;
+    /* background-color: purple; */
 }
 
-/* #header_mutation{
-    position: absolute;
-    top: 0;
-    bottom: 0;
-  
-    right: 10px;
-    margin: auto;
-    width: 200px;
-    height: 50px;
-    border: 1px solid #000;
-} */
+#header_mutation_text{
+    height: 60px;
+    max-width: 90%;
+    position: relative;
+    text-align: left;
+    display: block;
+    margin: auto;    
+    /* border: 1px solid #000; */
+}
 
 .gene_symbol, .gene_full_name{
     margin: 0 auto;
@@ -229,6 +277,7 @@ ul, #myUL {
 
 .content {
     flex: 1;
+    margin-bottom: 20px;
 }
 
 #footer{
@@ -236,5 +285,4 @@ ul, #myUL {
     height: 100px;
     background-color: #583F99;
     align-items: center;
-    margin-top: 20px;
 }

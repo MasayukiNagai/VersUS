@@ -22,7 +22,7 @@ if(!isset($_POST['submit'])){
     $connection = new PDO($dsn, $username, $password, $options);
     $ec = $_GET['ec'];
     $ec_numbers = explode(".", $ec);
-    $current_page = GetPost('page', 1);
+    $current_page = Get('page', 1);
     $num_per_page = 50;
     $start = ($current_page - 1) * $num_per_page;
     if(count($ec_numbers) == 1){
@@ -79,7 +79,29 @@ else{
 }
 ?>
 
-<?php require "templates/result_header.php" ?>
+<?php 
+$first_item = ($current_page-1) * $num_per_page + 1;
+$last_item = ($current_page * $num_per_page) < $num_results ? $current_page * $num_per_page: $num_results;
+?>
+
+<div id="result_header">
+  <h2 class="result_count">Items: <?php echo escape($first_item) ?> to <?php echo escape($last_item); ?> of <?php echo escape($num_results) ?> genes</h2>
+  <div class="pageforms">
+    <form action="#" method="get" class="pageform">
+      <button class="page_button" type="submit" name="page" value="1" <?php if($current_page==1){?> disabled="disabled" <?php } ?>>&lt&lt First</button>
+      <button class="page_button" type="submit" name="page" value=<?php echo ($current_page-1); ?> <?php if($current_page==1){?>disabled="disabled" <?php }; ?> >&lt Prev</button>
+    </form>        
+    <form action="#" method="get" class="pageform">
+      <span>Page </span><input type="text" id="view_page" name="page" value="<?php echo $current_page; ?>" />/ <span id="total_page"><?php echo $total_page ?></span>
+      <input type="submit" id="jump_button" value="Go"/>
+    </form>
+    <form action="#" method="get" class="pageform"> 
+      <button class="page_button" type="submit" name="page" value=<?php echo ($current_page+1); ?> <?php if($current_page==$total_page){?>disabled="disabled" <?php }; ?> >&gt Next</button>     
+      <button class="page_button" type="submit" name="page" value=<?php echo $total_page ?> <?php if($current_page==$total_page){?>disabled="disabled" <?php } ?>>&gt&gt Last</button>
+    </from>
+  </div>
+</div>
+
 
 <?php
 $counter = ($current_page-1) * $num_per_page;

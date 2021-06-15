@@ -14,9 +14,9 @@ require "config.php";
 require "common.php";
 try{
     $connection = new PDO($dsn, $username, $password, $options);
-    $current_page_count = Get('page', 1);
+    $current_page = GetPost('page', 1);
     $num_per_page = 50;
-    $start = ($current_page_count - 1) * $num_per_page;
+    $start = ($current_page - 1) * $num_per_page;
     if(!isset($_GET['term'])){
         $condition = "";
         $order = "ORDER BY gene_symbol ASC";
@@ -64,18 +64,22 @@ try{
     }
     $statement2->execute();
     $num_results = $statement2->fetch()[0]; 
-    $total_page_count = ceil($num_results/$num_per_page);
+    $total_page = ceil($num_results/$num_per_page);
 }catch(PDOException $error) {
     echo $error->getMessage();
 }
 ?>
 
 
+<?php require "templates/result_header.php" ?>
+
 <?php
+$counter = ($current_page-1) * $num_per_page;
 if ($results && $statement->rowCount() > 0) { ?>
     <table>
     　<thead>
         <tr>
+        <th class="count">#</th> 
         <th class="gene_id">Gene ID</th>
         <th class="enzyme_name">Enzyme Name</th>
         <th class="uniprot_id">Uniprot ID</th>
@@ -85,21 +89,20 @@ if ($results && $statement->rowCount() > 0) { ?>
         </tr>
       </thead>
       <tbody>
-      <?php foreach ($results as $row) { ?>
+      <?php foreach ($results as $row) { 
+        $counter += 1; ?>
         <tr>
-        <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>&page=1"><?php echo escape($row["gene_symbol"]); ?></a></td>
+        <td class="count"><?php echo escape($counter) ?></td>
+        <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_symbol"]); ?></a></td>
         <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
         <td class="uniprot_id"><a href=<?php echo get_uniprot_url($row["uniprot_id"]) ?>><?php echo escape($row["uniprot_id"]) ?></a></td>
         <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
-        <td class="cadd_score"><?php echo escape($row["max_cadd"]); ?></td>
+        <td class="cadd_score"><?php echo escape(number_format((float)$row["max_cadd"], 1, '.', '')); ?></td>
         <td class="EC_number"><?php echo escape($row["EC_number"]); ?></td>
         </tr>
       <?php } ?>
       </tbody>
     </table>
-
-<?php require "templates/pagination.php";?>
-
 
 <?php } else { ?>
   <p>> No results are available.</p>

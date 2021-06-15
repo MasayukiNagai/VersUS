@@ -48,7 +48,7 @@ if ($result && $statement->rowCount() > 0) { ?>
   <?php if($row["class"] == 1){?>
   <li><?php
     if($row["num_vus"] > 0){?>
-    <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"]) ?>&page=1"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+    <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
     </span>
   <?php } else {?>
     <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -60,7 +60,7 @@ if ($result && $statement->rowCount() > 0) { ?>
     <?php $ct_class = 2;}?>
     <li><?php
     if($row["num_vus"] > 0){?>
-    <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"]) ?>&page=1"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+    <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
     </span>
   <?php } else {?>
     <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -73,7 +73,7 @@ if ($result && $statement->rowCount() > 0) { ?>
     <li><?php
     if($row["num_vus"] > 0){?>
     <span class="caret">
-    <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"]) ?>&page=1"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+    <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
     </span>
   <?php } else {?>
     <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -85,7 +85,7 @@ if ($result && $statement->rowCount() > 0) { ?>
     <?php $ct_class = 4;}?>
     <li><?php
       if($row["num_vus"] > 0){?> 
-      <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"].".".$row["ec_4"]) ?>&page=1"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?></a> <?php echo escape(" (".$row["num_vus"].")");?>
+      <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"].".".$row["ec_4"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?></a> <?php echo escape(" (".$row["num_vus"].")");?>
       <?php } else{ ?>
       <?php echo escape($row["ec_number"]." "); echo($row["description"]); echo escape(" (0)")?>
       <?php } ?>

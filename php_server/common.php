@@ -13,6 +13,10 @@ function Get($index, $defaultValue) {
   return isset($_GET[$index]) ? $_GET[$index] : $defaultValue;
 }
 
+function GetPost($index, $defaultValue) {
+  return isset($_POST[$index]) ? $_POST[$index] : $defaultValue;
+}
+
 function get_uniprot_url($uniprot_id) {
   $url = "https://www.uniprot.org/uniprot/";
   return $url . $uniprot_id;
