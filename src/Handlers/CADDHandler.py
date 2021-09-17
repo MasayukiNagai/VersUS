@@ -147,7 +147,7 @@ class CADDHandler:
                     for alt in cadd_dict[chrom][pos]['alt']:
                         info_tup = (chrom, pos, ref, alt)
                         info = '\t'.join(info_tup)
-                        f.write(infor + '\n')
+                        f.write(info + '\n')
 
 
     def read_CADD_results(self):
