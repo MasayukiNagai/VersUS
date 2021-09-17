@@ -1,5 +1,4 @@
 import os
-import csv
 from Bio import Entrez
 from Bio import SeqIO
 from logging import getLogger
@@ -14,8 +13,8 @@ class SeqHandler:
         self.proteomes_dir = proteomes_dir
         self.seq_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
-        
-    
+
+
     # read tsv file of entry(uniprot_id) - gene id - ec number
     # return dict {gene_id: 'ec': ec number, 'uniprot_id': uniprot_id}
     def readUniprot_GeneId_EC(self):
@@ -34,7 +33,7 @@ class SeqHandler:
         self.logger.info(f'{len(dup)} genes are duplicated: {dup}')
         return self.genes_dict
 
-    
+
     def add_uniprotId_EC(self, vus_dict):
         for mut in vus_dict.values():
             gene_id = mut['gene_id']
@@ -43,9 +42,9 @@ class SeqHandler:
             mut['uniprot_id'] = uniprot_id
             mut['EC_number'] = ec
         return vus_dict
-            
 
-    # makes dictionary of fasta sequences and np number 
+
+    # makes dictionary of fasta sequences and np number
     # returns dict{np_num: fasta sequence}
     def make_seq_dict(self):
         self.logger.debug(f'Open sequence files')
@@ -84,8 +83,8 @@ class SeqHandler:
         else:
             self.logger.warning('Failed to crop a sequence')
             return None
-    
-    
+
+
     # add fasta sequence to vus dict
     # return vus dict and unfound_seq set
     def add_seq_to_dict(self, vus_dict: dict, seq_range: int=12):
@@ -106,8 +105,8 @@ class SeqHandler:
                 unfound_seq.add(np_num)
             vus_dict[vus_id]['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
-    
-    
+
+
     def get_seq(self, vus_dict, window_size: int=12):
         self.logger.info('Add sequences to vus_dict')
         self.make_seq_dict()

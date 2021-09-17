@@ -1,10 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import chromedriver_binary
-# import urllib.request
 import wget
 import gzip
-import sys
 import time
 from datetime import datetime
 from logging import getLogger
@@ -62,7 +59,7 @@ class CADDHandler:
         else:
             return False
 
-    
+
     def check_CADD_output_ready(self):
         is_ready = False
         start = datetime.now()
@@ -105,7 +102,7 @@ class CADDHandler:
             self.failed_retrival = True
             return
         self.close()
-    
+
 
     def make_tsv_for_CADD(self, vus_dict):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
@@ -120,7 +117,7 @@ class CADDHandler:
                 info_tup = (chrom, pos, str(vus_id), ref, alt)
                 info = '\t'.join(info_tup)
                 f.write((info + '\n').encode())
-    
+
 
     def make_tsv_for_CADD2(self, vus_dict):
         cadd_dict = {}
