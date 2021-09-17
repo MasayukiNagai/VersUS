@@ -21,11 +21,11 @@ class VersUS:
 
     def argument_parser(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--config', '-c', nargs=1, type=str, required=True,
+        parser.add_argument('--config', '-c', type=str, required=True,
                             dest='config', help='Required; Specify a config file.')
-        parser.add_argument('--input', '-i', nargs=1, type=str, required=True,
-                            dest='input', help='Required; Specify a ClinVarVariation xml file.')        
-        parser.add_argument('--name', '-n', nargs=1, type=str, required=True,
+        parser.add_argument('--input', '-i', type=str, required=True,
+                            dest='input', help='Required; Specify a ClinVarVariation xml file.')
+        parser.add_argument('--name', '-n', type=str, required=True,
                             dest='name', help='Required; Specify analysis-ID that is added to the end of outputs.')
         args = parser.parse_args()
         return args
@@ -34,12 +34,12 @@ class VersUS:
     def setup_logger(self, name: str, logfile: str):
         logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
-        # creates a file handler that logs messages above DEBUG level 
+        # creates a file handler that logs messages above DEBUG level
         fh = logging.FileHandler(logfile)
         fh.setLevel(logging.DEBUG)
         fh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s %(funcName)s : %(message)s')
         fh.setFormatter(fh_formatter)
-        # creates a file handler that logs messages above INFO level 
+        # creates a file handler that logs messages above INFO level
         sh = logging.StreamHandler()
         sh.setLevel(logging.DEBUG)
         sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s : %(message)s', '%Y-%m-%d %H:%M:%S')
@@ -75,7 +75,7 @@ class VersUS:
         seqHandler = SeqHandler(genes, proteomes)
         genes_dict = seqHandler.readUniprot_GeneId_EC()
 
-        # parse a ClinvarVariation XML file 
+        # parse a ClinvarVariation XML file
         clinvarHandler = ClinVarHandler(clinvar_file)
         vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict.keys())
 
@@ -84,21 +84,21 @@ class VersUS:
 
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
-        
+
         header = format_header(vus_dict)
         intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
         write_to_tsv(vus_dict, header, intermediate_output)
-        
+
         if blast:
             blast_input_path = os.path.join(intermediates_dir, 'blast_input.fasta')
             blast_output_path = os.path.join(intermediates_dir, 'blast_results.xml')
             blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
             evalue = float(params_dict['evalue'])
             vus_dict = blastHandler.run(vus_dict, evalue)
-            
+
             header = format_header(vus_dict)
             write_to_tsv(vus_dict, header, intermediate_output)
-        
+
         if vep:
             vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
             vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
@@ -107,7 +107,7 @@ class VersUS:
 
             header = format_header(vus_dict)
             write_to_tsv(vus_dict, header, intermediate_output)
-        
+
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
             cadd_output_file = os.path.join(intermediates_dir, 'cadd_scores.tsv.gz')
@@ -124,9 +124,9 @@ class VersUS:
     def main(self):
         start = datetime.now()
         args = self.argument_parser()
-        config = args.config[0]
-        clinvar_file = args.input[0]
-        analysis_id = args.name[0]
+        config = args.config
+        clinvar_file = args.input
+        analysis_id = args.name
 
         checkpath(config)
 
