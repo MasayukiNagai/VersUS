@@ -29,16 +29,16 @@ if(!isset($_POST['submit'])){
       $condition = "WHERE ec_1 = {$ec_numbers[0]}";
     }
     elseif(count($ec_numbers) == 2){
-      $condition = "ec_1 = $ec_numbers[0] 
+      $condition = "WHERE ec_1 = $ec_numbers[0] 
                     AND ec_2 = {$ec_numbers[1]}";
     }
     elseif(count($ec_numbers) == 3){
-      $condition = "ec_1 = $ec_numbers[0] 
+      $condition = "WHERE ec_1 = $ec_numbers[0] 
                     AND ec_2 = {$ec_numbers[1]}
                     AND ec_3 = {$ec_numbers[2]}";
     }
     elseif(count($ec_numbers) == 4){
-      $condition = "ec_1 = {$ec_numbers[0]}
+      $condition = "WHERE ec_1 = {$ec_numbers[0]}
                     AND ec_2 = {$ec_numbers[1]}
                     AND ec_3 = {$ec_numbers[2]}
                     AND ec_4 = {$ec_numbers[3]}";

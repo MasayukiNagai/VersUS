@@ -3,7 +3,7 @@
 
 <ul>
   <li>
-    <a href="gene.php?page=1"><strong>Normal</strong></a> - gene table
+    <a href="gene.php"><strong>Normal</strong></a> - gene table
   </li>
   <li>
     <a href="tree.html"><strong>Tree</strong></a> - tree view
