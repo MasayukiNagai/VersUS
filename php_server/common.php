@@ -22,8 +22,13 @@ function get_uniprot_url($uniprot_id) {
   return $url . $uniprot_id;
 }
 
+function get_alphafold_url($uniprot_id) {
+  $url = "https://alphafold.ebi.ac.uk/entry/";
+  return $url . $uniprot_id;
+}
+
 function get_query($condition, $order, $limit){
-  $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name, 
+  $sql = "SELECT g.gene_id, g.gene_symbol, g.gene_full_name,
                  g.uniprot_id, g.EC_number,
                  COUNT(m.mutation_id) AS num_vus,
                  MAX(m.CADD_score) AS max_cadd

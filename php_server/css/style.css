@@ -27,7 +27,7 @@ h2{
     color: #5b616b;
 }
 
-/* 
+/*
   Header
 */
 #header {
@@ -37,7 +37,7 @@ h2{
     background-color: #9B92C6;
     align-items: center;
 }
-   
+
 #title-image img{
     margin-top: 10px;
     width: 120px;
@@ -45,7 +45,7 @@ h2{
     max-height:100%;  */
     /* object-fit: contain; */
 }
-   
+
 #queryContainer {
     display: inline-block;
     margin-left: 30px;
@@ -65,26 +65,26 @@ h2{
 
 #textbox{
     height:30px;
-    padding:0 10px; 
-    position:relative; 
+    padding:0 10px;
+    position:relative;
     left:2px;
-    top:0; 
+    top:0;
     border-radius:2px;
     outline:0;
-    background:white;	
+    background:white;
     font-size: 16px;
-    border:none; 
+    border:none;
 }
-		
+
 #sbtn{
-    width:70px;/*検索ボタンの横幅*/ 
-    height:30px;/*検索ボタンの縦幅*/ 
-    position:relative;/*検索ボタンの絶対位置*/  
+    width:70px;/*検索ボタンの横幅*/
+    height:30px;/*検索ボタンの縦幅*/
+    position:relative;/*検索ボタンの絶対位置*/
     left:4px;
     top:0;
     border-radius:2px;
-    background:#7fbfff;/*検索ボタンの背景カラー*/ 
-    border:none;/*検索ボタンの枠線を消す*/ 
+    background:#7fbfff;/*検索ボタンの背景カラー*/
+    border:none;/*検索ボタンの枠線を消す*/
     color:#fff;
     font-weight:bold;
     font-size:16px;
@@ -136,8 +136,8 @@ h2{
 #view_page{
     /* height:15px; */
     width: 20px;
-    padding:0 auto; 
-    position:relative; 
+    padding:0 auto;
+    position:relative;
     margin: 0 2px;
     /* top:0;  */
     border-radius:2px;
@@ -146,7 +146,7 @@ h2{
     border: solid 1px black;
 }
 
-/* 
+/*
   Gene Table
 */
 table{
@@ -173,7 +173,7 @@ table td {
     padding: 2px 0px 2px 3px; /* top right bottom left */
 }
 
-.count, .num_vus, .cadd_score{
+.count, .num_vus, .cadd_score, .alphafold{
     text-align: center;
 }
 
@@ -181,7 +181,7 @@ table td {
     width: 200px;
 } */
 
-/* 
+/*
   Mutation Table
 */
 
@@ -200,7 +200,7 @@ table td {
     position: relative;
     text-align: left;
     display: block;
-    margin: auto;    
+    margin: auto;
     /* border: 1px solid #000; */
 }
 
@@ -222,13 +222,13 @@ td.variation, td.clinvar_link{
 
 
 
-/* 
-  Tree view 
+/*
+  Tree view
 */
 ul, #myUL {
     list-style-type: none;
 }
-  
+
 #myUL {
     margin: 0 20px;
     padding: 0;
@@ -254,7 +254,7 @@ ul, #myUL {
 .caret-down::before {
     -ms-transform: rotate(90deg); /* IE 9 */
     -webkit-transform: rotate(90deg); /* Safari */
-    transform: rotate(90deg);  
+    transform: rotate(90deg);
 }
 
 .nested {
@@ -266,8 +266,8 @@ ul, #myUL {
 }
 
 
-/* 
-  Footer 
+/*
+  Footer
 */
 .pagination{
     width: 200px;

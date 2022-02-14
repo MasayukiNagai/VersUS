@@ -1,7 +1,7 @@
 <?php require "templates/header.php"; ?>
 <div class="content">
 
-<?php 
+<?php
 require "config.php";
 require "common.php";
 try{
@@ -20,7 +20,7 @@ try{
   $gene_full_name = $value['gene_full_name'];
   $ec_number = $value['EC_number'];
 
-  $sql2 = "SELECT * FROM Mutation WHERE gene_id = $gene_id 
+  $sql2 = "SELECT * FROM Mutation WHERE gene_id = $gene_id
            ORDER BY CADD_score DESC
            LIMIT :start, :num_per_page";
   $statement2 = $connection->prepare($sql2);
@@ -34,7 +34,7 @@ try{
   $statement3->execute();
   $num_results = $statement3->fetch()[0];
   $total_page = ceil($num_results/$num_per_page);
-  
+
 }catch(PDOException $error) {
   echo $sql2 . "<br>" . $error->getMessage();
 }?>
@@ -63,7 +63,7 @@ if ($results && $statement2->rowCount() > 0) { ?>
     </tr>
   </thead>
   <tbody>
-    <?php foreach ($results as $row) { 
+    <?php foreach ($results as $row) {
       $counter += 1;?>
     <tr>
       <td class="count"><?php echo escape($counter) ?></td>

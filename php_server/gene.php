@@ -1,4 +1,4 @@
-<?php 
+<?php
 # If empty term is entered, redirect to the main page
 if(isset($_GET['term']) && (empty($_GET['term']) || ctype_space($_GET['term']))){
     header('Location: gene.php');
@@ -36,7 +36,7 @@ try{
           $order = "ORDER BY uniprot_id ASC";
           $keyword = "$term";
         }
-        else{ 
+        else{
           // search by keywords
           $condition = "WHERE gene_full_name LIKE :keyword
                            OR EC_number LIKE :keyword";
@@ -55,15 +55,15 @@ try{
     }
     $statement->execute();
     $results = $statement->fetchAll();
-    
-    # query to get the number of results 
+
+    # query to get the number of results
     $sql2 = "SELECT COUNT(*) FROM Gene {$condition}";
     $statement2 = $connection->prepare($sql2);
     if(isset($_GET['term'])){
         $statement2->bindParam(':keyword', $keyword, PDO::PARAM_STR);
     }
     $statement2->execute();
-    $num_results = $statement2->fetch()[0]; 
+    $num_results = $statement2->fetch()[0];
     $total_page = ceil($num_results/$num_per_page);
 }catch(PDOException $error) {
     echo $error->getMessage();
@@ -79,17 +79,18 @@ if ($results && $statement->rowCount() > 0) { ?>
     <table>
     　<thead>
         <tr>
-        <th class="count">#</th> 
+        <th class="count">#</th>
         <th class="gene_id">Gene ID</th>
         <th class="enzyme_name">Enzyme Name</th>
         <th class="uniprot_id">Uniprot ID</th>
         <th class="num_vus"># Missense VUS</th>
         <th class="cadd_score">Highest CADD score</th>
         <th class="EC_number">EC #</th>
+        <th class="alphafold">AlphaFold Protein Structure</th>
         </tr>
       </thead>
       <tbody>
-      <?php foreach ($results as $row) { 
+      <?php foreach ($results as $row) {
         $counter += 1; ?>
         <tr>
         <td class="count"><?php echo escape($counter) ?></td>
@@ -99,6 +100,7 @@ if ($results && $statement->rowCount() > 0) { ?>
         <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
         <td class="cadd_score"><?php echo escape(number_format((float)$row["max_cadd"], 1, '.', '')); ?></td>
         <td class="EC_number"><?php echo escape($row["EC_number"]); ?></td>
+        <td class="alphafold"><a href=<?php echo get_alphafold_url($row["uniprot_id"]) ?>>link</a></td>
         </tr>
       <?php } ?>
       </tbody>
