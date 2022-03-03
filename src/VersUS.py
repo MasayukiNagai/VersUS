@@ -50,26 +50,27 @@ class VersUS:
         return logger
 
 
-    def run(self, config, clinvar_file, analysis_id):
+    def run(self, config, analysis_id):
         self.logger.info('Start running the process')
-        general_dict, params_dict = parse_config(config)
+        conf_dict, params_dict = parse_config(config)
 
         # check if config has valid items
         check_config_params(params_dict)
 
-        genes = general_dict['genes']
-        proteomes = general_dict['proteomes']
-        blast = os.path.abspath(general_dict['blast']) if general_dict['blast'] != 'None' else None
-        vep = os.path.abspath(general_dict['vep']) if general_dict['vep'] != 'None' else None
-        cadd = True if general_dict['cadd'] == 'True' else False
+        clinvar_file = conf_dict['clinvar']
+        genes = conf_dict['genes']
+        proteomes = conf_dict['proteomes']
+        blast = os.path.abspath(conf_dict['blast']) if conf_dict['blast'] != 'None' else None
+        vep = os.path.abspath(conf_dict['vep']) if conf_dict['vep'] != 'None' else None
+        cadd = True if conf_dict['cadd'] == 'True' else False
         for path in [genes, proteomes, blast, vep]:
             if path != None:
                 checkpath(path)
 
         # create correpsonding directories
-        intermediates_dir = os.path.abspath(general_dict['intermediates'])
+        intermediates_dir = os.path.abspath(conf_dict['intermediates'])
         make_dir(intermediates_dir)
-        outdir = os.path.abspath(general_dict['outdir'])
+        outdir = os.path.abspath(conf_dict['outdir'])
         make_dir(outdir)
 
         seqHandler = SeqHandler(genes, proteomes)
@@ -115,7 +116,7 @@ class VersUS:
             vus_dict = caddHandler.run(vus_dict)
 
         header = format_header(vus_dict)
-        outpath = os.path.join(outdir, f'vus-{analysis_id}.tsv')
+        outpath = os.path.join(outdir, f'vus_{analysis_id}.tsv')
         write_to_tsv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')
@@ -125,12 +126,11 @@ class VersUS:
         start = datetime.now()
         args = self.argument_parser()
         config = args.config
-        clinvar_file = args.input
         analysis_id = args.name
 
         checkpath(config)
 
-        self.run(config, clinvar_file, analysis_id)
+        self.run(config, analysis_id)
 
         end = datetime.now()
         time = end - start
