@@ -1,6 +1,7 @@
 # test script
 import os
 import logging
+from Handlers.AlphaFoldHandler import AlphaFoldHandler
 from Handlers.SeqHandler import *
 from Handlers.ClinVarHandler import *
 from Handlers.BLASTHandler import *
@@ -22,9 +23,9 @@ vep_output = './data/vep/vep_vus_results.tsv'
 # seqHandler = SeqHandler(gene_file, seq_dir)
 # clinvarHandler = ClinVarHandler()
 # blastHandler = BLASTHandler(blast_input, blast_output)
-caddHandler = CADDHandler(cadd_input, cadd_output)
+# caddHandler = CADDHandler(cadd_input, cadd_output)
 # vepHandler = VEPHandler(vep_input, vep_output)
-# versus = VersUS()
+versus = VersUS()
 
 # print('---------- read Gene File ----------')
 # genes_dict = seqHandler.readHumanGenesEC()
@@ -87,15 +88,15 @@ caddHandler = CADDHandler(cadd_input, cadd_output)
 # vus_blast_path = './data/VUS_with_blast.tsv'
 # versus.write_to_tsv(vus_dict, header, vus_blast_path)
 
-print('********** read TSV **********')
-tsv_path = './data/VUS_with_blast.tsv'
-vus_dict = read_tsv_to_dict(tsv_path)
-print(f'The number of VUS: {len(vus_dict)}')
-print(vus_dict[0])
+# print('********** read TSV **********')
+# tsv_path = './data/VUS_with_blast.tsv'
+# vus_dict = read_tsv_to_dict(tsv_path)
+# print(f'The number of VUS: {len(vus_dict)}')
+# print(vus_dict[0])
 
-print('---------- make_tsv_for_CADD ----------')
-caddHandler.make_tsv_for_CADD(vus_dict)
-print('Done')
+# print('---------- make_tsv_for_CADD ----------')
+# caddHandler.make_tsv_for_CADD(vus_dict)
+# print('Done')
 
 # print('---------- get CADD scores from its website ----------')
 # cadd_results = '/Users/moon/DePauw/ITAP/ClinvarSorting/data/CADD/GRCh38-v1.4.tsv.gz'
@@ -140,37 +141,15 @@ print('Done')
 # vus_blast_cadd_path = './data/VUS_with_blast_cadd_vep.tsv'
 # versus.write_to_tsv(vus_dict, header, vus_blast_cadd_path)
 
+print('********** read TSV **********')
+tsv_path = '../results/vus-06132021.tsv'
+vus_dict = read_tsv_to_dict(tsv_path)
+print(f'The number of VUS: {len(vus_dict)}')
+# print(vus_dict[0])
 
-# logger = logging.getLogger('test_logger')
-# logger.setLevel(logging.DEBUG)
-# fh = logging.FileHandler('test.log')
-# fh.setLevel(logging.DEBUG)
-# fh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s %(funcName)s : %(message)s')
-# fh.setFormatter(fh_formatter)
-# # creates a file handler that logs messages above INFO level 
-# sh = logging.StreamHandler()
-# sh.setLevel(logging.DEBUG)
-# sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s : %(message)s', '%Y-%m-%d %H:%M:%S')
-# sh.setFormatter(sh_formatter)
-# # add the handlers to logger
-# logger.addHandler(fh)
-# logger.addHandler(sh)
-
-# logger.debug('What up, this is DEBUG')
-# logger.info('Hi, this is INFO')
-# logger.warning('Well, this is WARNING')
-
-# from test2 import log
-
-# log()
-
-# blast_input = './data/blast/vus_blast.fasta'
-# blast_output = './data/blast/blast_result_short.xml'
-# blastHandler = BLASTHandler(blast_path, blast_input, blast_output)
-# blast_results = blastHandler.readBlastXML()
-# print(blast_results)
-
-# cadd_input = os.path.abspath('./data/CADD/CADD_sample_input.vcf')
-# cadd_output = os.path.abspath('./data/CADD/CADD_sample_output.vcf')
-# caddHandler = CADDHandler(cadd_input, cadd_output)
-# caddHandler.get_CADD_scores()
+print('---------- AlphaFold Link Check ----------')
+afhandler = AlphaFoldHandler()
+vus_dict = afhandler.run(vus_dict)
+header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to', 'alphafold')
+vus_output = './data/VersUS_alphafold.tsv'
+versus.write_to_tsv(vus_dict, header, vus_output)
