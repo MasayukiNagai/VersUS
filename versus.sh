@@ -8,6 +8,7 @@ mkdir -p $pwd/data/proteomes
 # Download the ClinVarVariationRelease.xml.gz
 cd $pwd/data
 wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/ClinVarVariationRelease_00-latest.xml.gz
+gunzip ./ClinVarVariationRelease_00-latest.xml.gz
 
 # Download the fasta sequences
 cd $pwd/data/proteomes
