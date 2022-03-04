@@ -23,8 +23,6 @@ class VersUS:
         parser = argparse.ArgumentParser()
         parser.add_argument('--config', '-c', type=str, required=True,
                             dest='config', help='Required; Specify a config file.')
-        parser.add_argument('--input', '-i', type=str, required=True,
-                            dest='input', help='Required; Specify a ClinVarVariation xml file.')
         parser.add_argument('--name', '-n', type=str, required=True,
                             dest='name', help='Required; Specify analysis-ID that is added to the end of outputs.')
         args = parser.parse_args()
