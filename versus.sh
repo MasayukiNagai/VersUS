@@ -14,7 +14,7 @@ gunzip ./ClinVarVariationRelease_00-latest.xml.gz
 cd $pwd/data/proteomes
 for i in {1..100}
 do
-   wget https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/mRNA_Prot/human.$i.protein.faa.gz
+   echo "wget https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/mRNA_Prot/human.$i.protein.faa.gz"
 done
 
 # Download the tsv file of a list of human enzymes from Uniprot
@@ -23,7 +23,7 @@ done
 
 ### Execute the VersUS
 cd $pwd/src
-python VersUS.py -i config.conf -n $TIMESTAMP
+python VersUS.py -c config.conf -n $TIMESTAMP
 
 ### Register the output to the MySQL database
 # pythoh versusDBsql.py ...
