@@ -21,7 +21,8 @@ done
 # python getHumanEnzymesFromUniprot.py
 
 ### Execute the VersUS
-python VersUS.py -i $PWD/config.conf -n $TIMESTAMP
+cd $PWD
+python ./src/VersUS.py -i ./config.conf -n $TIMESTAMP
 
 ### Register the output to the MySQL database
 # pythoh versusDBsql.py ...
