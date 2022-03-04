@@ -1,27 +1,27 @@
 #!/bin/sh
 TIMESTAMP=`date "+%Y%m%d"`
 
-PWD=`pwd`
-mkdir -p $PWD/data/proteomes
+pwd=`pwd`
+mkdir -p $pwd/data/proteomes
 
 ### Prepare input files
 # Download the ClinVarVariationRelease.xml.gz
-cd $PWD/data
+cd $pwd/data
 wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/ClinVarVariationRelease_00-latest.xml.gz
 
 # Download the fasta sequences
-cd $PWD/data/fasta
+cd $pwd/data/proteomes
 for i in {1..100}
 do
    wget https://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/mRNA_Prot/human.$i.protein.faa.gz
 done
 
 # Download the tsv file of a list of human enzymes from Uniprot
-# cd $PWD/data
+# cd $pwd/data
 # python getHumanEnzymesFromUniprot.py
 
 ### Execute the VersUS
-cd $PWD/src
+cd $pwd/src
 python VersUS.py -i config.conf -n $TIMESTAMP
 
 ### Register the output to the MySQL database
