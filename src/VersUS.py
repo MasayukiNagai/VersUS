@@ -61,8 +61,8 @@ class VersUS:
         blast = os.path.abspath(conf_dict['blast']) if conf_dict['blast'] != 'None' else None
         vep = os.path.abspath(conf_dict['vep']) if conf_dict['vep'] != 'None' else None
         cadd = True if conf_dict['cadd'] == 'True' else False
-        for path in [genes, proteomes, blast, vep]:
-            if path != None:
+        for path in [clinvar_file, genes, proteomes, blast, vep]:
+            if path is not None:
                 checkpath(path)
 
         # create correpsonding directories
