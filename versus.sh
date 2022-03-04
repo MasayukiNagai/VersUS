@@ -2,7 +2,7 @@
 TIMESTAMP=`date "+%Y%m%d"`
 
 PWD=`pwd`
-mkdir -p $PWD/data/fasta
+mkdir -p $PWD/data/proteomes
 
 ### Prepare input files
 # Download the ClinVarVariationRelease.xml.gz
