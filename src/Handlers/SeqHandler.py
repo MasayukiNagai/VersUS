@@ -1,4 +1,5 @@
 import os
+import gzip
 from Bio import Entrez
 from Bio import SeqIO
 from logging import getLogger
@@ -49,11 +50,12 @@ class SeqHandler:
     def make_seq_dict(self):
         self.logger.debug(f'Open sequence files')
         ct_np = 0
-        for root, d_names, file_names in os.walk(self.proteomes_dir):
+        for root, _, file_names in os.walk(self.proteomes_dir):
             for filename in file_names:
                 fname = os.path.join(root, filename)
-                for record in SeqIO.parse(fname, 'fasta'):
-                    self.seq_dict[record.id] = str(record.seq)
+                with gzip.open(fname, 'r') as handle:
+                    for record in SeqIO.parse(handle, 'fasta'):
+                        self.seq_dict[record.id] = str(record.seq)
         self.logger.debug(f'Finish storing {len(self.seq_dict)} sequences')
         # print(f'The number of np found in the files: {ct_np}')
         return self.seq_dict
