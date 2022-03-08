@@ -1,4 +1,5 @@
 from lxml import etree
+import gzip
 from datetime import datetime
 from logging import getLogger
 
@@ -12,7 +13,7 @@ class ClinVarHandler:
     def __init__(self, clinvar_variation):
         self.clinvar_variation = clinvar_variation
         self.logger = getLogger('versus_logger').getChild(__name__)
-    
+
 
     class VariationHandler(object):
         def __init__(self, gene_set):
@@ -42,7 +43,7 @@ class ClinVarHandler:
             self.is_not_provided = False
 
             self.tag_stack = []
-            
+
             self.ct_var = 0
             self.ct_missense_and_type_to_get = 0
             self.ct_uncertain_var = 0
@@ -52,14 +53,14 @@ class ClinVarHandler:
         def start(self, tag, attrs):
             self.tag_stack.append(tag)
             if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
-                self.is_var_type_to_get = True  
+                self.is_var_type_to_get = True
                 # self.clinvar_acc = attrs.get('Accession')
                 self.clinvar_acc = attrs.get('VariationID')
             if self.is_var_type_to_get:
                 if tag == 'Gene' and self.is_first_gene_tag == True:
                     self.gene_symbol = attrs.get('Symbol')
                     self.gene_name = attrs.get('FullName')
-                    self.is_first_gene_tag = False  
+                    self.is_first_gene_tag = False
                 elif tag == 'SequenceLocation' and 'GeneList' not in self.tag_stack:
                     if attrs.get('Assembly') == 'GRCh38':
                         self.chr = attrs.get('Chr')
@@ -71,13 +72,13 @@ class ClinVarHandler:
                     np_acc = attrs.get('sequenceAccessionVersion')
                     if (np_acc is not None) and np_acc.startswith('NP'):
                         self.np_acc = np_acc
-                        self.change = attrs.get('change') 
-                        self.has_np_yet = True  
+                        self.change = attrs.get('change')
+                        self.has_np_yet = True
                 elif tag == 'MolecularConsequence' and self.has_np_yet == True and self.has_mut_type_yet == False:
                     if (attrs.get('Type') is not None) and 'missense' in attrs.get('Type').lower():
                         self.is_missense = True
                         self.ct_missense_and_type_to_get += 1
-                    self.has_mut_type_yet = True  
+                    self.has_mut_type_yet = True
 
         def end(self, tag):
             self.tag_stack.pop()
@@ -149,10 +150,10 @@ class ClinVarHandler:
                 self.ct_var += 1
                 if self.ct_var % 100000 == 0:
                     print(f'{self.ct_var} variations have been processed')
-        
+
         def data(self, data):
             if 'Interpretations' in self.tag_stack and 'Interpretation' in self.tag_stack and 'Description' in self.tag_stack and 'DescriptionHistory' not in self.tag_stack:
-                self.interpretation = data  # needs to check this part 
+                self.interpretation = data  # needs to check this part
 
         def close(self):
             self.logger.info(f'Finish parsing ClinvarVariaiton\n\
@@ -171,7 +172,8 @@ class ClinVarHandler:
         self.logger.info('Start parcing ClinvarVariationsRelease')
         start = datetime.now()
         parser = etree.XMLParser(target=self.VariationHandler(gene_set))
-        vus_dict = etree.parse(self.clinvar_variation, parser)
+        with gzip.open(self.clinvar_variation, 'rt') as handle:
+            vus_dict = etree.parse(handle, parser)
         end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
@@ -186,7 +188,7 @@ class ClinVarHandler:
     #         self.accession = accession
     #         self.ct = 0
     #         print("Accession:" + self.accession)
-            
+
     #     def start(self, tag, attrs):
     #         global WFILE
     #         if (tag == 'VariationArchive') and (attrs.get('Accession') == self.accession):
@@ -195,7 +197,7 @@ class ClinVarHandler:
     #         if self.is_accession:
     #             if len(attrs.keys()) == 0:
     #                 WFILE.write('<' + tag)
-    #             else:   
+    #             else:
     #                 for i, t in enumerate(attrs.keys()):
     #                     if i == 0:
     #                         WFILE.write('<' + tag + ' ')
@@ -204,7 +206,7 @@ class ClinVarHandler:
     #                     else:
     #                         WFILE.write(t + '="' + attrs.get(t) + '"')
     #             WFILE.write('>')
-                
+
     #     def end(self, tag):
     #         global WFILE
     #         if self.is_accession:
@@ -217,13 +219,13 @@ class ClinVarHandler:
     #             self.is_accession = False
     #             WFILE.close()
     #             print('The subnode file is completed')
-                
+
     #     def data(self, data):
     #         global WFILE
     #         if data is not None:
     #             if self.is_accession and data != "":
     #                 WFILE.write(data)
-                
+
     #     def close(self):
     #         print('The xml file is closed')
 
@@ -235,9 +237,8 @@ class ClinVarHandler:
     #     parser = etree.XMLParser(target=self.VariationHandlerSpecific(accession))
     #     etree.parse(self.clinvar_variation, parser)
 
-    
+
     def run(self, genes_dict):
         vus_dict = self.readClinVarVariationsXML(genes_dict)
         self.logger.info('Finish processing the ClinVarVariationRelease')
         return vus_dict
-        
