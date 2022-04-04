@@ -1,11 +1,32 @@
 import mysql.connector
+import argparse
+import os
+import sys
+import gzip
+from Bio import SeqIO
 
-aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys', 
-                   'E': 'Glu', 'Q': 'Gln', 'G': 'Gly', 'H': 'His', 'I': 'Ile', 
-                   'L': 'Leu', 'K': 'Lys', 'M': 'Met', 'F': 'Phe', 'P': 'Pro', 
+aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys',
+                   'E': 'Glu', 'Q': 'Gln', 'G': 'Gly', 'H': 'His', 'I': 'Ile',
+                   'L': 'Leu', 'K': 'Lys', 'M': 'Met', 'F': 'Phe', 'P': 'Pro',
                    'S': 'Ser', 'T': 'Thr', 'W': 'Trp', 'Y': 'Tyr', 'V': 'Val'}
 
 cinvar_link_variation = 'https://www.ncbi.nlm.nih.gov/clinvar/variation/'
+
+
+def argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--input', '-i', type=str, required=True, dest='vus',
+        help='Required; Specify a VUS file (tsv).')
+    parser.add_argument(
+        '--ec', '-e', type=str, required=True, dest='ec',
+        help='Required; Specify an ec file (txt).')
+    parser.add_argument(
+        '--fasta', '-f', type=str, required=True, dest='fasta',
+        help='Required; Specify a direcotry path to fasta.')
+    args = parser.parse_args()
+    return args
+
 
 class DataBaseEditor:
     def __init__(self, user, passwd, dbname):
@@ -16,12 +37,12 @@ class DataBaseEditor:
         self.gene_table = 'Gene'
         self.mutation_table = 'Mutation'
         self.ec_table = 'Enzyme_class'
+        self.fasta_table = 'Fasta'
         # self.clinical_significance = 'Clinical_Significane'
         # self.pdb = 'PDB'
         self.gene_id = 0
         self.mutation_id = 0
 
-    
     def prepare(self):
         self.cnx = mysql.connector.connect(
             host=self.host,
@@ -30,12 +51,10 @@ class DataBaseEditor:
             database=self.dbname
         )
         self.cur = self.cnx.cursor()
-    
-    
+
     def close(self):
         self.cur.close()
         self.cnx.close()
-
 
     def create_table(self, table_name, name_type_dict):
         query1 = 'CREATE TABLE IF NOT EXISTS ' + table_name + ' ('
@@ -47,22 +66,21 @@ class DataBaseEditor:
         query = query1 + body + query2
         self.cur.execute(query)
 
-    
     def create_gene_table(self):
-        nn = 'NOT NULL'
+        nn = ' NOT NULL'
         name_type_dict = {'gene_id': 'SERIAL PRIMARY KEY',
-                          'gene_symbol': 'VARCHAR(10) ' + nn,
-                          'gene_full_name': 'VARCHAR(255) ' + nn,
+                          'gene_symbol': 'VARCHAR(10)' + nn,
+                          'gene_full_name': 'VARCHAR(255)' + nn,
                           'uniprot_id': 'VARCHAR(20)' + nn,
-                          'chrom': 'VARCHAR(20) ' + nn,
-                          'EC_number': 'VARCHAR(100) ' + nn,
-                          'ec_1': 'INT ' + nn, 
+                          'NP_accession': 'VARCHAR(20)' + nn,
+                          'chrom': 'VARCHAR(20)' + nn,
+                          'EC_number': 'VARCHAR(100)' + nn,
+                          'ec_1': 'INT' + nn,
                           'ec_2': 'INT', 'ec_3': 'INT', 'ec_4': 'INT',
                           'EC_number2': 'VARCHAR(100)',
-                          'ec2_1': 'INT', 
+                          'ec2_1': 'INT',
                           'ec2_2': 'INT', 'ec2_3': 'INT', 'ec2_4': 'INT'}
         self.create_table(self.gene_table, name_type_dict)
-    
 
     def create_mutation_table(self):
         nn = ' NOT NULL'
@@ -73,10 +91,10 @@ class DataBaseEditor:
                           'clinical_significance': 'VARCHAR(255)' + nn,
                           'CADD_score': 'FLOAT',
                           'gnomAD_AF': 'FLOAT',
-                          'pdb': 'VARCHAR(20)'}
+                          'pdb': 'VARCHAR(20)',
+                          'fasta_id': 'INT'}  # nn?
         self.create_table(self.mutation_table, name_type_dict)
 
-    
     def create_ec_table(self):
         nn = ' NOT NULL'
         name_type_dict = {'ec_id': 'SERIAL PRIMARY KEY',
@@ -87,6 +105,12 @@ class DataBaseEditor:
                           'ec_2': 'INT', 'ec_3': 'INT', 'ec_4': 'INT'}
         self.create_table(self.ec_table, name_type_dict)
 
+    def create_fasta_table(self):
+        nn = ' NOT NULL'
+        name_type_dict = {'fasta_id': 'SERIAL PRIMARY KEY',
+                          'NP_accession': 'VARCHAR(20)' + nn,
+                          'fasta': 'TEXT' + nn}
+        self.create_table(self.fasta_table, name_type_dict)
 
     def create_all_tables(self):
         # connect to mysql database
@@ -98,11 +122,9 @@ class DataBaseEditor:
         # close connection
         self.close()
 
-
     def drop_table(self, table_name):
         query = 'DROP TABLE IF EXISTS ' + table_name
         self.cur.execute(query)
-
 
     def drop_all_tables(self):
         # connect to mysql database
@@ -114,7 +136,6 @@ class DataBaseEditor:
         print('---------- Dropped all tables ----------')
         # close connection
         self.close()
-    
 
     # def insert_items(self, table, keytup, values_tuplist):
     #     query1 = 'INSERT INTO ' + table + ' '
@@ -128,7 +149,6 @@ class DataBaseEditor:
     #     print(query)
     #     self.cur.execute(query)
     #     self.cnx.commit()
-    
 
     def insert_items(self, table, keytup, values_tuplist):
         query1 = 'INSERT INTO ' + table + ' '
@@ -143,8 +163,7 @@ class DataBaseEditor:
         print(query)
         # print(values_tuplist)
         self.cur.executemany(query, values_tuplist)
-        self.cnx.commit() 
-
+        self.cnx.commit()
 
     def str_editor(self, strings):
         # if strings == 'NULL' or strings == 'null':
@@ -157,15 +176,13 @@ class DataBaseEditor:
             return None
         else:
             return str(strings)
-    
 
     def get_tuplist_for_gene(self, keytup, gene_dict):
         tuplist = []
         for gene_id in gene_dict.keys():
             tup = tuple([self.str_editor(gene_dict[gene_id][key]) for key in keytup])
-            tuplist.append(tup)   
+            tuplist.append(tup)
         return tuplist
-
 
     def get_tuplist_for_mut(self, keytup, mutation_dict):
         tuplist = []
@@ -175,7 +192,6 @@ class DataBaseEditor:
                 tuplist.append(tup)
         return tuplist
 
-    
     def get_tuplist_for_ec(self, keytup, ec_dict):
         tuplist = []
         for ec_number, item in ec_dict.items():
@@ -183,6 +199,12 @@ class DataBaseEditor:
             tuplist.append(tup)
         return tuplist
 
+    def get_tuplist_for_fasta(self, keytup, fasta_dict):
+        tuplist = []
+        for np_accession, fasta in fasta_dict.items():
+            tup = tuple([np_accession, self.str_editor(fasta)])
+            tuplist.append(tup)
+        return tuplist
 
     def register_vus(self, vus_tsv):
         vus_dictlist = self.parse_vus_data(vus_tsv)
@@ -190,7 +212,6 @@ class DataBaseEditor:
         self.add_index_gene()
         self.register_mutations(vus_dictlist)
         self.add_index_mutation()
-
 
     def register_genes(self, vus_dictlist):
         gene_dict = dict()
@@ -202,12 +223,11 @@ class DataBaseEditor:
                                                   'chrom': vus_dict['chr']}
                 ec_dict = self.get_ec_info(vus_dict['EC_number'])
                 gene_dict[vus_dict['gene_id']].update(ec_dict)
-        keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom', 
+        keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom',
                   'EC_number', 'ec_1', 'ec_2', 'ec_3', 'ec_4',
                   'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4')
         gene_values = self.get_tuplist_for_gene(keytup, gene_dict)
         self.insert_items(self.gene_table, keytup, gene_values)
-
 
     def get_ec_info(self, ec_number):
         ec_numbers = ec_number.split(';')
@@ -232,7 +252,6 @@ class DataBaseEditor:
                    'EC_number2': ec2, 'ec2_1': ec2_1, 'ec2_2': ec2_2, 'ec2_3': ec2_3, 'ec2_4': ec2_4}
         return ec_dict
 
-    
     def is_integer(self, n):
         try:
             int(n)
@@ -241,62 +260,81 @@ class DataBaseEditor:
         else:
             return True
 
-
     def register_mutations(self, vus_dictlist):
         mutation_dict = dict()
         for vus_dict in vus_dictlist:
             if vus_dict['gene_id'] not in mutation_dict.keys():
                 mutation_dict[vus_dict['gene_id']] = []
-            mutation_dict[vus_dict['gene_id']].append(self.make_mut_dict(vus_dict))
-        keytup = ('gene_id', 'ref_pos_alt', 'clinvar_link', 'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb')
+            mut_entry = self.make_mut_dict(vus_dict)
+            mutation_dict[vus_dict['gene_id']].append(mut_entry)
+        keytup = ('gene_id', 'ref_pos_alt', 'clinvar_link',
+                  'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
+                  'fasta_id')
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
         self.insert_items(self.mutation_table, keytup, vus_values)
 
-
     def make_mut_dict(self, vus_dict):
         gene_id = self.get_gene_id(vus_dict['gene_id'])
+        fasta_id = self.get_fasta_id(vus_dict['NP_accession'])
         ref_pos_alt = vus_dict['missense_variation']
         # ref_pos_alt = aaMapOneToThree(vus_dict['ref']) + vus_dict['pos'] +  aaMapOneToThree(vus_dict['alt'])
         clinvar_link = cinvar_link_variation + vus_dict['ClinVar_accession']
         mut = {'gene_id': gene_id,
-               'ref_pos_alt': ref_pos_alt, 
+               'ref_pos_alt': ref_pos_alt,
                'clinvar_link': clinvar_link,
                'clinical_significance': vus_dict['clinical_significance'],
                'CADD_score': vus_dict['CADD_score'],
                'gnomAD_AF': vus_dict['gnomAD_AF'],
-               'pdb': vus_dict['pdb_ID']}
+               'pdb': vus_dict['pdb_ID'],
+               'fasta_id': fasta_id}
         return mut
 
-    
     def get_gene_id(self, gene_name):
         query = 'SELECT gene_id FROM ' + self.gene_table\
                + ' WHERE gene_symbol = ' + '%s'
         self.cur.execute(query, (gene_name,))
         gene_id_list = self.cur.fetchall()
-        assert len(gene_id_list) == 1, f'"{gene_name}" does not exist in Gene table or the Table may have duplicates'
+        assert len(gene_id_list) == 1, \
+            f'"{gene_name}" does not exist in Gene table or the Table may have duplicates'
         gene_id = gene_id_list[0][0]
         return gene_id
 
-    
+    def get_fasta_id(self, NP_accession):
+        query = 'SELECT fasta_id FROM ' + self.fasta_table\
+               + ' WHERE NP_accession = ' + '%s'
+        self.cur.execute(query, (NP_accession,))
+        fasta_ids = self.cur.fetchall()
+        assert len(fasta_ids) == 1,\
+            f'"{NP_accession}" does not exist in Gene table or the Table may have duplicates'
+        fasta_id = fasta_ids[0][0]
+        return fasta_id
+
     def register_ec(self, ec_file):
         ec_dict = self.parse_EC_numbers(ec_file)
         self.register_ec_numbers(ec_dict)
-
 
     def register_ec_numbers(self, ec_dict):
         keytup = ('ec_number', 'description', 'class', 'ec_1', 'ec_2', 'ec_3', 'ec_4')
         ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
         self.insert_items(self.ec_table, keytup, ec_values)
 
-        
+    def register_fasta(self, fasta_dirpath):
+        fasta_dict = self.parse_fasta(fasta_dirpath)
+        keytup = ('NP_accession', 'fasta')
+        fasta_values = self.get_tuplist_for_fasta(keytup, fasta_dict)
+        self.insert_items(self.fasta_table, keytup, fasta_values)
+        self.add_index_fasta()
+
     def add_index_gene(self):
         query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_symbol, gene_id);'
-
 
     def add_index_mutation(self):
         query = f'ALTER TABLE {self.mutation_table} ADD INDEX gene_cadd_idx(gene_id, CADD_score DESC);'
         self.cur.execute(query)
 
+    def add_index_fasta(self):
+        query = f'ALTER TABLE {self.fasta_table} ADD INDEX np_fasta_idx(NP_accession, fasta_id);'
+        self.cur.execute(query)
 
     def parse_vus_data(self, vus_tsv):
         with open(vus_tsv, 'r') as f:
@@ -317,14 +355,12 @@ class DataBaseEditor:
                 vus_dictlist.append(vus_dict)
         return vus_dictlist
 
-    
     def map_aa_one_to_three(self, missense):
         ref = aaMapOneToThree[missense[0]]
         alt = aaMapOneToThree[missense[-1]]
         pos = missense[1:-1]
         return ref + pos + alt
-            
-    
+
     def parse_EC_numbers(self, ec_file):
         ec_dict = {}
         with open(ec_file, 'r') as f:
@@ -342,6 +378,17 @@ class DataBaseEditor:
                 ec_4 = int(ec_levels[3]) if class_level > 3 else None
                 ec_dict[ec] = {'description': desc, 'class': class_level, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4}
         return ec_dict
+
+    def parse_fasta(self, fasta_dirpath):
+        fasta_dict = {}
+        for root, _, file_names in os.walk(fasta_dirpath):
+            for filename in file_names:
+                fname = os.path.join(root, filename)
+                with gzip.open(fname, 'r') as handle:
+                    for record in SeqIO.parse(handle, 'fasta'):
+                        fasta_dict[record.id] = str(record.seq)
+        print(f'Finish processing {len(fasta_dict)} sequences.')
+        return fasta_dict
 
 
 def test():
@@ -370,9 +417,17 @@ def test():
     # ec_dict2 = DBE.parse_EC_class(ec_class)
     DBE.register_ec_numbers(ec_dict)
     DBE.close()
-    
+
 
 def main():
+    args = argument_parser()
+    vus_file = args.vus
+    ec_file = args.ec
+    fasta_dirpath = args.fasta
+    for f in [vus_file, ec_file]:
+        if not os.path.exists(f):
+            sys.exit(f'Error: Cannot find "{f}"')
+
     user = 'test_user'
     password = 'test_password'
     dbname = 'versus_db'
@@ -382,9 +437,8 @@ def main():
     DBE.create_all_tables()
 
     DBE.prepare()
-    vus_file = '/Users/moon/DePauw/ITAP/VersUS/results/vus-06132021.tsv'
+    DBE.register_fasta(fasta_dirpath)
     DBE.register_vus(vus_file)
-    ec_file = '/Users/moon/DePauw/ITAP/VersUS/ecNumbersHTML.txt'
     DBE.register_ec(ec_file)
     DBE.close()
 
