@@ -151,6 +151,7 @@ class DataBaseEditor:
         self.drop_table(self.gene_table)
         self.drop_table(self.mutation_table)
         self.drop_table(self.ec_table)
+        self.drop_table(self.fasta_table)
         print('---------- Dropped all tables ----------')
         # close connection
         self.close()
@@ -211,6 +212,13 @@ class DataBaseEditor:
             tuplist.append(tup)
         return tuplist
 
+    def register_entries(self):
+        self.prepare()
+        self.register_fasta(self.fasta)
+        self.register_vus(self.vus)
+        self.register_ec(self.ec)
+        self.close()
+
     def register_vus(self, vus_tsv):
         vus_dictlist = self.parse_vus_data(vus_tsv)
         self.register_genes(vus_dictlist)
@@ -264,13 +272,6 @@ class DataBaseEditor:
             return False
         else:
             return True
-
-    def register_entries(self):
-        self.prepare()
-        self.register_fasta(self.fasta)
-        self.register_vus(self.vus)
-        self.register_ec(self.ec)
-        self.close()
 
     def register_mutations(self, vus_dictlist):
         mutation_dict = dict()
