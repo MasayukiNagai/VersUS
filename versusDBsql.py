@@ -136,6 +136,7 @@ class DataBaseEditor:
         self.create_gene_table()
         self.create_mutation_table()
         self.create_ec_table()
+        self.create_fasta_table()
         # close connection
         self.close()
 
@@ -338,6 +339,7 @@ class DataBaseEditor:
 
     def add_index_gene(self):
         query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_symbol, gene_id);'
+        self.cur.execute(query)
 
     def add_index_mutation(self):
         query = f'ALTER TABLE {self.mutation_table} ADD INDEX gene_cadd_idx(gene_id, CADD_score DESC);'
@@ -395,7 +397,7 @@ class DataBaseEditor:
         for root, _, file_names in os.walk(fasta_dirpath):
             for filename in file_names:
                 fname = os.path.join(root, filename)
-                with gzip.open(fname, 'r') as handle:
+                with gzip.open(fname, 'rt') as handle:
                     for record in SeqIO.parse(handle, 'fasta'):
                         fasta_dict[record.id] = str(record.seq)
         print(f'Finish processing {len(fasta_dict)} sequences.')
