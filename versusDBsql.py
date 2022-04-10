@@ -55,7 +55,7 @@ class DataBaseEditor:
         conf.optionxform = str
         conf.read(self.args.conf, 'UTF-8')
         self.settings = dict(conf.items('settings'))
-        self.host = self.settings['localhost']
+        self.host = self.settings['host']
         self.user = self.settings['user']
         self.passwd = self.settings['passwd']
         self.dbname = self.settings['dbname']
