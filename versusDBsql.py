@@ -1,5 +1,6 @@
 import mysql.connector
 import argparse
+import configparser
 import os
 import sys
 import gzip
@@ -13,27 +14,9 @@ aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys',
 cinvar_link_variation = 'https://www.ncbi.nlm.nih.gov/clinvar/variation/'
 
 
-def argument_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--input', '-i', type=str, required=True, dest='vus',
-        help='Required; Specify a VUS file (tsv).')
-    parser.add_argument(
-        '--ec', '-e', type=str, required=True, dest='ec',
-        help='Required; Specify an ec file (txt).')
-    parser.add_argument(
-        '--fasta', '-f', type=str, required=True, dest='fasta',
-        help='Required; Specify a direcotry path to fasta.')
-    args = parser.parse_args()
-    return args
-
-
 class DataBaseEditor:
-    def __init__(self, user, passwd, dbname):
-        self.host = 'localhost'
-        self.user = user
-        self.passwd = passwd
-        self.dbname = dbname
+    def __init__(self):
+        self.argument_parser()
         self.gene_table = 'Gene'
         self.mutation_table = 'Mutation'
         self.ec_table = 'Enzyme_class'
@@ -42,6 +25,40 @@ class DataBaseEditor:
         # self.pdb = 'PDB'
         self.gene_id = 0
         self.mutation_id = 0
+
+    def argument_parser(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            '--config', '-c', type=str, required=True, dest='conf',
+            help='Required; Specify a config file (txt).')
+        parser.add_argument(
+            '--input', '-i', type=str, required=True, dest='vus',
+            help='Required; Specify a VUS file (tsv).')
+        parser.add_argument(
+            '--ec', '-e', type=str, required=True, dest='ec',
+            help='Required; Specify an ec file (txt).')
+        parser.add_argument(
+            '--fasta', '-f', type=str, required=True, dest='fasta',
+            help='Required; Specify a direcotry path to fasta.')
+        self.args = parser.parse_args()
+        self.vus = self.args.vus
+        self.fasta = self.args.fasta
+        self.ec = self.args.ec
+
+    def check_infiles(self):
+        for f in [self.vus, self.fasta, self.ec]:
+            if not os.path.exists(f):
+                sys.exit(f'Error: Cannot find "{f}"')
+
+    def parse_config(self):
+        conf = configparser.ConfigParser()
+        conf.optionxform = str
+        conf.read(self.args.conf, 'UTF-8')
+        self.settings = dict(conf.items('settings'))
+        self.host = self.settings['localhost']
+        self.user = self.settings['user']
+        self.passwd = self.settings['passwd']
+        self.dbname = self.settings['dbname']
 
     def prepare(self):
         self.cnx = mysql.connector.connect(
@@ -136,19 +153,6 @@ class DataBaseEditor:
         print('---------- Dropped all tables ----------')
         # close connection
         self.close()
-
-    # def insert_items(self, table, keytup, values_tuplist):
-    #     query1 = 'INSERT INTO ' + table + ' '
-    #     body1 = '(' + ', '.join(keytup) + ') VALUES '
-    #     values_query_list = []
-    #     for values in values_tuplist:
-    #         val_q = '(' + ', '.join(values) + ')'
-    #         values_query_list.append(val_q)
-    #     body2 = ', '.join(values_query_list) + ';'
-    #     query = query1 + body1 + body2
-    #     print(query)
-    #     self.cur.execute(query)
-    #     self.cnx.commit()
 
     def insert_items(self, table, keytup, values_tuplist):
         query1 = 'INSERT INTO ' + table + ' '
@@ -259,6 +263,13 @@ class DataBaseEditor:
             return False
         else:
             return True
+
+    def register_entries(self):
+        self.prepare()
+        self.register_fasta(self.fasta)
+        self.register_vus(self.vus)
+        self.register_ec(self.ec)
+        self.close()
 
     def register_mutations(self, vus_dictlist):
         mutation_dict = dict()
@@ -390,57 +401,45 @@ class DataBaseEditor:
         print(f'Finish processing {len(fasta_dict)} sequences.')
         return fasta_dict
 
+    def run(self):
+        self.check_infiles()
+        self.parse_config()
+        self.drop_all_tables()
+        self.create_all_tables()
+        self.register_entries()
 
-def test():
-    user = 'test_user'
-    password = 'test_password'
-    dbname = 'versus_db'
-    DBE = DataBaseEditor(user, password, dbname)
-    DBE.prepare()
-    # DBE.create_gene_table()
-    # DBE.create_mutation_table()
-    # path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
-    path = '/Users/moon/DePauw/ITAP/VersUS/src/results/VersUS-test.tsv'
-    vus_dictlist = DBE.parse_vus_data(path)
-    print(vus_dictlist)
-    breakpoint()
-    DBE.register_genes(vus_dictlist)
-    # gene_name = 'POLG'
-    # DBE.get_gene_id(gene_name)
-    # ec_subclass = '/Users/moon/DePauw/ITAP/VersUS/ec_subclass.dat'
-    # ec_class = '/Users/moon/DePauw/ITAP/VersUS/ec_class.txt'
-    ec_file = '/Users/moon/DePauw/ITAP/VersUS/eCNumbersHTML_cleaned.txt'
-    # ec_file = '/Users/moon/DePauw/ITAP/VersUS/ec_exceptions.txt'
-    ec_dict = DBE.parse_EC_numbers(ec_file)
-    DBE.create_ec_table()
-    # ec_dict1 = DBE.parse_EC_subclass(ec_subclass)
-    # ec_dict2 = DBE.parse_EC_class(ec_class)
-    DBE.register_ec_numbers(ec_dict)
-    DBE.close()
+
+# def test():
+#     user = 'test_user'
+#     password = 'test_password'
+#     dbname = 'versus_db'
+#     DBE = DataBaseEditor(user, password, dbname)
+#     DBE.prepare()
+#     # DBE.create_gene_table()
+#     # DBE.create_mutation_table()
+#     # path = '/Users/moon/DePauw/ITAP/VersUS/result/VersUS.tsv'
+#     path = '/Users/moon/DePauw/ITAP/VersUS/src/results/VersUS-test.tsv'
+#     vus_dictlist = DBE.parse_vus_data(path)
+#     print(vus_dictlist)
+#     breakpoint()
+#     DBE.register_genes(vus_dictlist)
+#     # gene_name = 'POLG'
+#     # DBE.get_gene_id(gene_name)
+#     # ec_subclass = '/Users/moon/DePauw/ITAP/VersUS/ec_subclass.dat'
+#     # ec_class = '/Users/moon/DePauw/ITAP/VersUS/ec_class.txt'
+#     ec_file = '/Users/moon/DePauw/ITAP/VersUS/eCNumbersHTML_cleaned.txt'
+#     # ec_file = '/Users/moon/DePauw/ITAP/VersUS/ec_exceptions.txt'
+#     ec_dict = DBE.parse_EC_numbers(ec_file)
+#     DBE.create_ec_table()
+#     # ec_dict1 = DBE.parse_EC_subclass(ec_subclass)
+#     # ec_dict2 = DBE.parse_EC_class(ec_class)
+#     DBE.register_ec_numbers(ec_dict)
+#     DBE.close()
 
 
 def main():
-    args = argument_parser()
-    vus_file = args.vus
-    ec_file = args.ec
-    fasta_dirpath = args.fasta
-    for f in [vus_file, ec_file]:
-        if not os.path.exists(f):
-            sys.exit(f'Error: Cannot find "{f}"')
-
-    user = 'test_user'
-    password = 'test_password'
-    dbname = 'versus_db'
-    DBE = DataBaseEditor(user, password, dbname)
-
-    DBE.drop_all_tables()
-    DBE.create_all_tables()
-
-    DBE.prepare()
-    DBE.register_fasta(fasta_dirpath)
-    DBE.register_vus(vus_file)
-    DBE.register_ec(ec_file)
-    DBE.close()
+    DBE = DataBaseEditor()
+    DBE.run()
 
 
 if __name__ == '__main__':
