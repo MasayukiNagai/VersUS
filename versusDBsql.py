@@ -368,8 +368,8 @@ class DataBaseEditor:
                 data = line.rstrip().split('\t')
                 np_acc = data[6]
                 np_set.add(np_acc)
-        unfound_nps = set(fasta_dict.keys()) - np_set
-        print(f'unfound NP_accessions: {unfound_nps}')
+        unfound_nps = np_set - set(fasta_dict.keys())
+        print(f'"{len(unfound_nps)}" unfound NP_accessions: {unfound_nps}')
         comp_fasta_dict = self.fetch_seq(unfound_nps)
         keytup = ('NP_accession', 'fasta')
         fasta_values = self.get_tuplist_for_fasta(keytup, comp_fasta_dict)
