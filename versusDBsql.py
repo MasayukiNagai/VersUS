@@ -4,7 +4,7 @@ import configparser
 import os
 import sys
 import gzip
-from Bio import SeqIO
+from Bio import SeqIO, Entrez
 
 aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys',
                    'E': 'Glu', 'Q': 'Gln', 'G': 'Gly', 'H': 'His', 'I': 'Ile',
@@ -59,6 +59,7 @@ class DataBaseEditor:
         self.user = self.settings['user']
         self.passwd = self.settings['passwd']
         self.dbname = self.settings['dbname']
+        self.apikey = self.settings['apikey']
 
     def prepare(self):
         self.cnx = mysql.connector.connect(
@@ -178,7 +179,7 @@ class DataBaseEditor:
         if type(strings) is str:
             return strings
         elif strings is None:
-            return None
+            return 'NULL'
         else:
             return str(strings)
 
@@ -214,6 +215,7 @@ class DataBaseEditor:
     def register_entries(self):
         self.prepare()
         self.register_fasta(self.fasta)
+        self.register_fasta_fetched(self.vus)
         self.register_vus(self.vus)
         self.register_ec(self.ec)
         self.close()
@@ -316,9 +318,13 @@ class DataBaseEditor:
                + ' WHERE NP_accession = ' + '%s'
         self.cur.execute(query, (NP_accession,))
         fasta_ids = self.cur.fetchall()
-        assert len(fasta_ids) == 1,\
-            f'"{NP_accession}" does not exist in Gene table or the Table may have duplicates'
-        fasta_id = fasta_ids[0][0]
+        assert len(fasta_ids) <= 1,\
+            f'"{NP_accession}" may have duplicates.'
+        if len(fasta_ids) == 1:
+            fasta_id = fasta_ids[0][0]
+        else:
+            print(f'"{NP_accession}" does not have a corresponding seq.')
+            fasta_id = None
         return fasta_id
 
     def register_ec(self, ec_file):
@@ -330,10 +336,15 @@ class DataBaseEditor:
         ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
         self.insert_items(self.ec_table, keytup, ec_values)
 
-    def register_fasta(self, fasta_dirpath):
+    def register_fasta(self, fasta_dirpath, vus_tsv):
+        fasta_dict = self.register_fasta_from_files(fasta_dirpath)
+        self.register_fasta_from_fetched(fasta_dict, vus_tsv)
+        self.add_index_fasta()
+
+    def register_fasta_from_files(self, fasta_dirpath):
         fasta_dict = self.parse_fasta(fasta_dirpath)
         keytup = ('NP_accession', 'fasta')
-        fasta_values = self.get_tuplist_for_fasta(keytup, fasta_dict)
+        fasta_values = self.get_tuplist_for_fasta(keytup, self.fasta_dict)
         n = 10000
         chunks=[fasta_values[i:i + n] for i in range(0, len(fasta_values), n)]
         for chunk in chunks:
@@ -344,7 +355,25 @@ class DataBaseEditor:
                 self.close()
                 self.prepare()
                 self.insert_items(self.fasta_table, keytup, chunk)
-        self.add_index_fasta()
+        return fasta_dict
+
+    def register_fasta_from_fetched(self, fasta_dict, vus_tsv):
+        np_set = set()
+        with open(vus_tsv, 'r') as f:
+            header = f.readline().rstrip()
+            # keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+            # assert len(keys) == len(keytup)
+            assert header[6] == 'NP_accession',\
+                'Error: Confirm the column for "NP_accession"'
+            for line in f:
+                data = line.rstrip().split('\t')
+                np_acc = data[6]
+                np_set.add(np_acc)
+        unfound_nps = set(fasta_dict.keys()) - np_set
+        comp_fasta_dict = self.fetch_seq(unfound_nps)
+        keytup = ('NP_accession', 'fasta')
+        fasta_values = self.get_tuplist_for_fasta(keytup, comp_fasta_dict)
+        self.insert_items(self.fasta_table, keytup, fasta_values)
 
     def add_index_gene(self):
         query = f'ALTER TABLE {self.gene_table} ADD INDEX name_id_idx(gene_symbol, gene_id);'
@@ -410,6 +439,14 @@ class DataBaseEditor:
                     for record in SeqIO.parse(handle, 'fasta'):
                         fasta_dict[record.id] = str(record.seq)
         print(f'Finish processing {len(fasta_dict)} sequences.')
+        return fasta_dict
+
+    def fetch_seq(self, np_ls):
+        fasta_dict = {}
+        for np_num in np_ls:
+            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key=self.apikey)
+            seq_record = SeqIO.read(handle, 'fasta')
+            fasta_dict[np_num] = str(seq_record.seq)
         return fasta_dict
 
     def run(self):
