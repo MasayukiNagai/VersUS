@@ -359,14 +359,14 @@ class DataBaseEditor:
     def register_fasta_from_fetched(self, fasta_dict, vus_tsv):
         np_set = set()
         with open(vus_tsv, 'r') as f:
-            header = f.readline().rstrip()
+            header = f.readline().rstrip().split('\t')
             # keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
             # assert len(keys) == len(keytup)
-            assert header[5] == 'NP_accession',\
+            assert header[6] == 'NP_accession',\
                 'Error: Confirm the column for "NP_accession"'
             for line in f:
                 data = line.rstrip().split('\t')
-                np_acc = data[5]
+                np_acc = data[6]
                 np_set.add(np_acc)
         unfound_nps = set(fasta_dict.keys()) - np_set
         print(f'unfound NP_accessions: {unfound_nps}')
