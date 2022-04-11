@@ -89,7 +89,6 @@ class DataBaseEditor:
                           'gene_symbol': 'VARCHAR(10)' + nn,
                           'gene_full_name': 'VARCHAR(255)' + nn,
                           'uniprot_id': 'VARCHAR(20)' + nn,
-                          'NP_accession': 'VARCHAR(20)' + nn,
                           'chrom': 'VARCHAR(20)' + nn,
                           'EC_number': 'VARCHAR(100)' + nn,
                           'ec_1': 'INT' + nn,
@@ -335,7 +334,16 @@ class DataBaseEditor:
         fasta_dict = self.parse_fasta(fasta_dirpath)
         keytup = ('NP_accession', 'fasta')
         fasta_values = self.get_tuplist_for_fasta(keytup, fasta_dict)
-        self.insert_items(self.fasta_table, keytup, fasta_values)
+        n = 10000
+        chunks=[fasta_values[i:i + n] for i in range(0, len(fasta_values), n)]
+        for chunk in chunks:
+            try:
+                self.insert_items(self.fasta_table, keytup, chunk)
+            except:
+                print('Exception occured')
+                self.close()
+                self.prepare()
+                self.insert_items(self.fasta_table, keytup, chunk)
         self.add_index_fasta()
 
     def add_index_gene(self):
