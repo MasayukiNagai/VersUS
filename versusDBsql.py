@@ -214,8 +214,7 @@ class DataBaseEditor:
 
     def register_entries(self):
         self.prepare()
-        self.register_fasta(self.fasta)
-        self.register_fasta_fetched(self.vus)
+        self.register_fasta(self.fasta, self.vus)
         self.register_vus(self.vus)
         self.register_ec(self.ec)
         self.close()
@@ -344,7 +343,7 @@ class DataBaseEditor:
     def register_fasta_from_files(self, fasta_dirpath):
         fasta_dict = self.parse_fasta(fasta_dirpath)
         keytup = ('NP_accession', 'fasta')
-        fasta_values = self.get_tuplist_for_fasta(keytup, self.fasta_dict)
+        fasta_values = self.get_tuplist_for_fasta(keytup, fasta_dict)
         n = 10000
         chunks=[fasta_values[i:i + n] for i in range(0, len(fasta_values), n)]
         for chunk in chunks:
@@ -363,11 +362,11 @@ class DataBaseEditor:
             header = f.readline().rstrip()
             # keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
             # assert len(keys) == len(keytup)
-            assert header[6] == 'NP_accession',\
+            assert header[5] == 'NP_accession',\
                 'Error: Confirm the column for "NP_accession"'
             for line in f:
                 data = line.rstrip().split('\t')
-                np_acc = data[6]
+                np_acc = data[5]
                 np_set.add(np_acc)
         unfound_nps = set(fasta_dict.keys()) - np_set
         comp_fasta_dict = self.fetch_seq(unfound_nps)
