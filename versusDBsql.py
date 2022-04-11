@@ -13,7 +13,6 @@ aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys',
 
 cinvar_link_variation = 'https://www.ncbi.nlm.nih.gov/clinvar/variation/'
 
-
 class DataBaseEditor:
     def __init__(self):
         self.argument_parser()
@@ -60,6 +59,7 @@ class DataBaseEditor:
         self.passwd = self.settings['passwd']
         self.dbname = self.settings['dbname']
         self.apikey = self.settings['apikey']
+        Entrez.email = self.settings['email']
 
     def prepare(self):
         self.cnx = mysql.connector.connect(
@@ -369,6 +369,7 @@ class DataBaseEditor:
                 np_acc = data[5]
                 np_set.add(np_acc)
         unfound_nps = set(fasta_dict.keys()) - np_set
+        print(f'unfound NP_accessions: {unfound_nps}')
         comp_fasta_dict = self.fetch_seq(unfound_nps)
         keytup = ('NP_accession', 'fasta')
         fasta_values = self.get_tuplist_for_fasta(keytup, comp_fasta_dict)
