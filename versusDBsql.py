@@ -179,7 +179,7 @@ class DataBaseEditor:
         if type(strings) is str:
             return strings
         elif strings is None:
-            return 'NULL'
+            return None
         else:
             return str(strings)
 
