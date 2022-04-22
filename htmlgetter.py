@@ -1,5 +1,18 @@
+import argparse
 import urllib3
 import io
+
+def argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--url', '-u', type=str, required=True, dest='url',
+        help='Required; Specify a link.')
+    parser.add_argument(
+        '--out', '-o', type=str, required=True, dest='out',
+        help='Required; Specify a output path.')
+    args = parser.parse_args()
+    return args
+
 
 def write_html(url, path):
     http = urllib3.PoolManager()
@@ -9,6 +22,12 @@ def write_html(url, path):
         for line in io.TextIOWrapper(r):
             f.write(line)
 
+def main():
+    args = argument_parser()
+    url = args.url
+    path = args.out
+    write_html(url, path)
+
 
 def test():
     url = "http://localhost:8888/tree.php"
@@ -17,4 +36,5 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
+    main()
+    # test()
