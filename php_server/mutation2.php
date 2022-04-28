@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="VersUS-App">
 <head>
   <!-- Required meta tags -->
   <meta charset="utf-8">
@@ -8,6 +8,7 @@
   <meta name="author" content="Masayuki Nagai">
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
 
   <title>VersUS(beta)</title>
 
@@ -21,6 +22,21 @@
     }
     hr{
       color: grey;
+    }
+    a{
+      color: #337ab7;
+    }
+    a[ng-click] {
+      cursor: pointer;
+    }
+    td > a {
+      text-decoration: none;
+    }
+    td > a:hover {
+      text-decoration: underline;
+    }
+    th > a.sortable {
+      text-decoration: none;
     }
     /*
     Result Header
@@ -92,23 +108,8 @@
       font-size: 14px;
     }
   </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
 
-  <!-- <style type="text/css">
-    .navbar-custom {
-    background-color: #633974 ;
-    }
-    /* change the brand and text color */
-    .navbar-custom .navbar-brand,
-    .navbar-custom .navbar-text {
-    color: rgba(255,255,255,.8);
-    }
-
-    /* change the color of active or hovered links */
-    .navbar-custom .nav-item.active .nav-link,
-    .navbar-custom .nav-item:hover .nav-link {
-    color: #ffffff;
-    }
-  </style> -->
 </head>
 
 <?php
@@ -130,8 +131,29 @@ try{
   $gene_full_name = $value['gene_full_name'];
   $ec_number = $value['EC_number'];
 
+  if(!isset($_GET['sort'])){
+    $order = "ORDER BY CADD_score DESC";
+  }else{
+    $sort_by = $_GET['sort'];
+    $desc = $_GET['desc'];
+    if($sort_by == 'variation'){
+      $order = "ORDER BY ref_pos_alt ";
+    } elseif($sort_by == 'cadd'){
+      $order = "ORDER BY CADD_score ";
+    } elseif($sort_by == 'gnomADAF'){
+      $order = "ORDER BY gnomAD_AF ";
+    } else{
+      $order = "";
+    }
+    if($desc == 'true'){
+      $order .= 'DESC';
+    } else{
+      $order .= 'ASC';
+    }
+  }
+
   $sql2 = "SELECT * FROM Mutation WHERE gene_id = $gene_id
-           ORDER BY CADD_score DESC
+           {$order}
            LIMIT :start, :num_per_page";
   $statement2 = $connection->prepare($sql2);
   $statement2->bindParam(':start', $start, PDO::PARAM_INT);
@@ -149,7 +171,7 @@ try{
   echo $sql2 . "<br>" . $error->getMessage();
 }?>
 
-<body>
+<body ng-controller="myCtrl">
 <?php require "templates/header2.php"; ?>
 
 <div class="contents">
@@ -171,10 +193,22 @@ try{
     <thead>
       <tr>
         <th class="count">#</th>
-        <th class="variation">Missense Variation</th>
+        <th class="variation"><a ng-click="sortType = 'variation'; reverse(); sort()" class="sortable">
+            Missense Variation
+            <span ng-show="sortType == 'variation' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'variation' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
         <th class="clinvar_link">Clinvar Link</th>
-        <th class="cadd_score">CADD Score</th>
-        <th class="gnomAD_AF">gnomAD AF</th>
+        <th class="cadd_score"><a ng-click="sortType = 'cadd'; reverse(); sort()" class="sortable">
+            CADD Score
+            <span ng-show="sortType == 'cadd' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'cadd' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
+        <th class="gnomAD_AF"><a ng-click="sortType = 'gnomADAF'; reverse(); sort()" class="sortable">
+            gnomAD AF
+            <span ng-show="sortType == 'gnomADAF' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'gnomADAF' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
         <th class="pdb">PDB</th>
       </tr>
     </thead>
@@ -194,8 +228,52 @@ try{
   </table>
 
   <?php } else { ?>
-    > No resultss are available.
+    <p>> No resultss are available.</p>
+    <p>> Query: <?php echo escape($sql2) ?></p>
   <?php } ?>
+
+  <script type="text/javascript">
+
+    // sessionStorage.setItem("reverse", true);
+    var app = angular.module("VersUS-App", []);
+    app.controller("myCtrl", function($scope){
+      $scope.sortType = '<?=$_GET['sort']?>';
+      $scope.sortReverse = JSON.parse(sessionStorage.getItem('reverse'));
+      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.getItem('reverse')))};
+      $scope.reverse = function (){sortReverse()};
+
+      function tableSort(sortType, sortReverse){
+        var url = window.location.href;
+        var url_query = url.split('?');
+        var newurl = ""
+        if (url_query.length == 1){
+            newurl += url + "?";
+        }
+        else{
+            newurl += url_query[0] + "?";
+            var querystring = url_query[url_query.length - 1];
+            var queries = querystring.split("&");
+            var newQueries = [];
+            for (var query of queries){
+              if (!query.includes("sort") && !query.includes("desc")){
+                  newurl += query + "&";
+              }
+            }
+        }
+        newurl += "sort=" + sortType;
+        if (sortReverse){
+          newurl += "&desc=true";
+        }
+        location.href = newurl;
+      };
+
+      function sortReverse(){
+        sessionStorage.reverse = !(JSON.parse(sessionStorage.getItem('reverse')));
+      }
+
+    });
+
+  </script>
 
 </div>
 

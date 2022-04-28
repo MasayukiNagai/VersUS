@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="VersUS-App">
 
 <head>
   <!-- Required meta tags -->
@@ -8,12 +8,16 @@
   <meta name="description" content="An interface for exploring variants of uncertain significance">
   <meta name="author" content="Masayuki Nagai">
 
-  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/bootstrap.min.css" >
+  <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
 
   <title>VersUS(beta)</title>
 
   <style type="text/css">
 
+    /* body{
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    } */
     .contents{
       font-size: 15px;
       width: 90%;
@@ -24,6 +28,22 @@
     hr{
       color: grey;
     }
+    a{
+      color: #337ab7;
+    }
+    a[ng-click] {
+      cursor: pointer;
+    }
+    td > a {
+      text-decoration: none;
+    }
+    td > a:hover {
+      text-decoration: underline;
+    }
+    th > a.sortable {
+      text-decoration: none;
+    }
+
     /*
     Result Header
     */
@@ -36,10 +56,10 @@
     }
 
     .btn-group-xs > .btn, .btn-xs {
-    padding: 1px 5px;
-    font-size: 12px;
-    line-height: 1.5;
-    border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
     }
 
     .num_items{
@@ -92,22 +112,15 @@
 
   </style>
 
-  <!-- <style type="text/css">
-    .navbar-custom {
-    background-color: #633974 ;
-    }
-    /* change the brand and text color */
-    .navbar-custom .navbar-brand,
-    .navbar-custom .navbar-text {
-    color: rgba(255,255,255,.8);
-    }
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+  <script>
+    var ct = 0;
+    // window.onclick = function(){
+    //   ct += 1;
+    //   document.getElementById('test').innerHTML = "(" + ct + ")";
+    // };
+  </script>
 
-    /* change the color of active or hovered links */
-    .navbar-custom .nav-item.active .nav-link,
-    .navbar-custom .nav-item:hover .nav-link {
-    color: #ffffff;
-    }
-  </style> -->
 </head>
 
 <?php
@@ -145,6 +158,28 @@ try{
           $keyword = "%$term%";
         }
     }
+    if(isset($_GET['sort'])){
+      $sort_by = $_GET['sort'];
+      $desc = $_GET['desc'];
+      if($sort_by == 'gene'){
+        $order = "ORDER BY gene_symbol ";
+      } elseif($sort_by == 'uniprot'){
+        $order = "ORDER BY uniprot_id ";
+      } elseif($sort_by == 'vus'){
+        $order = "ORDER BY num_vus ";
+      } elseif($sort_by == 'cadd'){
+        $order = "ORDER BY max_cadd ";
+      } elseif($sort_by == 'ec'){
+        $order = "ORDER BY EC_number ";
+      } else{
+        $order = "";
+      }
+      if($desc == 'true'){
+        $order .= 'DESC';
+      } else{
+        $order .= 'ASC';
+      }
+    }
     $limit = "LIMIT :start, :num_per_page";
     # query to get gene items
     $sql = get_query($condition, $order, $limit);
@@ -171,7 +206,7 @@ try{
 }
 ?>
 
-<body>
+<body ng-controller="myCtrl">
 <?php require "templates/header2.php"; ?>
 
 <div class="contents">
@@ -188,12 +223,32 @@ try{
       <thead>
         <tr>
         <th class="count">#</th>
-        <th class="gene_id">Gene ID</th>
+        <th class="gene_id"><a ng-click="sortType = 'gene'; reverse(); sort()" class="sortable">
+            Gene
+            <span ng-show="sortType == 'gene' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'gene' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
         <th class="enzyme_name">Enzyme Name</th>
-        <th class="uniprot_id">Uniprot ID</th>
-        <th class="num_vus"># Missense VUS</th>
-        <th class="cadd_score">Highest CADD score</th>
-        <th class="EC_number">EC #</th>
+        <th class="uniprot_id"><a ng-click="sortType = 'uniprot'; reverse(); sort()" class="sortable">
+            Uniprot ID </a>
+            <span ng-show="sortType == 'uniprot' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'uniprot' && !sortReverse" class="fa fa-caret-up"></span>
+          </th>
+        <th class="num_vus"><a ng-click="sortType = 'vus'; reverse(); sort()" class="sortable">
+            # Missense VUS
+            <span ng-show="sortType == 'vus' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'vus' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
+        <th class="cadd_score"><a ng-click="sortType = 'cadd'; reverse(); sort()" class="sortable">
+            Highest CADD Score
+            <span ng-show="sortType == 'cadd' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'cadd' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
+        <th class="EC_number"><a ng-click="sortType = 'ec'; reverse(); sort()" class="sortable">
+            EC #
+            <span ng-show="sortType == 'ec' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'ec' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
         <th class="alphafold">AlphaFold Protein Structure</th>
         </tr>
       </thead>
@@ -215,8 +270,53 @@ try{
     </table>
   <?php } else { ?>
     <p>> No results are available.</p>
+    <p>> Query: <?php echo escape($sql) ?></p>
   <?php } ?>
   </div>
+
+  <script type="text/javascript">
+
+    // sessionStorage.setItem("reverse", true);
+    var app = angular.module("VersUS-App", []);
+    app.controller("myCtrl", function($scope){
+      $scope.sortType = '<?=$_GET['sort']?>';
+      $scope.sortReverse = JSON.parse(sessionStorage.getItem('reverse'));
+      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.getItem('reverse')))};
+      $scope.reverse = function (){sortReverse()};
+
+      function tableSort(sortType, sortReverse){
+        var url = window.location.href;
+        var url_query = url.split('?');
+        var newurl = ""
+        if (url_query.length == 1){
+            newurl += url + "?";
+        }
+        else{
+            newurl += url_query[0] + "?";
+            var querystring = url_query[url_query.length - 1];
+            var queries = querystring.split("&");
+            var newQueries = [];
+            for (var query of queries){
+              if (!query.includes("sort") && !query.includes("desc")){
+                  newurl += query + "&";
+              }
+            }
+        }
+        newurl += "sort=" + sortType;
+        if (sortReverse){
+          newurl += "&desc=true";
+        }
+        location.href = newurl;
+      };
+
+      function sortReverse(){
+        sessionStorage.reverse = !(JSON.parse(sessionStorage.getItem('reverse')));
+      }
+
+    });
+
+  </script>
+
 </div>
 
 <?php require "templates/footer2.php"; ?>
