@@ -185,7 +185,7 @@ try{
         <td class="count"><?php echo escape($counter) ?></td>
         <td class="variation"><?php echo escape($row["ref_pos_alt"]); ?></td>
         <td class="clinvar_link"><a href=<?php echo $row["clinvar_link"] ?>>link</a></td>
-        <td class="cadd_score"><?php echo escape($row["CADD_score"]); ?></td>
+        <td class="cadd_score"><?php echo escape(number_format((float)$row["CADD_score"], 1, '.', '')); ?></td>
         <td class="gnomAD_AF"><?php echo escape($row["gnomAD_AF"]); ?></td>
         <td class="pdb"><?php echo escape($row["pdb"]); ?></td>
       </tr>
