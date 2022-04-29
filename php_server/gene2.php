@@ -230,10 +230,10 @@ try{
           </a></th>
         <th class="enzyme_name">Enzyme Name</th>
         <th class="uniprot_id"><a ng-click="sortType = 'uniprot'; reverse(); sort()" class="sortable">
-            Uniprot ID </a>
+            Uniprot ID
             <span ng-show="sortType == 'uniprot' && sortReverse" class="fa fa-caret-down"></span>
             <span ng-show="sortType == 'uniprot' && !sortReverse" class="fa fa-caret-up"></span>
-          </th>
+          </a></th>
         <th class="num_vus"><a ng-click="sortType = 'vus'; reverse(); sort()" class="sortable">
             # Missense VUS
             <span ng-show="sortType == 'vus' && sortReverse" class="fa fa-caret-down"></span>
