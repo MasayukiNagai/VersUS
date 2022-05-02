@@ -104,7 +104,7 @@ class DataBaseEditor:
         name_type_dict = {'mutation_id': 'SERIAL PRIMARY KEY',
                           'gene_id': 'INT ' + nn,
                           'ref_pos_alt': 'VARCHAR(20)' + nn,
-                          'clinvar_link': 'VARCHAR(255)' + nn,
+                          'accession': 'VARCHAR(255)' + nn,
                           'clinical_significance': 'VARCHAR(255)' + nn,
                           'CADD_score': 'FLOAT',
                           'gnomAD_AF': 'FLOAT',
@@ -280,7 +280,7 @@ class DataBaseEditor:
                 mutation_dict[vus_dict['gene_id']] = []
             mut_entry = self.make_mut_dict(vus_dict)
             mutation_dict[vus_dict['gene_id']].append(mut_entry)
-        keytup = ('gene_id', 'ref_pos_alt', 'clinvar_link',
+        keytup = ('gene_id', 'ref_pos_alt', 'accession',
                   'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
                   'fasta_id')
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
@@ -291,10 +291,10 @@ class DataBaseEditor:
         fasta_id = self.get_fasta_id(vus_dict['NP_accession'])
         ref_pos_alt = vus_dict['missense_variation']
         # ref_pos_alt = aaMapOneToThree(vus_dict['ref']) + vus_dict['pos'] +  aaMapOneToThree(vus_dict['alt'])
-        clinvar_link = cinvar_link_variation + vus_dict['ClinVar_accession']
+        accession = vus_dict['ClinVar_accession']
         mut = {'gene_id': gene_id,
                'ref_pos_alt': ref_pos_alt,
-               'clinvar_link': clinvar_link,
+               'accession': accession,
                'clinical_significance': vus_dict['clinical_significance'],
                'CADD_score': vus_dict['CADD_score'],
                'gnomAD_AF': vus_dict['gnomAD_AF'],
