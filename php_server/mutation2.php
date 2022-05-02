@@ -7,7 +7,7 @@
   <meta name="description" content="An interface for exploring variants of uncertain significance">
   <meta name="author" content="Masayuki Nagai">
 
-  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/bootstrap.min.css" >
   <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
 
   <title>VersUS(beta)</title>
@@ -49,11 +49,24 @@
         /* border: solid 1px black; */
     }
 
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+
+    .alert-info {
+      color: #31708f;
+      background-color: #d9edf7;
+      border-color: #bce8f1;
+    }
+
     .btn-group-xs > .btn, .btn-xs {
-    padding: 1px 5px;
-    font-size: 12px;
-    line-height: 1.5;
-    border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
     }
 
     .num_items{
@@ -109,7 +122,6 @@
     }
   </style>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
-
 </head>
 
 <?php
@@ -192,6 +204,7 @@ try{
   <table class="table table-striped table-hover">
     <thead>
       <tr>
+        <th><input type="checkbox"></th>
         <th class="count">#</th>
         <th class="variation"><a ng-click="sortType = 'variation'; reverse(); sort()" class="sortable">
             Missense Variation
@@ -216,6 +229,7 @@ try{
       <?php foreach ($results as $row) {
         $counter += 1;?>
       <tr>
+        <td><input type="checkbox"></td>
         <td class="count"><?php echo escape($counter) ?></td>
         <td class="variation"><?php echo escape($row["ref_pos_alt"]); ?></td>
         <td class="clinvar_link"><a href=<?php echo $row["clinvar_link"] ?>>link</a></td>
@@ -278,6 +292,8 @@ try{
 </div>
 
 <?php require "templates/footer2.php"; ?>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 </body>
-<?php require "templates/footer.php"; ?>
+
+</html>

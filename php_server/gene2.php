@@ -55,6 +55,19 @@
         /* border: solid 1px black; */
     }
 
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+
+    .alert-info {
+      color: #31708f;
+      background-color: #d9edf7;
+      border-color: #bce8f1;
+    }
+
     .btn-group-xs > .btn, .btn-xs {
       padding: 1px 5px;
       font-size: 12px;
@@ -111,16 +124,7 @@
     }
 
   </style>
-
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
-  <script>
-    var ct = 0;
-    // window.onclick = function(){
-    //   ct += 1;
-    //   document.getElementById('test').innerHTML = "(" + ct + ")";
-    // };
-  </script>
-
 </head>
 
 <?php
@@ -165,7 +169,9 @@ try{
         $order = "ORDER BY gene_symbol ";
       } elseif($sort_by == 'uniprot'){
         $order = "ORDER BY uniprot_id ";
-      } elseif($sort_by == 'vus'){
+      } elseif($sort_by == 'name'){
+        $order = "ORDER BY gene_full_name ";
+      }elseif($sort_by == 'vus'){
         $order = "ORDER BY num_vus ";
       } elseif($sort_by == 'cadd'){
         $order = "ORDER BY max_cadd ";
@@ -228,7 +234,11 @@ try{
             <span ng-show="sortType == 'gene' && sortReverse" class="fa fa-caret-down"></span>
             <span ng-show="sortType == 'gene' && !sortReverse" class="fa fa-caret-up"></span>
           </a></th>
-        <th class="enzyme_name">Enzyme Name</th>
+        <th class="enzyme_name"><a ng-click="sortType = 'name'; reverse(); sort()" class="sortable">
+            Enzyme Name
+            <span ng-show="sortType == 'name' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
         <th class="uniprot_id"><a ng-click="sortType = 'uniprot'; reverse(); sort()" class="sortable">
             Uniprot ID
             <span ng-show="sortType == 'uniprot' && sortReverse" class="fa fa-caret-down"></span>

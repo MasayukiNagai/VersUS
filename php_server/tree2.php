@@ -160,7 +160,18 @@ try{
       <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
     <?php } ?>
 
-    <?php } ?>
+    <?php } elseif($row["class"] == 4){
+    if($ct_class == 3){?>
+    <ul class="nested">
+    <?php $ct_class = 4;}?>
+    <li><?php
+      if($row["num_vus"] > 0){?>
+      <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"].".".$row["ec_4"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?></a> <?php echo escape(" (".$row["num_vus"].")");?>
+      <?php } else{ ?>
+      <?php echo escape($row["ec_number"]." "); echo($row["description"]); echo escape(" (0)")?>
+      <?php } ?>
+    </li>
+  <?php } ?>
 
   <?php } ?>
   <?php while($ct_class > $row["class"]){?>
@@ -168,7 +179,6 @@ try{
         </li>
     <?php $ct_class--;
   }?>
-
 
   <?php } else { ?>
       <p>> No results are available.</p>
