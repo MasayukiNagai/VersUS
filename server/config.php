@@ -5,11 +5,11 @@
   *
   */
 
-$host       = "127.0.0.1";
+$server     = "alucard.csc.depauw.edu";
 $username   = "test_user";
 $password   = "test_password";
-$dbname     = "versus_db"; // will use later
-$dsn        = "mysql:host=$host;dbname=$dbname"; // will use later
+$db_name    = "versus_db2";
+$dsn        = "mysql:host=$server;dbname=$db_name;port=3306;";
 $options    = array(
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
               );

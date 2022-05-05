@@ -38,6 +38,33 @@
     th > a.sortable {
       text-decoration: none;
     }
+    .btn-primary, .btn-primary.disabled {
+      color: #fff;
+      background-color: #337ab7;
+      border-color: #2e6da4;
+    }
+    .btn-primary:hover {
+      color: #fff;
+      background-color: #286090;
+      border-color: #204d74;
+    }
+    .btn-primary.focus, .btn-primary:focus {
+      color: #fff;
+      background-color: #286090;
+      border-color: #122b40;
+    }
+    .btn-default {
+      color: #333;
+      background-color: #fff;
+      border-color: #ccc;
+    }
+    .btn.disabled{
+      cursor: not-allowed;
+      filter: alpha(opacity=65);
+      -webkit-box-shadow: none;
+      box-shadow: none;
+      opacity: .65;
+    }
     /*
     Result Header
     */
@@ -150,7 +177,7 @@ try{
     $sort_by = $_GET['sort'];
     $desc = $_GET['desc'];
     if($sort_by == 'variation'){
-      $order = "ORDER BY ref_pos_alt ";
+      $order = "ORDER BY pos ";
     } elseif($sort_by == 'cadd'){
       $order = "ORDER BY CADD_score ";
     } elseif($sort_by == 'gnomADAF'){
@@ -207,8 +234,10 @@ try{
   <hr>
   <button type='button' class="btn btn-primary" ng-class="{disabled: selectedItems == 0}" ng-click="saveDatasets()">
     Add <span ng-bind="selectedItems">0</span> to collection</button>
-  <button type='button' class="btn" ng-class="savedResults.length == 0 ? 'disabled btn-default' : 'btn-primary'" ng-click="checkoutButton('test.fasta')"><span
-        class="glyphicon glyphicon-shopping-cart"></span> Download <span ng-bind="savedResults.length"></span> fasta seqs</button>
+  <button type='button' class="btn" ng-class="savedResults.length == 0 ? 'disabled btn-default' : 'btn-primary'" ng-click="checkoutButton('test.fasta')">
+    <i class="fa fa-archive" aria-hidden="true"></i> Download <span ng-bind="savedResults.length"></span> fasta seqs</button>
+  <button type='button' class="btn btn-default" ng-show="savedResults.length > 0" ng-click="clearSaved()">
+    Clear the collection </button>
   <hr>
   <?php
   $counter = ($current_page-1) * $num_per_page;
@@ -216,7 +245,7 @@ try{
   <table class="table table-striped table-hover">
     <thead>
       <tr>
-        <th><input type="checkbox"></th>
+        <th><input type="checkbox" ng-model="selectAll" ng-click="checkAll()"></th>
         <!-- <th class="count">#</th> -->
         <th class="variation"><a ng-click="sortType = 'variation'; reverse(); sort()" class="sortable">
             Missense Variation
@@ -240,7 +269,7 @@ try{
     <tbody>
       <tr ng-repeat="x in results" ng-click="rowClicked(x)">
         <td><input type="checkbox" ng-checked="x.selected" ng-click="toggleRow($event, x)"></td>
-        <td>{{ x.ref_pos_alt }}</td>
+        <td>{{ x.ref + x.pos + x.alt}}</td>
         <td><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}"> {{ x.accession }}</a></td>
         <td>{{ x.CADD_score }}</td>
         <td>{{ x.gnomAD_AF }}</td>
@@ -257,15 +286,19 @@ try{
 
     // sessionStorage.setItem("reverse", true);
     var app = angular.module("VersUS-App", []);
+    var aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
+                           'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
+                           'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
+                           'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
     app.controller("myCtrl", function($scope){
       $scope.gene_symbol = <?= json_encode($gene_symbol); ?>;
       $scope.sortType = '<?= $_GET['sort'] ?>';
-      $scope.sortReverse = JSON.parse(sessionStorage.getItem('reverse'));
-      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.getItem('reverse')))};
+      // $scope.sortReverse = JSON.parse(sessionStorage.reverse);
+      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.reverse))};
       $scope.reverse = function (){sortReverse()};
 
       $scope.results = [];
-      $scope.savedResults = [];
+      // $scope.savedResults = [];
       $scope.fastaSeqs = []
 
       function tableSort(sortType, sortReverse){
@@ -294,7 +327,7 @@ try{
       };
 
       function sortReverse(){
-        sessionStorage.reverse = !(JSON.parse(sessionStorage.getItem('reverse')));
+        sessionStorage.reverse = !(JSON.parse(sessionStorage.reverse));
       };
 
       $scope.passMutationInfo = function (){
@@ -304,7 +337,9 @@ try{
           $scope.results.push({
             'mutation_id': value['mutation_id'],
             'gene_id': value['gene_id'],
-            'ref_pos_alt': value['ref_pos_alt'],
+            'ref': value['ref'],
+            'pos': value['pos'],
+            'alt': value['alt'],
             'accession': value['accession'],
             'CADD_score': value['CADD_score'],
             'gnomAD_AF': value['gnomAD_AF'],
@@ -333,6 +368,12 @@ try{
 
       $scope.rowClicked = function (obj) {
         obj.selected = !obj.selected;
+      };
+
+      $scope.checkAll = function () {
+        angular.forEach($scope.results, function (item) {
+          item.selected = $scope.selectAll;
+        });
       };
 
       $scope.$watch('results', function (items) {
@@ -365,7 +406,9 @@ try{
               $scope.savedResults.push({
                 'mutation_id': item['mutation_id'],
                 'fasta_id': item['fasta_id'],
-                'ref_pos_alt': item['ref_pos_alt'],
+                'ref': item['ref'],
+                'pos': item['pos'],
+                'alt': item['alt'],
                 'gene_id': item['gene_id'],
                 'gene_symbol': $scope.gene_symbol,
                 'NP_accession': $scope.fastaSeqs[index]['NP_accession'],
@@ -373,28 +416,37 @@ try{
               })
             }
           }
+          sessionStorage.savedResults = JSON.stringify($scope.savedResults);
         });
       };
 
+      $scope.clearSaved = function () {
+        $scope.savedResults = [];
+        sessionStorage.removeItem("savedResults");
+      }
+
       $scope.checkoutButton = function (filename) {
-        // Clear search results and download fasta
+        var fasta = $scope.prepFasta();
+        $scope.downloadFile(fasta, filename);
         // $scope.savedResults = [];
-        // $scope.downloadFasta();
+      };
 
-        angular.forEach($scope.savedResults, function (item) {
-          console.log('Item: ' + item['ref_pos_alt'] + ' ' + item['NP_accession']);
-        });
-
+      $scope.prepFasta = function () {
         var contents = [];
         for (var i = 0; i < $scope.savedResults.length; i++){
           var line = [];
           line.push('>' + $scope.savedResults[i]['NP_accession']);
-          line.push($scope.savedResults[i]['ref_pos_alt']);
+          line.push($scope.savedResults[i]['ref']+$scope.savedResults[i]['pos']+$scope.savedResults[i]['alt']);
           contents.push(line.join('\t'));
-          contents.push($scope.savedResults[i]['fasta'] + '\n');
+          fasta = $scope.savedResults[i]['fasta'];
+          pos = $scope.savedResults[i]['pos'];
+          ref = aaMapThreeToOne[$scope.savedResults[i]['ref']];
+          alt = aaMapThreeToOne[$scope.savedResults[i]['alt']];
+          mtFasta = fasta.modifyFasta(Number(pos), ref, alt);
+          contents.push(mtFasta + '\n');
         }
-        $scope.downloadFile(contents.join('\n'), filename);
-      };
+        return contents.join('\n');
+      }
 
       $scope.downloadFile = function (content, filename) {
         var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -408,11 +460,32 @@ try{
       };
 
       String.prototype.modifyFasta = function(pos, ref, alt) {
-        if (fasta[pos] == ref) {
-          return this.substring(0, pos) + alt + this.substring(pos + alt.length);
+        if (fasta[pos-1] == ref) {
+          return this.substring(0, pos-1) + alt + this.substring(pos-1 + alt.length);
         }
         else{
+          console.log(ref + pos + alt);
           return null;
+        }
+      };
+
+      $scope.initSortReverse = function () {
+        if (sessionStorage.reverse == null){
+          sessionStorage.reverse = false;
+        }
+        else{
+          $scope.sortReverse = JSON.parse(sessionStorage.reverse);
+        }
+      }
+
+      $scope.initSavedResults = function () {
+        if (sessionStorage.savedResults == null) {
+          // sessionStorage.savedResults = [];
+          $scope.savedResults = [];
+        }
+        else {
+          // console.log(sessionStorage.savedResults);
+          $scope.savedResults = JSON.parse(sessionStorage.savedResults);
         }
       };
 
@@ -420,6 +493,8 @@ try{
         console.log('Call init function');
         $scope.passMutationInfo();
         $scope.passFastaInfo();
+        $scope.initSortReverse();
+        $scope.initSavedResults();
       };
 
     });
