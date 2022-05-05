@@ -213,11 +213,11 @@ try{
 ?>
 
 <body ng-controller="myCtrl">
-<?php require "templates/header2.php"; ?>
+<?php require "templates/header.php"; ?>
 
 <div class="contents">
 
-  <?php require "templates/result_header2.php" ?>
+  <?php require "templates/result_header.php" ?>
 
   <hr>
 
@@ -267,7 +267,7 @@ try{
         $counter += 1; ?>
         <tr>
           <td class="count"><?php echo escape($counter) ?></td>
-          <td class="gene_id"><a href="mutation2.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_symbol"]); ?></a></td>
+          <td class="gene_id"><a href="mutation.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_symbol"]); ?></a></td>
           <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
           <td class="uniprot_id"><a href=<?php echo get_uniprot_url($row["uniprot_id"]) ?>><?php echo escape($row["uniprot_id"]) ?></a></td>
           <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
@@ -329,7 +329,7 @@ try{
 
 </div>
 
-<?php require "templates/footer2.php"; ?>
+<?php require "templates/footer.php"; ?>
   <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="js/bootstrap.min.js"></script>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
