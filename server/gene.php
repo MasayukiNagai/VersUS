@@ -217,7 +217,7 @@ try{
 
 <div class="contents">
 
-  <?php require "templates/result_header.php" ?>
+  <?php require "templates/pagination.php" ?>
 
   <hr>
 
