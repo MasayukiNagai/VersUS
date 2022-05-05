@@ -230,7 +230,7 @@ try{
     </div>
   </div>
 
-  <?php require "templates/result_header.php" ?>
+  <?php require "templates/pagination.php" ?>
   <hr>
   <button type='button' class="btn btn-primary" ng-class="{disabled: selectedItems == 0}" ng-click="saveDatasets()">
     Add <span ng-bind="selectedItems">0</span> to collection</button>
