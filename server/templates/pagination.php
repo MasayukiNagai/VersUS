@@ -4,9 +4,14 @@ $last_item = ($current_page * $num_per_page) < $num_results ? $current_page * $n
 ?>
 
 <div class="contents_header">
-  <div class="alert alert-info" role="alert">
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus viverra elit non ullamcorper maximus. Nullam tempus libero felis, eget ullamcorper nisl rhoncus eu. Nullam mi odio, maximus nec metus a, gravida vulputate lacus. Curabitur sed ex lacinia, pharetra eros rutrum, congue justo. Maecenas ac sem quis metus ultrices sollicitudin eget id ex. Quisque pretium aliquet diam, nec iaculis arcu. Sed pretium nisl sit amet metus venenatis maximus.
-  </div>
+  <?php
+  if (strpos($_SERVER['SCRIPT_NAME'], 'gene.php') !== false){
+    include('templates/description_gene.html');
+  } elseif (strpos($_SERVER['SCRIPT_NAME'], 'variant.php') !== false) {
+   include('templates/description_variant.html');
+  } elseif (strpos($_SERVER['SCRIPT_NAME'], 'gene_ec.php') !== false){
+    include('templates/description_gene.html');
+  }?>
   <p class="num_items">Items: <span class="badge rounded-pill bg-light text-dark"><?php echo escape($first_item) ?></span> to <span class="badge rounded-pill bg-light text-dark"><?php echo escape($last_item); ?></span> of <span class="badge rounded-pill bg-secondary"><?php echo escape($num_results) ?></span></h2>
   <div class="pageforms">
     <form action="" method="Post" class="pageform">
