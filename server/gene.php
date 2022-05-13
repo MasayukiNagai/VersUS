@@ -8,122 +8,12 @@
   <meta name="description" content="An interface for exploring variants of uncertain significance">
   <meta name="author" content="Masayuki Nagai">
 
+  <title>VersUS</title>
+
   <link rel="stylesheet" href="css/bootstrap.min.css" >
   <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
 
-  <title>VersUS(beta)</title>
-
-  <style type="text/css">
-
-    /* body{
-      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    } */
-    .contents{
-      font-size: 15px;
-      width: 90%;
-      /* margin-left: auto;
-      margin-right: auto; */
-      margin: 0px auto 50px;
-    }
-    hr{
-      color: grey;
-    }
-    a{
-      color: #337ab7;
-    }
-    a[ng-click] {
-      cursor: pointer;
-    }
-    td > a {
-      text-decoration: none;
-    }
-    td > a:hover {
-      text-decoration: underline;
-    }
-    th > a.sortable {
-      text-decoration: none;
-    }
-
-    /*
-    Result Header
-    */
-    .contents_header{
-        margin-top: 5px;
-        margin-bottom: 30px;
-        display: inline-block;
-        /* height: 150px; */
-        /* border: solid 1px black; */
-    }
-
-    .alert {
-      padding: 15px;
-      margin-bottom: 20px;
-      border: 1px solid transparent;
-      border-radius: 4px;
-    }
-
-    .alert-info {
-      color: #31708f;
-      background-color: #d9edf7;
-      border-color: #bce8f1;
-    }
-
-    .btn-group-xs > .btn, .btn-xs {
-      padding: 1px 5px;
-      font-size: 12px;
-      line-height: 1.5;
-      border-radius: 3px;
-    }
-
-    .num_items{
-        position: absolute;
-        left: 5%;
-        display: inline-block;
-        margin: 0 auto;
-    }
-
-    .pageforms{
-        position: absolute;
-        right: 5%;
-        display: inline-block;
-        vertical-align: bottom;
-        margin: 5px auto;
-    }
-
-    .pageform{
-        display: inline-block;
-    }
-
-    .page_button, #jump_button{
-        cursor: pointer;
-    }
-
-    .page_button:disabled{
-        cursor: auto;
-    }
-
-    #page_number{
-      /* height:15px; */
-      width: 50px;
-      padding:0 auto;
-      position:relative;
-      margin: 0 2px;
-      /* top:0;  */
-      border-radius:2px;
-      border: 1px solid grey;
-      /* outline:0; */
-      background:white;
-      border: solid 1px black;
-    }
-
-    footer{
-      width: 90%;
-      margin: 50px auto 50px;
-      color: grey;
-      font-size: 14px;
-    }
-
-  </style>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
 </head>
 
@@ -212,7 +102,7 @@ try{
 }
 ?>
 
-<body ng-controller="myCtrl">
+<body ng-controller="myCtrl" ng-init="init()">
 <?php require "templates/header.php"; ?>
 
 <div class="contents">
@@ -288,11 +178,20 @@ try{
 
     // sessionStorage.setItem("reverse", true);
     var app = angular.module("VersUS-App", []);
+    var aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
+                           'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
+                           'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
+                           'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
     app.controller("myCtrl", function($scope){
-      $scope.sortType = '<?=$_GET['sort']?>';
-      $scope.sortReverse = JSON.parse(sessionStorage.getItem('reverse'));
-      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.getItem('reverse')))};
+      $scope.gene_symbol = <?= json_encode($gene_symbol); ?>;
+      $scope.sortType = '<?= $_GET['sort'] ?>';
+      // $scope.sortReverse = JSON.parse(sessionStorage.reverse);
+      $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.reverse))};
       $scope.reverse = function (){sortReverse()};
+
+      $scope.results = [];
+      // $scope.savedResults = [];
+      $scope.fastaSeqs = []
 
       function tableSort(sortType, sortReverse){
         var url = window.location.href;
@@ -320,11 +219,175 @@ try{
       };
 
       function sortReverse(){
-        sessionStorage.reverse = !(JSON.parse(sessionStorage.getItem('reverse')));
+        sessionStorage.reverse = !(JSON.parse(sessionStorage.reverse));
+      };
+
+      // $scope.passMutationInfo = function (){
+      //   var php_results = <?= json_encode($results); ?>;
+      //   for (var i = 0; i < php_results.length; i++){
+      //     value = php_results[i];
+      //     $scope.results.push({
+      //       'mutation_id': value['mutation_id'],
+      //       'gene_id': value['gene_id'],
+      //       'ref': value['ref'],
+      //       'pos': value['pos'],
+      //       'alt': value['alt'],
+      //       'accession': value['accession'],
+      //       'CADD_score': value['CADD_score'],
+      //       'gnomAD_AF': value['gnomAD_AF'],
+      //       'pdb': value['pdb'],
+      //       'fasta_id': value['fasta_id']
+      //     })
+      //   }
+      // };
+
+      // $scope.passFastaInfo = function () {
+      //   var php_fasta = <?= json_encode($fasta_seqs); ?>;
+      //   for (var i = 0; i < php_fasta.length; i++){
+      //     value = php_fasta[i];
+      //     $scope.fastaSeqs.push({
+      //       'fasta_id': value['fasta_id'],
+      //       'NP_accession': value['NP_accession'],
+      //       'fasta': value['fasta']
+      //     })
+      //   }
+      // };
+
+      $scope.toggleRow = function ($event, obj) {
+        $event.stopPropagation();
+        obj.selected = !obj.selected;
+      };
+
+      $scope.rowClicked = function (obj) {
+        obj.selected = !obj.selected;
+      };
+
+      $scope.checkAll = function () {
+        angular.forEach($scope.results, function (item) {
+          item.selected = $scope.selectAll;
+        });
+      };
+
+      $scope.$watch('results', function (items) {
+        var selectedItems = 0;
+        angular.forEach(items, function (item) {
+          selectedItems += item.selected ? 1 : 0;
+        });
+        $scope.selectedItems = selectedItems;
+      }, true);
+
+      $scope.saveDatasets = function () {
+        angular.forEach($scope.results, function (item) {
+          if (item.selected) {
+            var alreadyAdded = false;
+            for (var i = 0; i < $scope.savedResults.length; i++) {
+              if (item['mutation_id'] == $scope.savedResults[i]['mutation_id']) {
+                alreadyAdded = true;
+              }
+            }
+            if (!alreadyAdded) {
+              // $scope.savedResults.push(angular.copy(item));
+              // fasta seq instead of fasta_id?
+              // gene name instead of gene_id?
+              for(var i = 0; i < $scope.fastaSeqs.length; i++) {
+                if (item['fasta_id'] == $scope.fastaSeqs[i]['fasta_id']) {
+                  var index = i;
+                  break;
+                }
+              }
+              $scope.savedResults.push({
+                'mutation_id': item['mutation_id'],
+                'fasta_id': item['fasta_id'],
+                'ref': item['ref'],
+                'pos': item['pos'],
+                'alt': item['alt'],
+                'gene_id': item['gene_id'],
+                'gene_symbol': $scope.gene_symbol,
+                'NP_accession': $scope.fastaSeqs[index]['NP_accession'],
+                'fasta': $scope.fastaSeqs[index]['fasta']
+              })
+            }
+          }
+          sessionStorage.savedResults = JSON.stringify($scope.savedResults);
+        });
+      };
+
+      $scope.clearSaved = function () {
+        $scope.savedResults = [];
+        sessionStorage.removeItem("savedResults");
       }
 
-    });
+      $scope.checkoutButton = function (filename) {
+        var fasta = $scope.prepFasta();
+        $scope.downloadFile(fasta, filename);
+        // $scope.savedResults = [];
+      };
 
+      $scope.prepFasta = function () {
+        var contents = [];
+        for (var i = 0; i < $scope.savedResults.length; i++){
+          var line = [];
+          line.push('>' + $scope.savedResults[i]['NP_accession']);
+          line.push($scope.savedResults[i]['ref']+$scope.savedResults[i]['pos']+$scope.savedResults[i]['alt']);
+          contents.push(line.join('\t'));
+          fasta = $scope.savedResults[i]['fasta'];
+          pos = $scope.savedResults[i]['pos'];
+          ref = aaMapThreeToOne[$scope.savedResults[i]['ref']];
+          alt = aaMapThreeToOne[$scope.savedResults[i]['alt']];
+          mtFasta = fasta.modifyFasta(Number(pos), ref, alt);
+          contents.push(mtFasta + '\n');
+        }
+        return contents.join('\n');
+      }
+
+      $scope.downloadFile = function (content, filename) {
+        var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        // saveAs(blob, filename);
+        var downloadLink = document.createElement("a");
+        downloadLink.download = filename;
+        downloadLink.href = window.URL.createObjectURL(blob);
+        downloadLink.style.display = "none";
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+      };
+
+      String.prototype.modifyFasta = function(pos, ref, alt) {
+        if (fasta[pos-1] == ref) {
+          return this.substring(0, pos-1) + alt + this.substring(pos-1 + alt.length);
+        }
+        else{
+          console.log(ref + pos + alt);
+          return null;
+        }
+      };
+
+      $scope.initSortReverse = function () {
+        if (sessionStorage.reverse == null){
+          sessionStorage.reverse = false;
+        }
+        else{
+          $scope.sortReverse = JSON.parse(sessionStorage.reverse);
+        }
+      }
+
+      $scope.initSavedResults = function () {
+        if (sessionStorage.savedResults == null) {
+          // sessionStorage.savedResults = [];
+          $scope.savedResults = [];
+        }
+        else {
+          // console.log(sessionStorage.savedResults);
+          $scope.savedResults = JSON.parse(sessionStorage.savedResults);
+        }
+      };
+
+      $scope.init = function(){
+        console.log('Call init function');
+        $scope.initSortReverse();
+        $scope.initSavedResults();
+      };
+
+    });
   </script>
 
 </div>

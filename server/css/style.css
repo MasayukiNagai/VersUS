@@ -1,288 +1,160 @@
 html{
-    height: 100%;
+  height: 100%;
 }
 
-body {
-    width:100%;
-    /* height: 100%; */
-    margin: 0px;
-    padding: 0px;
-    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Oxygen-Sans,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue","Source Sans Pro",sans-serif;
-    font-size: 14px;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
+body{
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
-h1, h2{
-    font-weight: 500;
+.contents {
+  font-size: 15px;
+  width: 90%;
+  /* margin-left: auto;
+      margin-right: auto; */
+  margin: 0px auto 50px;
 }
 
-h1{
-    font-size: 2em;
+hr {
+  color: grey;
 }
 
-h2{
-    font-size: 1.5em;
-    color: #5b616b;
+a {
+  color: #337ab7;
 }
 
-/*
-  Header
-*/
-#header {
-    display: flex;
-    width: 100%;
-    height: 100px;
-    background-color: #9B92C6;
-    align-items: center;
+a[ng-click] {
+  cursor: pointer;
 }
 
-#title-image img{
-    margin-top: 10px;
-    width: 120px;
-    /* max-width:100%;
-    max-height:100%;  */
-    /* object-fit: contain; */
+td>a {
+  text-decoration: none;
 }
 
-#queryContainer {
-    display: inline-block;
-    margin-left: 30px;
-    margin-right: auto;
+td>a:hover {
+  text-decoration: underline;
 }
 
-#search-bar{
-    position:relative;
-    /* max-width:300px;	 */
-    margin-bottom:10px;
+th>a.sortable {
+  text-decoration: none;
 }
 
-#search_by{
-    height:30px;
-    font-size: 14px;
+.btn-primary,
+.btn-primary.disabled {
+  color: #fff;
+  background-color: #337ab7;
+  border-color: #2e6da4;
 }
 
-#textbox{
-    height:30px;
-    padding:0 10px;
-    position:relative;
-    left:2px;
-    top:0;
-    border-radius:2px;
-    outline:0;
-    background:white;
-    font-size: 16px;
-    border:none;
+.btn-primary:hover {
+  color: #fff;
+  background-color: #286090;
+  border-color: #204d74;
 }
 
-#sbtn{
-    width:70px;/*検索ボタンの横幅*/
-    height:30px;/*検索ボタンの縦幅*/
-    position:relative;/*検索ボタンの絶対位置*/
-    left:4px;
-    top:0;
-    border-radius:2px;
-    background:#7fbfff;/*検索ボタンの背景カラー*/
-    border:none;/*検索ボタンの枠線を消す*/
-    color:#fff;
-    font-weight:bold;
-    font-size:16px;
-    cursor:pointer;
+.btn-primary.focus,
+.btn-primary:focus {
+  color: #fff;
+  background-color: #286090;
+  border-color: #122b40;
 }
 
-#sbtn:hover{
-    color:#666;
+.btn-default {
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
 }
 
-
-/*
-  Result Header
-*/
-
-#result_header{
-    margin: 0;
-    height: 30px;
-    /* border: solid 1px black; */
+.btn.disabled {
+  cursor: not-allowed;
+  filter: alpha(opacity=65);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  opacity: .65;
 }
 
-.result_count{
-    position: absolute;
-    left: 5%;
-    display: inline-block;
-    margin: 0 auto;
+.btn-group-xs>.btn,
+.btn-xs {
+  padding: 1px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 3px;
 }
 
-.pageforms{
-    position: absolute;
-    right: 5%;
-    display: inline-block;
-    vertical-align: bottom;
-    margin: 5px auto;
-}
-
-.pageform{
-    display: inline-block;
-}
-
-.page_button, #jump_button{
-    cursor: pointer;
-}
-
-.page_button:disabled{
-    cursor: auto;
-}
-
-#view_page{
-    /* height:15px; */
-    width: 20px;
-    padding:0 auto;
-    position:relative;
-    margin: 0 2px;
-    /* top:0;  */
-    border-radius:2px;
-    /* outline:0; */
-    background:white;
-    border: solid 1px black;
-}
-
-/*
-  Gene Table
-*/
-table{
-    /* padding: 10px; */
-    margin: 0 auto;
-    border-collapse: collapse;
-    border: solid 2px purple;
-    /* font-family: -apple-system; */
-    font-size: 15px;
-    width: 90%;
-}
-
-table th, table td {
-    border: dashed 1px darkgrey;
-}
-
-table th {
-    padding: 10px;
-    background-color: purple;
-    color: white;
-}
-
-table td {
-    padding: 2px 0px 2px 3px; /* top right bottom left */
-}
-
-.count, .num_vus, .cadd_score, .alphafold{
-    text-align: center;
-}
-
-/* .enzyme_name {
-    width: 200px;
+/* .basket {
+  width: 50px;
+  display: inline-block;
 } */
 
 /*
-  Mutation Table
+    Result Header
 */
-
-#header_mutation{
-    height: 60px;
-    width: 100%;
-    position: relative;
-    border-top: 5px solid purple;
-    border-bottom: 5px solid purple;
-    /* background-color: purple; */
+.contents_header {
+  margin-top: 5px;
+  margin-bottom: 30px;
+  display: inline-block;
+  /* height: 150px; */
+  /* border: solid 1px black; */
 }
 
-#header_mutation_text{
-    height: 60px;
-    max-width: 90%;
-    position: relative;
-    text-align: left;
-    display: block;
-    margin: auto;
-    /* border: 1px solid #000; */
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
-.gene_symbol, .gene_full_name{
-    margin: 0 auto;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+.alert-info {
+  color: #31708f;
+  background-color: #d9edf7;
+  border-color: #bce8f1;
 }
 
-.gene_info{
-    text-align: left;
-    display: inline-block;
+.num_items {
+  position: absolute;
+  left: 5%;
+  display: inline-block;
+  margin: 0 auto;
 }
 
-td.variation, td.clinvar_link{
-    text-align: center;
+.pageforms {
+  position: absolute;
+  right: 5%;
+  display: inline-block;
+  margin: 3px auto;
+  vertical-align: bottom;
+  /* border: solid 1px black; */
 }
 
-
-
-/*
-  Tree view
-*/
-ul, #myUL {
-    list-style-type: none;
+.pageform {
+  display: inline-block;
 }
 
-#myUL {
-    margin: 0 20px;
-    padding: 0;
-    font-family: -apple-system;
-    font-size: 15px;
+.page_button,
+#jump_button {
+  cursor: pointer;
 }
 
-.caret {
-    cursor: pointer;
-    -webkit-user-select: none; /* Safari 3.1+ */
-    -moz-user-select: none; /* Firefox 2+ */
-    -ms-user-select: none; /* IE 10+ */
-    user-select: none;
+.page_button:disabled {
+  cursor: auto;
 }
 
-.caret::before {
-    content: "\25B6";
-    color: black;
-    display: inline-block;
-    margin-right: 6px;
+#page_number {
+  /* height:15px; */
+  width: 50px;
+  padding: 0 auto;
+  position: relative;
+  margin: 0 2px;
+  /* top:0;  */
+  border-radius: 2px;
+  border: 1px solid grey;
+  /* outline:0; */
+  background: white;
+  border: solid 1px black;
 }
 
-.caret-down::before {
-    -ms-transform: rotate(90deg); /* IE 9 */
-    -webkit-transform: rotate(90deg); /* Safari */
-    transform: rotate(90deg);
-}
-
-.nested {
-    display: none;
-}
-
-.active {
-    display: block;
-}
-
-
-/*
-  Footer
-*/
-.pagination{
-    width: 200px;
-    display: block;
-    margin: 20px auto 0 auto;
-}
-
-.content {
-    flex: 1;
-    margin-bottom: 20px;
-}
-
-#footer{
-    width: 100%;
-    height: 100px;
-    background-color: #583F99;
-    align-items: center;
+footer {
+  width: 90%;
+  margin: 50px auto 50px;
+  color: grey;
+  font-size: 14px;
 }

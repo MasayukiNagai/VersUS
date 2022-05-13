@@ -7,148 +7,12 @@
   <meta name="description" content="An interface for exploring variants of uncertain significance">
   <meta name="author" content="Masayuki Nagai">
 
+  <title>VersUS</title>
+
   <link rel="stylesheet" href="css/bootstrap.min.css" >
   <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/style.css">
 
-  <title>VersUS(beta)</title>
-
-  <style type="text/css">
-    .contents{
-      font-size: 15px;
-      width: 90%;
-      /* margin-left: auto;
-      margin-right: auto; */
-      margin: 0px auto 50px;
-    }
-    hr{
-      color: grey;
-    }
-    a{
-      color: #337ab7;
-    }
-    a[ng-click] {
-      cursor: pointer;
-    }
-    td > a {
-      text-decoration: none;
-    }
-    td > a:hover {
-      text-decoration: underline;
-    }
-    th > a.sortable {
-      text-decoration: none;
-    }
-    .btn-primary, .btn-primary.disabled {
-      color: #fff;
-      background-color: #337ab7;
-      border-color: #2e6da4;
-    }
-    .btn-primary:hover {
-      color: #fff;
-      background-color: #286090;
-      border-color: #204d74;
-    }
-    .btn-primary.focus, .btn-primary:focus {
-      color: #fff;
-      background-color: #286090;
-      border-color: #122b40;
-    }
-    .btn-default {
-      color: #333;
-      background-color: #fff;
-      border-color: #ccc;
-    }
-    .btn.disabled{
-      cursor: not-allowed;
-      filter: alpha(opacity=65);
-      -webkit-box-shadow: none;
-      box-shadow: none;
-      opacity: .65;
-    }
-    /*
-    Result Header
-    */
-    .contents_header{
-        margin-top: 5px;
-        margin-bottom: 5px;
-        display: inline-block;
-        /* height: 150px; */
-        /* border: solid 1px black; */
-    }
-
-    .alert {
-      padding: 15px;
-      margin-bottom: 20px;
-      border: 1px solid transparent;
-      border-radius: 4px;
-    }
-
-    .alert-info {
-      color: #31708f;
-      background-color: #d9edf7;
-      border-color: #bce8f1;
-    }
-
-    .btn-group-xs > .btn, .btn-xs {
-      padding: 1px 5px;
-      font-size: 12px;
-      line-height: 1.5;
-      border-radius: 3px;
-    }
-
-    .num_items{
-        /* position: absolute; */
-        left: 5%;
-        display: inline-block;
-        margin: 0 auto;
-    }
-
-    .pageforms{
-        /* position: static; */
-        left: 5%;
-        /* display: inline-block; */
-        margin: 3px auto;
-        /* vertical-align: bottom; */
-        /* border: solid 1px black; */
-    }
-
-    .pageform{
-    display: inline-block;
-    }
-
-    .pageform{
-        display: inline-block;
-    }
-
-    .page_button, #jump_button{
-        cursor: pointer;
-    }
-
-    .page_button:disabled{
-        cursor: auto;
-    }
-
-    #page_number{
-      /* height:15px; */
-      width: 50px;
-      padding:0 auto;
-      position:relative;
-      margin: 0 2px;
-      /* top:0;  */
-      border-radius:2px;
-      border: 1px solid grey;
-      /* outline:0; */
-      background:white;
-      border: solid 1px black;
-    }
-
-    footer{
-      width: 90%;
-      margin: 50px auto 50px;
-      color: grey;
-      font-size: 14px;
-    }
-  </style>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
 </head>
 
@@ -218,10 +82,10 @@ try{
   echo $sql2 . "<br>" . $error->getMessage();
 }?>
 
-<body ng-controller="myCtrl">
+<body ng-controller="myCtrl" ng-init="init()">
 <?php require "templates/header.php"; ?>
 
-<div class="contents" ng-init="init()">
+<div class="contents">
 
   <div id="header_mutation">
     <div id="header_mutation_text">
@@ -232,12 +96,10 @@ try{
 
   <?php require "templates/pagination.php" ?>
   <hr>
-  <button type='button' class="btn btn-primary" ng-class="{disabled: selectedItems == 0}" ng-click="saveDatasets()">
-    Add <span ng-bind="selectedItems">0</span> to collection</button>
-  <button type='button' class="btn" ng-class="savedResults.length == 0 ? 'disabled btn-default' : 'btn-primary'" ng-click="checkoutButton('test.fasta')">
-    <i class="fa fa-archive" aria-hidden="true"></i> Download <span ng-bind="savedResults.length"></span> fasta seqs</button>
-  <button type='button' class="btn btn-default" ng-show="savedResults.length > 0" ng-click="clearSaved()">
-    Clear the collection </button>
+  <div class="d-flex justify-content-end">
+    <button type='button' id="addbtn" class="btn btn-primary"  ng-class="{disabled: selectedItems == 0}" ng-click="saveDatasets()">
+      Add <span ng-bind="selectedItems">0</span> to collection</button>
+  </div>
   <hr>
   <?php
   $counter = ($current_page-1) * $num_per_page;
@@ -281,6 +143,8 @@ try{
     <p>> No resultss are available.</p>
     <p>> Query: <?php echo escape($sql2) ?></p>
   <?php } ?>
+
+</div>
 
   <script type="text/javascript">
 
@@ -431,22 +295,34 @@ try{
         // $scope.savedResults = [];
       };
 
+      $scope.getFileName = function (){
+        var date = new Date();
+        var name = 'sequence_' + date.toISOString() + '.fasta';
+        return name;
+      };
+
       $scope.prepFasta = function () {
-        var contents = [];
+        var lines = [];
         for (var i = 0; i < $scope.savedResults.length; i++){
           var line = [];
-          line.push('>' + $scope.savedResults[i]['NP_accession']);
-          line.push($scope.savedResults[i]['ref']+$scope.savedResults[i]['pos']+$scope.savedResults[i]['alt']);
-          contents.push(line.join('\t'));
-          fasta = $scope.savedResults[i]['fasta'];
+          gene_symbol = $scope.savedResults[i]['gene_symbol'];
+          np = $scope.savedResults[i]['NP_accession'];
           pos = $scope.savedResults[i]['pos'];
           ref = aaMapThreeToOne[$scope.savedResults[i]['ref']];
           alt = aaMapThreeToOne[$scope.savedResults[i]['alt']];
+          header = '>' + gene_symbol + '_' + np + '_(' + ref + pos + alt + ')'
+          fasta = $scope.savedResults[i]['fasta'];
           mtFasta = fasta.modifyFasta(Number(pos), ref, alt);
-          contents.push(mtFasta + '\n');
+          mtFasta_split = mtFasta.splitToMultiLines();
+          lines.push(header);
+          lines.push(mtFasta_split + '\n');
         }
-        return contents.join('\n');
-      }
+        return lines.join('\n');
+      };
+
+      String.prototype.splitToMultiLines = function () {
+        return this.match(/.{1,80}/g).join('\n');
+      };
 
       $scope.downloadFile = function (content, filename) {
         var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -501,7 +377,7 @@ try{
 
   </script>
 
-</div>
+
 
 <?php require "templates/footer.php"; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
