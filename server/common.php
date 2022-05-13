@@ -49,4 +49,4 @@ function get_query($condition, $order, $limit){
             {$order} {$limit}";
   }
   return $sql;
-}
+} ?>

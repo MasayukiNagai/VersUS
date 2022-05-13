@@ -108,7 +108,7 @@ try{
 ?>
 
 <body>
-<?php require "templates/header2.php"; ?>
+<?php require "templates/header.php"; ?>
 <div class="contents">
 
   <h1>Browse by EC number</h1>
@@ -201,4 +201,4 @@ try{
 </div>
 </body>
 
-<?php require "templates/footer2.php"; ?>
+<?php require "templates/footer.php"; ?>
