@@ -131,11 +131,11 @@ try{
     <tbody>
       <tr ng-repeat="x in results" ng-click="rowClicked(x)">
         <td><input type="checkbox" ng-checked="x.selected" ng-click="toggleRow($event, x)"></td>
-        <td>{{ x.ref + x.pos + x.alt}}</td>
-        <td><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}"> {{ x.accession }}</a></td>
-        <td>{{ x.CADD_score }}</td>
-        <td>{{ x.gnomAD_AF }}</td>
-        <td>{{ x.pdb }}</td>
+        <td class="variation">{{ x.ref + x.pos + x.alt}}</td>
+        <td class="clinvar_link"><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}"> {{ x.accession }}</a></td>
+        <td class="cadd_score">{{ x.CADD_score }}</td>
+        <td class="gnomAD_AF">{{ x.gnomAD_AF }}</td>
+        <td class="pdb">{{ x.pdb }}</td>
       </tbody>
   </table>
 
@@ -204,14 +204,22 @@ try{
             'ref': value['ref'],
             'pos': value['pos'],
             'alt': value['alt'],
-            'accession': value['accession'],
-            'CADD_score': value['CADD_score'],
+            'accession': formatAccession(value['accession']),
+            'CADD_score': formatCADD(value['CADD_score']),
             'gnomAD_AF': value['gnomAD_AF'],
             'pdb': value['pdb'],
             'fasta_id': value['fasta_id']
           })
         }
       };
+
+      formatAccession = function (acc){
+        return 'VCV' + '0'.repeat(9 - acc.length) + acc;
+      }
+
+      formatCADD = function (score) {
+        return parseFloat(score).toFixed(1);;
+      }
 
       $scope.passFastaInfo = function () {
         var php_fasta = <?= json_encode($fasta_seqs); ?>;
