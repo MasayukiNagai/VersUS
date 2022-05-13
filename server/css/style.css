@@ -38,6 +38,11 @@ th>a.sortable {
   text-decoration: none;
 }
 
+.cadd_score, .num_vus, .alphafold,
+.clinvar_link, .pdb, .variation {
+  text-align: center;
+}
+
 .btn-primary,
 .btn-primary.disabled {
   color: #fff;
@@ -92,12 +97,13 @@ th>a.sortable {
   margin-top: 5px;
   margin-bottom: 30px;
   display: inline-block;
+  width: 100%;
   /* height: 150px; */
   /* border: solid 1px black; */
 }
 
 .alert {
-  padding: 15px;
+  padding: 15px 15px 0px 15px;
   margin-bottom: 20px;
   border: 1px solid transparent;
   border-radius: 4px;

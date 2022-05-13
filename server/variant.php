@@ -98,7 +98,7 @@ try{
   <hr>
   <div class="d-flex justify-content-end">
     <button type='button' id="addbtn" class="btn btn-primary"  ng-class="{disabled: selectedItems == 0}" ng-click="saveDatasets()">
-      Add <span ng-bind="selectedItems">0</span> to collection</button>
+      Add <span ng-bind="selectedItems">0</span> to bucket</button>
   </div>
   <hr>
   <?php
