@@ -206,7 +206,7 @@ try{
             'alt': value['alt'],
             'accession': formatAccession(value['accession']),
             'CADD_score': formatCADD(value['CADD_score']),
-            'gnomAD_AF': value['gnomAD_AF'],
+            'gnomAD_AF': formatAF(value['gnomAD_AF']),
             'pdb': value['pdb'],
             'fasta_id': value['fasta_id']
           })
@@ -219,6 +219,14 @@ try{
 
       formatCADD = function (score) {
         return parseFloat(score).toFixed(1);;
+      }
+
+      formatAF = function (af) {
+        if (af != null){
+          return Number.parseFloat(af).toExponential(2);
+        } else {
+          return null;
+        };
       }
 
       $scope.passFastaInfo = function () {
