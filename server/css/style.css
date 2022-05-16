@@ -39,7 +39,7 @@ th>a.sortable {
 }
 
 .cadd_score, .num_vus, .alphafold,
-.clinvar_link, .pdb, .variation {
+.clinvar_link, .pdb, .variation, .gnomAD_AF{
   text-align: center;
 }
 
