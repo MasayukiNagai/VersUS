@@ -255,7 +255,7 @@ class ClinVarHandler:
     #     etree.parse(self.clinvar_xml, parser)
 
 
-    def run(self, genes_dict):
-        vus_dict = self.readClinVarVariationsXML(genes_dict)
+    def run(self, gene_set):
+        vus_dict = self.readClinVarVariationsXML(gene_set)
         self.logger.info('Finish processing the ClinVarVariationRelease')
         return vus_dict
