@@ -84,6 +84,10 @@ class ClinVarHandler:
                         self.change = attrs.get('change')
                         self.has_np_yet = True
                 elif tag == 'MolecularConsequence' and self.has_np_yet == True and self.has_mut_type_yet == False:
+                    if attrs.get('Type') is not None:
+                        self.change_types[attrs.get('Type')] += 1
+                    else:
+                        self.change_types['None'] += 1
                     if (attrs.get('Type') is not None) and 'missense' in attrs.get('Type').lower():
                         self.is_missense = True
                         self.ct_missense_and_type_to_get += 1
