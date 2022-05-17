@@ -183,7 +183,8 @@ class ClinVarHandler:
                                VUS in the list: {len(self.vus_dict)}')
             self.logger.info(f'Clinical Significances: {self.clinical_significances}\n\
                                Variable Types: {self.var_types}\n\
-                               Enzyme Ratio: {self.is_enzyme}')
+                               Enzyme Ratio: {self.is_enzyme}\n\
+                               Change Types: {self.change_types}')
             return self.vus_dict
 
 
