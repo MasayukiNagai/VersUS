@@ -12,8 +12,8 @@ aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
 
 class ClinVarHandler:
 
-    def __init__(self, clinvar_variation):
-        self.clinvar_variation = clinvar_variation
+    def __init__(self, clinvar_xml):
+        self.clinvar_xml = clinvar_xml
         self.logger = getLogger('versus_logger').getChild(__name__)
 
 
@@ -189,7 +189,7 @@ class ClinVarHandler:
         self.logger.info('Start parcing ClinvarVariationsRelease')
         start = datetime.now()
         parser = etree.XMLParser(target=self.VariationHandler(gene_set))
-        with gzip.open(self.clinvar_variation, 'rt') as handle:
+        with gzip.open(self.clinvar_xml, 'rt') as handle:
             vus_dict = etree.parse(handle, parser)
         end = datetime.now()
         time = end - start
@@ -252,7 +252,7 @@ class ClinVarHandler:
     # def readClinVarVariationsXMLSpecific(self, accession):
     #     self.logger.info('Start parcing ClinVarVariations Relase (Specific)')
     #     parser = etree.XMLParser(target=self.VariationHandlerSpecific(accession))
-    #     etree.parse(self.clinvar_variation, parser)
+    #     etree.parse(self.clinvar_xml, parser)
 
 
     def run(self, genes_dict):
