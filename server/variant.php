@@ -46,7 +46,9 @@ try{
       $order = "ORDER BY CADD_score ";
     } elseif($sort_by == 'gnomADAF'){
       $order = "ORDER BY gnomAD_AF ";
-    } else{
+    } elseif($sort_by == 'pdb'){
+      $order = "ORDER BY pdb ";
+    }else{
       $order = "";
     }
     if($desc == 'true'){
@@ -125,7 +127,11 @@ try{
             <span ng-show="sortType == 'gnomADAF' && sortReverse" class="fa fa-caret-down"></span>
             <span ng-show="sortType == 'gnomADAF' && !sortReverse" class="fa fa-caret-up"></span>
           </a></th>
-        <th class="pdb">PDB</th>
+        <th class="pdb"><a ng-click="sortType = 'pdb'; reverse(); sort()" class="sortable">
+            PDB
+            <span ng-show="sortType == 'pdb' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'pdb' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
       </tr>
     </thead>
     <tbody>
