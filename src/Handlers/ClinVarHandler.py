@@ -1,5 +1,7 @@
+from this import d
 from lxml import etree
 import gzip
+from collections import defaultdict
 from datetime import datetime
 from logging import getLogger
 
@@ -50,12 +52,19 @@ class ClinVarHandler:
             self.ct_conflicting_var = 0
             self.ct_not_provided_var = 0
 
+            self.var_types = defaultdict(int)
+            self.clinical_significances = defaultdict(int)
+            self.change_types = defaultdict(int)
+            self.is_enzyme = defaultdict(int)
+
         def start(self, tag, attrs):
             self.tag_stack.append(tag)
-            if (tag == 'VariationArchive') and (attrs.get('VariationType').lower() in self.var_types_to_get):
-                self.is_var_type_to_get = True
-                # self.clinvar_acc = attrs.get('Accession')
-                self.clinvar_acc = attrs.get('VariationID')
+            if (tag == 'VariationArchive'):
+                self.var_types[attrs.get('VariationType')] += 1
+                if (attrs.get('VariationType').lower() in self.var_types_to_get):
+                    self.is_var_type_to_get = True
+                    # self.clinvar_acc = attrs.get('Accession')
+                    self.clinvar_acc = attrs.get('VariationID')
             if self.is_var_type_to_get:
                 if tag == 'Gene' and self.is_first_gene_tag == True:
                     self.gene_symbol = attrs.get('Symbol')
@@ -83,6 +92,7 @@ class ClinVarHandler:
         def end(self, tag):
             self.tag_stack.pop()
             if tag == 'VariationArchive':
+                self.clinical_significances[self.interpretation] += 1
                 clinical_significance = self.interpretation.lower()
                 # print('debug: ' + clinical_significance)
                 if 'uncertain' in clinical_significance:
@@ -94,6 +104,10 @@ class ClinVarHandler:
                 elif 'not provided' in clinical_significance:
                     self.is_not_provided = True
                     self.ct_not_provided_var += 1
+                if self.gene_symbol in self.gene_set:
+                    self.is_enzyme['yes'] += 1
+                else:
+                    self.is_enzyme['no'] += 1
                 if self.is_var_type_to_get \
                    and (self.gene_symbol in self.gene_set)\
                    and self.is_missense\
@@ -163,6 +177,9 @@ class ClinVarHandler:
                                Not Provided: {self.ct_not_provided_var}\n\
                                Missense with specified type(s): {self.ct_missense_and_type_to_get}\n\
                                VUS in the list: {len(self.vus_dict)}')
+            self.logger.info(f'Clinical Significances: {self.clinical_significances}\n\
+                               Variable Types: {self.var_types}\n\
+                               Enzyme Ratio: {self.is_enzyme}')
             return self.vus_dict
 
 
