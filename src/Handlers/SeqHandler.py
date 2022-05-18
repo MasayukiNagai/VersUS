@@ -53,7 +53,7 @@ class SeqHandler:
         for root, _, file_names in os.walk(self.proteomes_dir):
             for filename in file_names:
                 fname = os.path.join(root, filename)
-                with gzip.open(fname, 'r') as handle:
+                with gzip.open(fname, 'rt') as handle:
                     for record in SeqIO.parse(handle, 'fasta'):
                         self.seq_dict[record.id] = str(record.seq)
         self.logger.debug(f'Finish storing {len(self.seq_dict)} sequences')
