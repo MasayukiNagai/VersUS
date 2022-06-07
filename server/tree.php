@@ -14,69 +14,6 @@
 
   <title>VersUS(beta)</title>
 
-  <style type="text/css">
-
-    .contents{
-      font-size: 15px;
-      width: 90%;
-      margin: 0px auto 50px;
-    }
-
-    hr{
-      color: grey;
-    }
-
-    footer{
-      width: 90%;
-      margin: 50px auto 50px;
-      color: grey;
-      font-size: 14px;
-    }
-
-    /*
-      Tree view
-    */
-    ul, #myUL {
-        list-style-type: none;
-    }
-
-    #myUL {
-        margin: 0 20px;
-        padding: 0;
-        font-family: -apple-system;
-        font-size: 15px;
-    }
-
-    .caret {
-        cursor: pointer;
-        -webkit-user-select: none; /* Safari 3.1+ */
-        -moz-user-select: none; /* Firefox 2+ */
-        -ms-user-select: none; /* IE 10+ */
-        user-select: none;
-    }
-
-    .caret::before {
-        content: "\25B6";
-        color: black;
-        display: inline-block;
-        margin-right: 6px;
-    }
-
-    .caret-down::before {
-        -ms-transform: rotate(90deg); /* IE 9 */
-        -webkit-transform: rotate(90deg); /* Safari */
-        transform: rotate(90deg);
-    }
-
-    .nested {
-        display: none;
-    }
-
-    .active {
-        display: block;
-    }
-
-  </style>
 </head>
 
 <?php
@@ -131,7 +68,7 @@ try{
     <?php if($row["class"] == 1){?>
     <li><?php
       if($row["num_vus"] > 0){?>
-      <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+      <span class="caret"><a class="tree" href="gene_ec.php?ec=<?php echo($row["ec_1"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
       </span>
     <?php } else {?>
       <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -143,7 +80,7 @@ try{
       <?php $ct_class = 2;}?>
       <li><?php
       if($row["num_vus"] > 0){?>
-      <span class="caret"><a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+      <span class="caret"><a class="tree" href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
       </span>
     <?php } else {?>
       <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -156,7 +93,7 @@ try{
       <li><?php
       if($row["num_vus"] > 0){?>
       <span class="caret">
-      <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
+      <a class="tree" href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></a>
       </span>
     <?php } else {?>
       <span class="caret"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?><?php echo escape(" (".$row["num_vus"].")");?></span>
@@ -168,7 +105,7 @@ try{
     <?php $ct_class = 4;}?>
     <li><?php
       if($row["num_vus"] > 0){?>
-      <a href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"].".".$row["ec_4"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?></a> <?php echo escape(" (".$row["num_vus"].")");?>
+      <a class="tree" href="gene_ec.php?ec=<?php echo($row["ec_1"].".".$row["ec_2"].".".$row["ec_3"].".".$row["ec_4"]) ?>"><?php echo escape($row["ec_number"]." "); echo($row["description"]);?></a> <?php echo escape(" (".$row["num_vus"].")");?>
       <?php } else{ ?>
       <?php echo escape($row["ec_number"]." "); echo($row["description"]); echo escape(" (0)")?>
       <?php } ?>

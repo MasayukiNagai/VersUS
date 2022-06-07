@@ -158,6 +158,60 @@ th>a.sortable {
   border: solid 1px black;
 }
 
+/*
+  Tree view
+*/
+ul, #myUL {
+    list-style-type: none;
+}
+
+#myUL {
+    margin: 0 20px;
+    padding: 0;
+    font-family: -apple-system;
+    font-size: 15px;
+}
+
+a.tree {
+  text-decoration: none;
+}
+
+a.tree:hover {
+  text-decoration: underline;
+}
+
+.caret {
+    cursor: pointer;
+    -webkit-user-select: none; /* Safari 3.1+ */
+    -moz-user-select: none; /* Firefox 2+ */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none;
+}
+
+.caret::before {
+    content: "\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.caret-down::before {
+    -ms-transform: rotate(90deg); /* IE 9 */
+    -webkit-transform: rotate(90deg); /* Safari */
+    transform: rotate(90deg);
+}
+
+.nested {
+    display: none;
+}
+
+.active {
+    display: block;
+}
+
+/*
+  Footer
+*/
 footer {
   width: 90%;
   margin: 50px auto 50px;
