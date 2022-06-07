@@ -8,7 +8,9 @@
   <meta name="description" content="An interface for exploring variants of uncertain significance">
   <meta name="author" content="Masayuki Nagai">
 
-  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/bootstrap.min.css" >
+  <!-- <link rel="stylesheet" href="css/font-awesome-4.7.0/css/font-awesome.min.css"> -->
+  <link rel="stylesheet" href="css/style.css">
 
   <title>VersUS(beta)</title>
 
@@ -108,7 +110,7 @@ try{
 ?>
 
 <body>
-<?php require "templates/header.php"; ?>
+<?php require "templates/header_tree.php"; ?>
 <div class="contents">
 
   <h1>Browse by EC number</h1>
