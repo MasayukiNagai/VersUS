@@ -27,6 +27,7 @@
             <select class="form-select form-select-sm mt-1" id="search_by" name="search_by">
               <option <?php if ($_GET['search_by'] == 'gene') { ?>selected="true" <?php }; ?> value="gene">Gene ID</option>
               <option <?php if ($_GET['search_by'] == 'uniprotID') { ?>selected="true" <?php }; ?> value="uniprotID">Uniprot ID</option>
+              <option <?php if ($_GET['search_by'] == 'ec') { ?>selected="true" <?php }; ?> value="ec">EC number</option>
               <option <?php if ($_GET['search_by'] == 'keywords') { ?>selected="true" <?php }; ?> value="keywords">Keyword</option>
             </select>
           </div>

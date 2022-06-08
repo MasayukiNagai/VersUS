@@ -44,10 +44,14 @@ try{
           $order = "ORDER BY uniprot_id ASC";
           $keyword = "$term";
         }
+        elseif($search_by == 'ec'){
+          $condition = "WHERE EC_number LIKE :keyword";
+          $order = "ORDER BY EC_number";
+          $keyword = "$term%";
+        }
         else{
           // search by keywords
-          $condition = "WHERE gene_full_name LIKE :keyword
-                           OR EC_number LIKE :keyword";
+          $condition = "WHERE gene_full_name LIKE :keyword";
           $order = "";
           $keyword = "%$term%";
         }
