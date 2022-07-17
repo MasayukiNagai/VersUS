@@ -1,4 +1,6 @@
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import wget
 import gzip
@@ -17,13 +19,11 @@ class CADDHandler:
         self.failed_retrival = False
         self.logger = getLogger('versus_logger').getChild(__name__)
 
-
     def setUp(self):
+        service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(options = chrome_options)
-        # self.driver = webdriver.Chrome()
-
+        self.driver = webdriver.Chrome(service=service, option=chrome_options)
 
     def upload_CADD_input(self):
         driver = self.driver
@@ -35,7 +35,6 @@ class CADDHandler:
         version.click()
         submit = driver.find_element_by_xpath("//input[@type='submit']")
         submit.click()
-
 
     def check_CADD_upload_succeeded(self):
         self.driver.implicitly_wait(10)
@@ -49,7 +48,6 @@ class CADDHandler:
             self.logger.warning('Cannot tell if upload is successful or not')
             return False
 
-
     def donwload_CADD_results(self):
         url_link = self.check_CADD_output_ready()
         if url_link:
@@ -58,7 +56,6 @@ class CADDHandler:
             return True
         else:
             return False
-
 
     def check_CADD_output_ready(self):
         is_ready = False
@@ -84,10 +81,8 @@ class CADDHandler:
         self.logger.info(f'Getting CADD output took {c[0]} minutes {c[1]} seconds')
         return new_url
 
-
     def close(self):
         self.driver.close()
-
 
     def get_CADD_scores(self):
         self.setUp()
@@ -103,7 +98,6 @@ class CADDHandler:
             return
         self.close()
 
-
     def make_tsv_for_CADD(self, vus_dict):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
@@ -117,7 +111,6 @@ class CADDHandler:
                 info_tup = (chrom, pos, str(vus_id), ref, alt)
                 info = '\t'.join(info_tup)
                 f.write((info + '\n').encode())
-
 
     def make_tsv_for_CADD2(self, vus_dict):
         cadd_dict = {}
@@ -149,7 +142,6 @@ class CADDHandler:
                         info = '\t'.join(info_tup)
                         f.write(info + '\n')
 
-
     def read_CADD_results(self):
         with gzip.open(self.cadd_output, 'rt') as f:
             for line in f:
@@ -171,7 +163,6 @@ class CADDHandler:
         self.logger.debug(f'Length of CADD dict: {ct}')
         return self.cadd_dict
 
-
     def add_cadd_results(self, vus_dict: dict):
         unfound_cadd = set()
         for vus_id in vus_dict:
@@ -188,7 +179,6 @@ class CADDHandler:
             vus_dict[vus_id]['CADD_score'] = cadd_score
         self.logger.debug(f'CADD Scores were found for {len(vus_dict)-len(unfound_cadd)}/{len(vus_dict)} mutations')
         return vus_dict
-
 
     def run(self, vus_dict):
         self.make_tsv_for_CADD(vus_dict)
