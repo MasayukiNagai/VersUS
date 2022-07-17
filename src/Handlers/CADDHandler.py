@@ -23,7 +23,7 @@ class CADDHandler:
         service = Service(executable_path=ChromeDriverManager().install())
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(service=service, option=chrome_options)
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
 
     def upload_CADD_input(self):
         driver = self.driver
