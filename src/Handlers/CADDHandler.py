@@ -2,6 +2,7 @@ from selenium import webdriver
 # from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import wget
 import gzip
 import time
@@ -30,11 +31,11 @@ class CADDHandler:
         driver = self.driver
         driver.get(self.cadd_website_url)
         assert 'CADD' in driver.title
-        upload = driver.find_element_by_xpath("//input[@type='file']")
+        upload = driver.find_element(By.XPATH, "//input[@type='file']")
         upload.send_keys(self.cadd_input)
-        version = driver.find_element_by_xpath("//select[@name='version']/option[text()='GRCh38-v1.4']")
+        version = driver.find_element(By.XPATH, "//select[@name='version']/option[text()='GRCh38-v1.4']")
         version.click()
-        submit = driver.find_element_by_xpath("//input[@type='submit']")
+        submit = driver.find_element(By.XPATH, "//input[@type='submit']")
         submit.click()
 
     def check_CADD_upload_succeeded(self):
@@ -62,7 +63,7 @@ class CADDHandler:
         is_ready = False
         start = datetime.now()
         while True:
-            new_url = self.driver.find_element_by_xpath(".//a[contains(text(), 'here')]").get_attribute('href')
+            new_url = self.driver.find_element(By.XPATH, ".//a[contains(text(), 'here')]").get_attribute('href')
             if 'check_avail' in new_url:
                 time.sleep(60)
                 self.driver.get(new_url)
