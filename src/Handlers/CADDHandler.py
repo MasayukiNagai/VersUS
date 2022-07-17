@@ -1,5 +1,6 @@
 from selenium import webdriver
-# from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.utils import ChromeType
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -13,7 +14,6 @@ from logging import getLogger
 class CADDHandler:
 
     def __init__(self, cadd_input, cadd_output):
-        self.chromedriver = "/home/LDAPdir/mnagai22/.wdm/drivers/chromedriver/linux64/90.0.4430.24/chromedriver"
         self.cadd_input = cadd_input
         self.cadd_output = cadd_output
         self.cadd_dict = {}
@@ -22,10 +22,10 @@ class CADDHandler:
         self.logger = getLogger('versus_logger').getChild(__name__)
 
     def setUp(self):
-        service = Service(executable_path=self.chromedriver)
+        chrome_service = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
     def upload_CADD_input(self):
         driver = self.driver
