@@ -1,14 +1,15 @@
-from this import d
 from lxml import etree
 import gzip
 from collections import defaultdict
 from datetime import datetime
 from logging import getLogger
 
+
 aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                    'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
                    'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
                    'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
+
 
 class ClinVarHandler:
 
@@ -121,10 +122,11 @@ class ClinVarHandler:
                         ref = aaMapThreeToOne.get(self.change[0:3])
                         alt = aaMapThreeToOne.get(self.change[len(self.change) - 3:len(self.change)])
                     except:
-                        ref = ''
-                        alt = ''
+                        ref = None
+                        alt = None
+                        self.logger.debug(f'Failed to parse "{self.change}"')
                         # pos = int(self.change.split('_')[0][1:])
-                    if ref != '' and alt != '':
+                    if ref and alt:
                         try:
                             pos = int(self.change[3:len(self.change) - 3])
                         except:
@@ -174,17 +176,19 @@ class ClinVarHandler:
                 self.interpretation = data  # needs to check this part
 
         def close(self):
-            self.logger.info(f'Finish parsing ClinvarVariaiton\n\
-                               Total Variations: {self.ct_var}\n\
-                               Uncertain Significance: {self.ct_uncertain_var}\n\
-                               Conflicting Report: {self.ct_conflicting_var}\n\
-                               Not Provided: {self.ct_not_provided_var}\n\
-                               Missense with specified type(s): {self.ct_missense_and_type_to_get}\n\
-                               VUS in the list: {len(self.vus_dict)}')
-            self.logger.info(f'Clinical Significances: {self.clinical_significances}\n\
-                               Variable Types: {self.var_types}\n\
-                               Enzyme Ratio: {self.is_enzyme}\n\
-                               Change Types: {self.change_types}')
+            self.logger.info(
+                (f'Finish parsing ClinvarVariaiton\n'
+                 f'Total Variations: {self.ct_var}\n'
+                 f'Uncertain Significance: {self.ct_uncertain_var}\n'
+                 f'Conflicting Report: {self.ct_conflicting_var}\n'
+                 f' Not Provided: {self.ct_not_provided_var}\n'
+                 f'Missense with specified type(s): {self.ct_missense_and_type_to_get}\n'
+                 f'VUS in the list: {len(self.vus_dict)}'))
+            self.logger.info(
+                (f'Clinical Significances: {self.clinical_significances}\n'
+                 f'Variable Types: {self.var_types}\n'
+                 f'Enzyme Ratio: {self.is_enzyme}\n'
+                 f'Change Types: {self.change_types}'))
             return self.vus_dict
 
 
