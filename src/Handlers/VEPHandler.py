@@ -44,7 +44,7 @@ class VEPHandler:
         self.logger.debug(f'Number of vus with any info missing: {ct_none}')
         return ordered_dict
 
-    
+
     def make_tsv_ordered_for_vep(self, vus_ordered_dict:dict):
         chrom_order = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X')
         with open(self.vep_input, 'w') as f:
@@ -62,12 +62,12 @@ class VEPHandler:
             for vus_id in range(0, len(vus_dict)):
                 info = (vus_dict[vus_id]['chr'], vus_dict[vus_id]['start'], vus_dict[vus_id]['stop'], vus_dict[vus_id]['referenceAllele'], vus_dict[vus_id]['alternateAllele'])
                 f.write('\t'.join(info) + '\n')
-    
+
 
     def vep_locally(self):
         self.logger.info('Start running VEP')
         start = datetime.now()  # for counting time necessary to run vep
-        cmd1 = self.vep_path 
+        cmd1 = self.vep_path
         cmd2 = './vep' + ' '\
              + '-i ' + self.vep_input + ' '\
              + '-o ' + self.vep_output + ' '\
@@ -85,7 +85,7 @@ class VEPHandler:
         self.logger.info(cmd + ' : ran with exit code %d' %vep_cmd)
         self.logger.info(f'Running Vep took {c[0]} minutes {c[1]} seconds')
 
-    
+
     # def crop_vep_output(self, vep_file_path: str, outfile_path: str):
     #     cmd = "cat " + vep_file_path + " | "\
     #         + "grep -v '##'" + " | "\
@@ -106,7 +106,7 @@ class VEPHandler:
                     location_i = header.index('Location')
                     alt_i = header.index('Allele')
                     pick_i = header.index('PICK')
-                    gnomadAF_i = header.index('gnomAD_AF')
+                    gnomadAF_i = header.index('gnomADe_AF')
                     self.logger.debug(f'VEP output header: {header}')
                     continue
                 data = line.split('\t')
@@ -130,8 +130,8 @@ class VEPHandler:
             ct += len(self.vep_dict[chrom])
         self.logger.debug(f'Number of items in the vep dict: {ct}')
         return self.vep_dict
-                
-    
+
+
     def add_vep_output(self, vus_dict: dict):
         unfound_af = {}
         for vus in vus_dict.values():
@@ -147,11 +147,11 @@ class VEPHandler:
         self.logger.debug(f'Unfound gnomAD_AF: {unfound_af}')
         return vus_dict
 
-    
+
     def run(self, vus_dict):
         vus_ordered_dict = self.make_ordered_vus_dict_for_vep(vus_dict)
         self.make_tsv_ordered_for_vep(vus_ordered_dict)
         self.vep_locally()
         self.read_vep_output()
         vus_dict = self.add_vep_output(vus_dict)
-        return vus_dict 
+        return vus_dict
