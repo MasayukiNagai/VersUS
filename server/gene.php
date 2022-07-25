@@ -161,7 +161,7 @@ try{
         $counter += 1; ?>
         <tr>
           <td class="count"><?php echo escape($counter) ?></td>
-          <td class="gene_id"><a href="variant.php?gene_id=<?php echo $row["gene_id"] ?>"><?php echo escape($row["gene_symbol"]); ?></a></td>
+          <td class="gene_id"><a href="variant.php?gene_id=<?php echo $row["gene_id"] ?>"><b><?php echo escape($row["gene_symbol"]); ?></b></a></td>
           <td class="enzyme_name"><?php echo escape($row["gene_full_name"]); ?></td>
           <td class="uniprot_id"><a href=<?php echo get_uniprot_url($row["uniprot_id"]) ?>><?php echo escape($row["uniprot_id"]) ?></a></td>
           <td class="num_vus"><?php echo escape($row["num_vus"]); ?></td>
