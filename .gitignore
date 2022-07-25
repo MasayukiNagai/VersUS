@@ -25,6 +25,7 @@ intermediates/
 results/
 configuration/
 server/versus_gui/etc/
+chrome-data/
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,vscode,python,django
