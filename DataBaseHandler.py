@@ -14,6 +14,7 @@ aaMapOneToThree = {'A': 'Ala', 'R': 'Arg', 'N': 'Asn', 'D': 'Asp', 'C': 'Cys',
 cinvar_link_variation = 'https://www.ncbi.nlm.nih.gov/clinvar/variation/'
 
 class DataBaseEditor:
+
     def __init__(self):
         self.argument_parser()
         self.gene_table = 'Gene'
