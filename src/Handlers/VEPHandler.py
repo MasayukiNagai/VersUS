@@ -71,7 +71,7 @@ class VEPHandler:
         cmd2 = './vep' + ' '\
              + '-i ' + self.vep_input + ' '\
              + '-o ' + self.vep_output + ' '\
-             + '--cache ' + '--af_gnomad '\
+             + '--cache ' + '--af_gnomadg '\
              + '--no_check_variants_order '\
              + '--flag_pick ' + '--tab '\
              + '--force_overwrite'
@@ -106,7 +106,7 @@ class VEPHandler:
                     location_i = header.index('Location')
                     alt_i = header.index('Allele')
                     pick_i = header.index('PICK')
-                    gnomadAF_i = header.index('gnomADe_AF')
+                    gnomadAF_i = header.index('gnomADg_AF')
                     self.logger.debug(f'VEP output header: {header}')
                     continue
                 data = line.split('\t')
