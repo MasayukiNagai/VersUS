@@ -207,63 +207,6 @@ class ClinVarHandler:
         return vus_dict
 
 
-    # # need to change global WFILE stuff later
-    # class VariationHandlerSpecific(object):
-    #     def __init__(self, accession):
-    #         self.is_accession = False
-    #         self.accession = accession
-    #         self.ct = 0
-    #         print("Accession:" + self.accession)
-
-    #     def start(self, tag, attrs):
-    #         global WFILE
-    #         if (tag == 'VariationArchive') and (attrs.get('Accession') == self.accession):
-    #             self.is_accession = True
-    #             print('The specific variation is found: ' + str(self.ct))
-    #         if self.is_accession:
-    #             if len(attrs.keys()) == 0:
-    #                 WFILE.write('<' + tag)
-    #             else:
-    #                 for i, t in enumerate(attrs.keys()):
-    #                     if i == 0:
-    #                         WFILE.write('<' + tag + ' ')
-    #                     elif i != len(attrs.keys()) - 1:
-    #                         WFILE.write(t + '="' + attrs.get(t) + '"' + ' ')
-    #                     else:
-    #                         WFILE.write(t + '="' + attrs.get(t) + '"')
-    #             WFILE.write('>')
-
-    #     def end(self, tag):
-    #         global WFILE
-    #         if self.is_accession:
-    #             WFILE.write('</' + tag + '>')
-    #         if tag == 'VariationArchive':
-    #             if self.ct % 10000 == 0:
-    #                 print(self.ct)
-    #             self.ct += 1
-    #         if self.is_accession and tag == 'VariationArchive':
-    #             self.is_accession = False
-    #             WFILE.close()
-    #             print('The subnode file is completed')
-
-    #     def data(self, data):
-    #         global WFILE
-    #         if data is not None:
-    #             if self.is_accession and data != "":
-    #                 WFILE.write(data)
-
-    #     def close(self):
-    #         print('The xml file is closed')
-
-
-    # # read xml file of variations from ClinVar
-    # # return dataframe and write to a csv file
-    # def readClinVarVariationsXMLSpecific(self, accession):
-    #     self.logger.info('Start parcing ClinVarVariations Relase (Specific)')
-    #     parser = etree.XMLParser(target=self.VariationHandlerSpecific(accession))
-    #     etree.parse(self.clinvar_xml, parser)
-
-
     def run(self, gene_set):
         vus_dict = self.readClinVarVariationsXML(gene_set)
         self.logger.info('Finish processing the ClinVarVariationRelease')
