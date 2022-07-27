@@ -91,6 +91,7 @@ class ClinVarHandler:
                         if np_acc and np_acc.startswith('NP'):
                             hgvs = {'NP': np_acc, 'change': attrs.get('change')}
                             self.hgvs_ls.append(hgvs)
+                            self.has_ProteinExpression = True
                     elif tag == 'MolecularConsequence':
                         if self.has_ProteinExpression:
                             is_missense = 'missense' in attrs.get('Type').lower()
@@ -117,6 +118,7 @@ class ClinVarHandler:
                 self.clinical_significances[self.interpretation] += 1
                 # Check clinical significance
                 clinical_significance = self.interpretation.lower()
+                is_uncertain, is_conflicting, is_not_provided = [False] * 3
                 if 'uncertain' in clinical_significance:
                     is_uncertain = True
                     self.ct_uncertain_var += 1
@@ -131,12 +133,13 @@ class ClinVarHandler:
                 else:
                     self.is_enzyme['no'] += 1
                 # Check missense
+                is_missense = False
                 if self.has_MANEandMissense:
                     hgvs = self.hgvs_ls[-1]
                     is_missense = True
                 else:
                     for v in self.hgvs_ls:
-                        if v['missense']:
+                        if v.get('missense'):
                             hgvs = v
                             is_missense = True
                 if is_missense:
