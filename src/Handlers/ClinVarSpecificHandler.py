@@ -15,7 +15,6 @@ class VariationHandlerSpecific(object):
         open(self.wfile, "w").close()  # erace contents
 
     def start(self, tag, attrs):
-        # global WFILE
         if (tag == 'VariationArchive') \
             and (attrs.get('Accession') == self.accession):
             self.is_accession = True
@@ -39,7 +38,6 @@ class VariationHandlerSpecific(object):
                 f.write('>')
 
     def end(self, tag):
-        # global WFILE
         if self.is_accession:
             with open(self.wfile, 'a') as f:
                 f.write('</' + tag + '>')
@@ -49,19 +47,15 @@ class VariationHandlerSpecific(object):
                 print(self.ct)
         if self.is_accession and tag == 'VariationArchive':
             self.is_accession = False
-            # WFILE.close()
             print('The subnode file is completed')
 
-
     def data(self, data):
-        # global WFILE
         if data is not None:
             if self.is_accession and data != "":
                 with open(self.wfile, 'a') as f:
                     f.write(data)
 
     def close(self):
-        # WFILE.close()
         print('The xml file is closed')
 
 
