@@ -4,8 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 from logging import getLogger
 
-from matplotlib.cbook import is_math_text
-
 
 aaMapThreeToOne = {'Ala': 'A', 'Arg': 'R', 'Asn': 'N', 'Asp': 'D', 'Cys': 'C',
                    'Glu': 'E', 'Gln': 'Q', 'Gly': 'G', 'His': 'H', 'Ile': 'I',
