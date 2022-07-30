@@ -2,11 +2,12 @@ import os
 import logging
 import argparse
 from datetime import datetime
-from Handlers.SeqHandler import *
-from Handlers.ClinVarHandler import *
-from Handlers.BLASTHandler import *
-from Handlers.CADDHandler import *
-from Handlers.VEPHandler import *
+from Handlers.SeqHandler import SeqHandler
+from Handlers.ClinVarHandler import ClinVarHandler
+from Handlers.BLASTHandler import BLASTHandler
+from Handlers.CADDHandler import CADDHandler
+from Handlers.VEPHandler import VEPHandler
+from Handlers.PTMHandler import PTMHandler
 from Handlers.FileHandler import *
 
 
@@ -72,11 +73,11 @@ class VersUS:
         make_dir(outdir)
 
         seqHandler = SeqHandler(genes, proteomes)
-        genes_dict = seqHandler.readUniprot_GeneId_EC()
+        gene_dict = seqHandler.readUniprot_GeneId_EC()
 
         # parse a ClinvarVariation XML file
         clinvarHandler = ClinVarHandler(clinvar_file)
-        vus_dict = clinvarHandler.readClinVarVariationsXML(genes_dict.keys())
+        vus_dict = clinvarHandler.readClinVarVariationsXML(gene_dict.keys())
 
         # add EC number and Uniprot id
         vus_dict = seqHandler.add_uniprotId_EC(vus_dict)
@@ -84,9 +85,12 @@ class VersUS:
         fasta_window = int(params_dict['fasta_window'])
         vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
 
-        header = format_header(vus_dict)
-        intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
-        write_to_tsv(vus_dict, header, intermediate_output)
+        ptmHandler = PTMHandler()
+        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, gene_dict)
+
+        # header = format_header(vus_dict)
+        # intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
+        # write_to_tsv(vus_dict, header, intermediate_output)
 
         if blast:
             blast_input_path = os.path.join(intermediates_dir, 'blast_input.fasta')
@@ -94,18 +98,16 @@ class VersUS:
             blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
             evalue = float(params_dict['evalue'])
             vus_dict = blastHandler.run(vus_dict, evalue)
-
-            header = format_header(vus_dict)
-            write_to_tsv(vus_dict, header, intermediate_output)
+            # header = format_header(vus_dict)
+            # write_to_tsv(vus_dict, header, intermediate_output)
 
         if vep:
             vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
             vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
             vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
             vus_dict = vepHandler.run(vus_dict)
-
-            header = format_header(vus_dict)
-            write_to_tsv(vus_dict, header, intermediate_output)
+            # header = format_header(vus_dict)
+            # write_to_tsv(vus_dict, header, intermediate_output)
 
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
