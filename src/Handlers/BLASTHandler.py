@@ -5,18 +5,15 @@ from logging import getLogger
 
 class BLASTHandler():
 
-    def __init__(self, blast_path, blast_input, blast_output):
-        self.blast_path = blast_path
-        self.blast_input = blast_input
-        self.blast_output = blast_output
-        self.blast_dict = {}
+    def __init__(self, blastp=None, blastdb=None):
+        self.blastp = blastp
+        self.blastdb = blastdb
         self.logger = getLogger('versus_logger').getChild(__name__)
 
-
     # make FASTA format text file from dataframe for blast search
-    def make_fasta_for_blast(self, vus_dict: dict):
+    def make_fasta_for_blast(self, vus_dict, blast_infile):
         # info_tup = ('NP_accession', 'gene_id', 'gene_name', 'FASTA_window')
-        with open(self.blast_input, 'w') as f:
+        with open(blast_infile, 'w') as f:
             for vus_id in range(0, len(vus_dict)):
                 np_acc = vus_dict[vus_id]['NP_accession']
                 gene_id = vus_dict[vus_id]['gene_id']
@@ -29,25 +26,22 @@ class BLASTHandler():
                 f.write(header)
                 f.write(fasta)
 
-
-    def blast_locally(self, evalue: float=10.0):
+    def blast_locally(self, infile, outfile, evalue=10.0):
         self.logger.info('Start running BLAST')
         start = datetime.datetime.now()
-        cmd1 = self.blast_path
-        cmd2 = 'blastp' + ' ' \
-                + '-query ' + self.blast_input + ' '\
-                + '-db ' + cmd1 + '/pdbaa' + ' '\
-                + '-evalue ' + str(evalue) + ' '\
-                + '-outfmt ' + '5' + ' '\
-                + '-out ' + self.blast_output
-        cmd = os.path.join(cmd1, cmd2)
+        cmd = f'{self.blastp} '\
+            + f'-query {infile}'\
+            + f'-evalue {str(evalue)}'\
+            + f'-outfmt 5 '\
+            + f'-out {outfile}'
+        if self.blastdb is not None:
+            cmd += f' -db {self.blastdb}'
         b_cmd = os.system(cmd)
         end = datetime.datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running BLAST took {c[0]} minutes {c[1]} seconds')
         self.logger.info(cmd + ' : ran with exit code %d' %b_cmd)
-
 
     class BlastXMLHandler(object):
         def __init__(self):
@@ -70,7 +64,7 @@ class BLASTHandler():
             self.tag_stack.append(tag)
             if tag == 'Iteration':
                 self.blast_results[self.blast_id] = {}
-                
+
         def end(self, tag):
             self.tag_stack.pop()
             if tag == 'Hit' and not self.has_got_best_pdb:
@@ -85,7 +79,6 @@ class BLASTHandler():
                 elif self.evalue < self.blast_results[self.blast_id]['BLAST_evalue']:
                     self.has_got_best_pdb = True
                 self.has_got_species = False
-                
             elif tag == 'Iteration':
                 for k in self.info:
                     if self.blast_results[self.blast_id].get(k) == None:
@@ -102,7 +95,7 @@ class BLASTHandler():
                 if 'Hit_id' == self.tag_stack[-1]:
                     try:
                         pdb = data.split('pdb|')[1]
-                    except: 
+                    except:
                         self.logger.warning(f'Cannot split {data} for pdb, id: {self.blast_id}')
                         pdb = data
                     self.pdb_id = pdb
@@ -127,42 +120,45 @@ class BLASTHandler():
                         self.hit_from = data
                     elif 'Hsp_hit-to' == self.tag_stack[-1]:
                         self.hit_to = data
-                           
+
         def close(self):
             self.logger.info(f'Could not identify species of the following: {self.unidentified_species}')
             self.logger.info(f'Finish parsing the BLAST results\n\
                                {len(self.blast_results)}/{self.blast_id} found')
             return self.blast_results
-            
 
-    def readBlastXML(self) -> dict:
+
+    def readBlastXML(self, outfile) -> dict:
         self.logger.info('Start parcing BLAST results')
         start = datetime.datetime.now()
         parser = etree.XMLParser(target=self.BlastXMLHandler())
-        blast_dict = etree.parse(self.blast_output, parser)
+        blast_dict = etree.parse(outfile, parser)
         end = datetime.datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
-        return blast_dict  
+        return blast_dict
 
 
-    def add_blast_results(self, vus_dict) -> dict:
+    def add_blast_results(self, vus_dict, blast_dict) -> dict:
         if vus_dict.keys() != self.blast_dict.keys():
             self.logger.warning(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
             return None
         for common_id in range(0, len(vus_dict)):
-            vus_dict[common_id]['pdb_ID'] = self.blast_dict[common_id]['pdb_ID']
-            vus_dict[common_id]['BLAST_evalue'] = self.blast_dict[common_id]['BLAST_evalue']
-            vus_dict[common_id]['hit_from'] = self.blast_dict[common_id]['hit_from']
-            vus_dict[common_id]['hit_to'] = self.blast_dict[common_id]['hit_to']
+            vus_dict[common_id]['pdb_ID'] = blast_dict[common_id]['pdb_ID']
+            vus_dict[common_id]['BLAST_evalue'] = blast_dict[common_id]['BLAST_evalue']
+            vus_dict[common_id]['hit_from'] = blast_dict[common_id]['hit_from']
+            vus_dict[common_id]['hit_to'] = blast_dict[common_id]['hit_to']
         return vus_dict
 
-
-    def run(self, vus_dict, evalue: float=10.0):
-        self.make_fasta_for_blast(vus_dict)
-        self.blast_locally(evalue)
-        self.blast_dict = self.readBlastXML()
-        vus_dict = self.add_blast_results(vus_dict)
+    def run(self, vus_dict, blast_infile, blast_outfile, evalue=10.0):
+        self.make_fasta_for_blast(vus_dict, blast_infile)
+        self.blast_locally(blast_infile, blast_outfile, evalue)
+        blast_dict = self.readBlastXML(blast_outfile)
+        vus_dict = self.add_blast_results(vus_dict, blast_dict)
         return vus_dict
-        
+
+    def run_preprocessed(self, vus_dict, blast_outfile):
+        blast_dict = self.readBlastXML(blast_outfile)
+        vus_dict = self.add_blast_results(vus_dict, blast_dict)
+        return vus_dict
