@@ -112,7 +112,8 @@ class DataBaseEditor:
                           'CADD_score': 'FLOAT',
                           'gnomAD_AF': 'FLOAT',
                           'pdb': 'VARCHAR(20)',
-                          'fasta_id': 'INT'}  # nn?
+                          'PTM': 'TINYINT(1)',
+                          'fasta_id': 'INT',}  # nn?
         self.create_table(self.mutation_table, name_type_dict)
 
     def create_ec_table(self):
@@ -285,7 +286,7 @@ class DataBaseEditor:
             mutation_dict[vus_dict['gene_id']].append(mut_entry)
         keytup = ('gene_id', 'ref', 'pos', 'alt', 'accession',
                   'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
-                  'fasta_id')
+                  'PTM', 'fasta_id')
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
         self.insert_items(self.mutation_table, keytup, vus_values)
 
@@ -307,6 +308,7 @@ class DataBaseEditor:
                'CADD_score': vus_dict['CADD_score'],
                'gnomAD_AF': vus_dict['gnomAD_AF'],
                'pdb': vus_dict['pdb_ID'],
+               'PTM': 1 if vus_dict['PTM'] else 0,
                'fasta_id': fasta_id}
         return mut
 
@@ -411,6 +413,8 @@ class DataBaseEditor:
                         vus_dict[key] = None
                     elif key == 'missense_variation':
                         vus_dict[key] = self.map_aa_one_to_three(vus_dict[key])
+                    elif key == 'PTM':
+                        vus_dict[key] = True if vus_dict[key] == 'True' else False
                 vus_dictlist.append(vus_dict)
         return vus_dictlist
 
