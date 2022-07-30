@@ -13,10 +13,7 @@ from logging import getLogger
 
 class CADDHandler:
 
-    def __init__(self, cadd_input, cadd_output):
-        self.cadd_input = cadd_input
-        self.cadd_output = cadd_output
-        self.cadd_dict = {}
+    def __init__(self):
         self.cadd_website_url = "https://cadd.gs.washington.edu/score"
         self.failed_retrival = False
         self.logger = getLogger('versus_logger').getChild(__name__)
@@ -27,12 +24,12 @@ class CADDHandler:
         chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
-    def upload_CADD_input(self):
+    def upload_CADD_input(self, cadd_infile):
         driver = self.driver
         driver.get(self.cadd_website_url)
         assert 'CADD' in driver.title
         upload = driver.find_element(By.XPATH, "//input[@type='file']")
-        upload.send_keys(self.cadd_input)
+        upload.send_keys(cadd_infile)
         version = driver.find_element(By.XPATH, "//select[@name='version']/option[text()='GRCh38-v1.4']")
         version.click()
         submit = driver.find_element(By.XPATH, "//input[@type='submit']")
@@ -50,11 +47,11 @@ class CADDHandler:
             self.logger.warning('Cannot tell if upload is successful or not')
             return False
 
-    def donwload_CADD_results(self):
+    def donwload_CADD_results(self, cadd_outfile):
         url_link = self.check_CADD_output_ready()
         if url_link:
             # urllib.request.urlretrieve(url_link, self.cadd_output)
-            wget.download(url_link, self.cadd_output)
+            wget.download(url_link, cadd_outfile)
             return True
         else:
             return False
@@ -86,24 +83,24 @@ class CADDHandler:
     def close(self):
         self.driver.close()
 
-    def get_CADD_scores(self):
+    def get_CADD_scores(self, cadd_infile, cadd_outfile):
         self.setUp()
-        self.upload_CADD_input()
+        self.upload_CADD_input(cadd_infile)
         is_upload_successful = self.check_CADD_upload_succeeded()
         if not is_upload_successful:
             self.close()
             self.failed_retrival = True
             return
-        is_download_successful = self.donwload_CADD_results()
+        is_download_successful = self.donwload_CADD_results(cadd_outfile)
         if not is_download_successful:
             self.failed_retrival = True
             return
         self.close()
 
-    def make_tsv_for_CADD(self, vus_dict):
+    def make_tsv_for_CADD(self, vus_dict, cadd_infile):
         header_info = ('CHROM', 'POS', 'ID', 'REF', 'ALT')
         header = '#' + '\t'.join(header_info)
-        with gzip.open(self.cadd_input, 'wb') as f:
+        with gzip.open(cadd_infile, 'wb') as f:
             f.write((header + '\n').encode())
             for vus_id in range(len(vus_dict)):
                 chrom = vus_dict[vus_id]['chr']
@@ -114,38 +111,9 @@ class CADDHandler:
                 info = '\t'.join(info_tup)
                 f.write((info + '\n').encode())
 
-    def make_tsv_for_CADD2(self, vus_dict):
+    def read_CADD_results(self, cadd_outfile):
         cadd_dict = {}
-        for vus_id in vus_dict.keys():
-            chrom = vus_dict[vus_id]['chr']
-            ref = vus_dict[vus_id]['referenceAllele']
-            pos = int(vus_dict[vus_id]['start'])
-            alt = vus_dict[vus_id]['alternateAllele']
-            if chrom not in cadd_dict.keys():
-                cadd_dict[chrom] =  {}
-            if pos not in cadd_dict[chrom].keys():
-                cadd_dict[chrom][pos] = {'ref': ref, 'alt': []}
-            cadd_dict[chrom][pos]['alt'].append(alt)
-        header_info = ('CHROM', 'POS', 'REF', 'ALT')
-        header = '#' + '\t'.join(header_info)
-        chroms = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
-                  '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-                  '21', '22', 'X')
-        with open(self.cadd_input, 'w') as f:
-            f.write(header + '\n')
-            for chrom in chroms:
-                if chrom not in cadd_dict.keys():
-                    continue
-                positions = cadd_dict[chrom].keys()
-                for pos in sorted(positions):
-                    ref = cadd_dict[chrom][pos]['ref']
-                    for alt in cadd_dict[chrom][pos]['alt']:
-                        info_tup = (chrom, pos, ref, alt)
-                        info = '\t'.join(info_tup)
-                        f.write(info + '\n')
-
-    def read_CADD_results(self):
-        with gzip.open(self.cadd_output, 'rt') as f:
+        with gzip.open(cadd_outfile, 'rt') as f:
             for line in f:
                 if line.startswith('#'):
                     continue
@@ -156,16 +124,16 @@ class CADDHandler:
                 alt = ls[3].strip()
                 phred = ls[5].strip()
                 key = ref + pos + alt
-                if chrom not in self.cadd_dict.keys():
-                    self.cadd_dict[chrom] = {}
-                self.cadd_dict[chrom][key] = phred
+                if chrom not in cadd_dict.keys():
+                    cadd_dict[chrom] = {}
+                cadd_dict[chrom][key] = phred
         ct = 0
-        for chrom in self.cadd_dict.keys():
-            ct += len(self.cadd_dict[chrom].keys())
+        for chrom in cadd_dict.keys():
+            ct += len(cadd_dict[chrom].keys())
         self.logger.debug(f'Length of CADD dict: {ct}')
-        return self.cadd_dict
+        return cadd_dict
 
-    def add_cadd_results(self, vus_dict: dict):
+    def add_cadd_results(self, vus_dict, cadd_dict):
         unfound_cadd = set()
         for vus_id in vus_dict:
             chrom = vus_dict[vus_id]['chr']
@@ -174,7 +142,7 @@ class CADDHandler:
             alt = vus_dict[vus_id]['alternateAllele']
             try:
                 key = ref + pos + alt
-                cadd_score = self.cadd_dict[chrom][key]
+                cadd_score = cadd_dict[chrom][key]
             except:
                 unfound_cadd.add(vus_dict[vus_id]['ClinVar_accession'])
                 cadd_score = None
@@ -182,10 +150,15 @@ class CADDHandler:
         self.logger.debug(f'CADD Scores were found for {len(vus_dict)-len(unfound_cadd)}/{len(vus_dict)} mutations')
         return vus_dict
 
-    def run(self, vus_dict):
-        self.make_tsv_for_CADD(vus_dict)
-        self.get_CADD_scores()
+    def run(self, vus_dict, cadd_infile, cadd_outfile):
+        self.make_tsv_for_CADD(vus_dict, cadd_infile)
+        self.get_CADD_scores(cadd_infile, cadd_outfile)
         if not self.failed_retrival:
-            self.read_CADD_results()
-            vus_dict = self.add_cadd_results(vus_dict)
+            cadd_dict = self.read_CADD_results(cadd_outfile)
+            vus_dict = self.add_cadd_results(vus_dict, cadd_dict)
+        return vus_dict
+
+    def run_preprocessed(self, vus_dict, cadd_outfile):
+        cadd_dict = self.read_CADD_results(cadd_outfile)
+        vus_dict = self.add_cadd_results(vus_dict, cadd_dict)
         return vus_dict

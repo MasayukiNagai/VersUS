@@ -136,8 +136,6 @@ class VersUS:
             blastHandler = BLASTHandler(blastp, blastdb)
             evalue = float(params_dict['evalue'])
             vus_dict = blastHandler.run(vus_dict, blast_input_path, blast_output_path, evalue)
-            # header = format_header(vus_dict)
-            # write_to_tsv(vus_dict, header, intermediate_output)
         elif pre_blast:
             blastHandler = BLASTHandler()
             vus_dict = blastHandler.run_preprocessed(vus_dict, pre_blast)
@@ -147,8 +145,6 @@ class VersUS:
             vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
             vepHandler = VEPHandler(vep)
             vus_dict = vepHandler.run(vus_dict, vep_input_path, vep_output_path)
-            # header = format_header(vus_dict)
-            # write_to_tsv(vus_dict, header, intermediate_output)
         elif pre_vep:
             vepHandler = VEPHandler()
             vus_dict = vepHandler.run(vus_dict, vep_output_path)
@@ -156,8 +152,11 @@ class VersUS:
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
             cadd_output_file = os.path.join(intermediates_dir, 'cadd_scores.tsv.gz')
-            caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
-            vus_dict = caddHandler.run(vus_dict)
+            caddHandler = CADDHandler()
+            vus_dict = caddHandler.run(vus_dict, cadd_input_file, cadd_output_file)
+        elif pre_cadd:
+            caddHandler = CADDHandler()
+            vus_dict = caddHandler.run_preprocessed(vus_dict, pre_cadd)
 
         header = util.format_header(vus_dict)
         outpath = os.path.join(outdir, f'vus_{analysis_id}.tsv')
