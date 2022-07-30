@@ -2,8 +2,6 @@ import os
 import logging
 import argparse
 from datetime import datetime
-
-from numpy import require
 from Handlers.SeqHandler import SeqHandler
 from Handlers.ClinVarHandler import ClinVarHandler
 from Handlers.BLASTHandler import BLASTHandler
@@ -183,7 +181,6 @@ class VersUS:
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running VersUS took {c[0]} minutes {c[1]} seconds')
-
 
 
 if __name__ == '__main__':

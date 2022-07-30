@@ -5,7 +5,7 @@ from logging import getLogger
 
 class BLASTHandler():
 
-    def __init__(self, blastp=None, blastdb=None):
+    def __init__(self, blastp='blastp', blastdb=None):
         self.blastp = blastp
         self.blastdb = blastdb
         self.logger = getLogger('versus_logger').getChild(__name__)
@@ -127,7 +127,6 @@ class BLASTHandler():
                                {len(self.blast_results)}/{self.blast_id} found')
             return self.blast_results
 
-
     def readBlastXML(self, outfile) -> dict:
         self.logger.info('Start parcing BLAST results')
         start = datetime.datetime.now()
@@ -138,7 +137,6 @@ class BLASTHandler():
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Running BlastXMLParser took {c[0]} minutes {c[1]} seconds')
         return blast_dict
-
 
     def add_blast_results(self, vus_dict, blast_dict) -> dict:
         if vus_dict.keys() != self.blast_dict.keys():
