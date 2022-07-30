@@ -86,8 +86,7 @@ class VersUS:
             blastdb = conf_dict['blastdb'] if conf_dict['blastp'] != 'None'\
                  else None
         else:
-            blastp = None
-            blastdb = None
+            blastp, blastdb = None, None
         if pre_vep is None:
             vep = conf_dict['vep'] if conf_dict['vep'] != 'None' else None
         else:
@@ -146,10 +145,13 @@ class VersUS:
         if vep:
             vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
             vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
-            vepHandler = VEPHandler(vep, vep_input_path, vep_output_path)
-            vus_dict = vepHandler.run(vus_dict)
+            vepHandler = VEPHandler(vep)
+            vus_dict = vepHandler.run(vus_dict, vep_input_path, vep_output_path)
             # header = format_header(vus_dict)
             # write_to_tsv(vus_dict, header, intermediate_output)
+        elif pre_vep:
+            vepHandler = VEPHandler()
+            vus_dict = vepHandler.run(vus_dict, vep_output_path)
 
         if cadd:
             cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
@@ -157,9 +159,9 @@ class VersUS:
             caddHandler = CADDHandler(cadd_input_file, cadd_output_file)
             vus_dict = caddHandler.run(vus_dict)
 
-        header = format_header(vus_dict)
+        header = util.format_header(vus_dict)
         outpath = os.path.join(outdir, f'vus_{analysis_id}.tsv')
-        write_to_tsv(vus_dict, header, outpath)
+        util.write_to_tsv(vus_dict, header, outpath)
 
         self.logger.info('Finish the process!')
 
@@ -174,7 +176,7 @@ class VersUS:
         pre_vep = args.vep
         pre_cadd = args.cadd
 
-        checkpath(config)
+        util.checkpath(config)
 
         self.run(config, suffix, pre_clinvar, pre_blast, pre_vep, pre_cadd)
 
