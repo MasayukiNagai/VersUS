@@ -107,6 +107,9 @@ class DataBaseEditor:
                           'ref': 'CHAR(3)' + nn,
                           'pos': 'INT' + nn,
                           'alt': 'CHAR(3)' + nn,
+                          'chr': 'VARCHAR(20)' + nn,
+                          'referenceAllele': 'CHAR(1)',
+                          'alternateAllele': 'CHAR(1)',
                           'accession': 'VARCHAR(255)' + nn,
                           'clinical_significance': 'VARCHAR(255)' + nn,
                           'CADD_score': 'FLOAT',
@@ -234,10 +237,11 @@ class DataBaseEditor:
         gene_dict = dict()
         for vus_dict in vus_dictlist:
             if vus_dict['gene_id'] not in gene_dict.keys():
-                gene_dict[vus_dict['gene_id']] = {'gene_symbol': vus_dict['gene_id'],
-                                                  'gene_full_name': vus_dict['gene_name'],
-                                                  'uniprot_id': vus_dict['uniprot_id'],
-                                                  'chrom': vus_dict['chr']}
+                gene_dict[vus_dict['gene_id']] = {
+                    'gene_symbol': vus_dict['gene_id'],
+                    'gene_full_name': vus_dict['gene_name'],
+                    'uniprot_id': vus_dict['uniprot_id'],
+                    'chrom': vus_dict['chr']}
                 ec_dict = self.get_ec_info(vus_dict['EC_number'])
                 gene_dict[vus_dict['gene_id']].update(ec_dict)
         keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom',
@@ -265,8 +269,11 @@ class DataBaseEditor:
             ec2_4 = int(ec2_levels[3]) if self.is_integer(ec2_levels[3]) else -1
         else:
             ec2, ec2_1, ec2_2, ec2_3, ec2_4 = None, None, None, None, None
-        ec_dict = {'EC_number': ec1, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4,
-                   'EC_number2': ec2, 'ec2_1': ec2_1, 'ec2_2': ec2_2, 'ec2_3': ec2_3, 'ec2_4': ec2_4}
+        ec_dict = {
+            'EC_number': ec1,
+            'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4,
+            'EC_number2': ec2,
+            'ec2_1': ec2_1, 'ec2_2': ec2_2, 'ec2_3': ec2_3, 'ec2_4': ec2_4}
         return ec_dict
 
     def is_integer(self, n):
@@ -290,25 +297,29 @@ class DataBaseEditor:
         vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
         self.insert_items(self.mutation_table, keytup, vus_values)
 
-    def make_mut_dict(self, vus_dict):
-        gene_id = self.get_gene_id(vus_dict['gene_id'])
-        fasta_id = self.get_fasta_id(vus_dict['NP_accession'])
-        ref_pos_alt = vus_dict['missense_variation']
-        # ref_pos_alt = aaMapOneToThree(vus_dict['ref']) + vus_dict['pos'] +  aaMapOneToThree(vus_dict['alt'])
+    def make_mut_dict(self, vus: dict):
+        gene_id = self.get_gene_id(vus['gene_id'])
+        fasta_id = self.get_fasta_id(vus['NP_accession'])
+        ref_pos_alt = vus['missense_variation']
+        # ref_pos_alt = aaMapOneToThree(vus_dict['ref'])
+        #             + vus_dict['pos'] +  aaMapOneToThree(vus_dict['alt'])
         ref = ref_pos_alt[:3]
         pos = int(ref_pos_alt[3:-3])
         alt = ref_pos_alt[-3:]
-        accession = vus_dict['ClinVar_accession']
+        accession = vus['ClinVar_accession']
         mut = {'gene_id': gene_id,
                'ref': ref,
                'pos': pos,
                'alt': alt,
+               'chr': vus['chr'],
+               'referenceAllele': vus['referenceAllele'],
+               'alternateAllele': vus['alternateAllele'],
                'accession': accession,
-               'clinical_significance': vus_dict['clinical_significance'],
-               'CADD_score': vus_dict['CADD_score'],
-               'gnomAD_AF': vus_dict['gnomAD_AF'],
-               'pdb': vus_dict['pdb_ID'],
-               'PTM': 1 if vus_dict['PTM'] else 0,
+               'clinical_significance': vus['clinical_significance'],
+               'CADD_score': vus['CADD_score'],
+               'gnomAD_AF': vus['gnomAD_AF'],
+               'pdb': vus['pdb_ID'],
+               'PTM': 1 if vus['PTM'] else 0,
                'fasta_id': fasta_id}
         return mut
 
@@ -341,7 +352,8 @@ class DataBaseEditor:
         self.register_ec_numbers(ec_dict)
 
     def register_ec_numbers(self, ec_dict):
-        keytup = ('ec_number', 'description', 'class', 'ec_1', 'ec_2', 'ec_3', 'ec_4')
+        keytup = ('ec_number', 'description', 'class',
+                  'ec_1', 'ec_2', 'ec_3', 'ec_4')
         ec_values = self.get_tuplist_for_ec(keytup, ec_dict)
         self.insert_items(self.ec_table, keytup, ec_values)
 
@@ -370,8 +382,6 @@ class DataBaseEditor:
         np_set = set()
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip().split('\t')
-            # keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
-            # assert len(keys) == len(keytup)
             assert header[6] == 'NP_accession',\
                 'Error: Confirm the column for "NP_accession"'
             for line in f:
@@ -401,21 +411,26 @@ class DataBaseEditor:
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip()
             keys = header.split('\t')
-            keytup = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number', 'uniprot_id', 'missense_variation', 'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score', 'chr', 'start', 'stop', 'referenceAllele', 'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to')
+            keytup = ('gene_id', 'gene_name', 'clinical_significance',
+                      'EC_number', 'uniprot_id', 'missense_variation',
+                      'NP_accession', 'ClinVar_accession', 'gnomAD_AF',
+                      'CADD_score', 'chr', 'start', 'stop',
+                      'referenceAllele', 'alternateAllele', 'FASTA_window',
+                      'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to', 'PTM')
             assert len(keys) == len(keytup)
             vus_dictlist = []
             for line in f:
                 data = line.rstrip().split('\t')
                 assert len(data) == len(keytup)
-                vus_dict = dict(zip(keytup, data))
+                vus = dict(zip(keytup, data))
                 for key in keytup:
-                    if vus_dict[key] == 'None':
-                        vus_dict[key] = None
+                    if vus[key] == 'None':
+                        vus[key] = None
                     elif key == 'missense_variation':
-                        vus_dict[key] = self.map_aa_one_to_three(vus_dict[key])
+                        vus[key] = self.map_aa_one_to_three(vus[key])
                     elif key == 'PTM':
-                        vus_dict[key] = True if vus_dict[key] == 'True' else False
-                vus_dictlist.append(vus_dict)
+                        vus[key] = True if vus[key] == 'True' else False
+                vus_dictlist.append(vus)
         return vus_dictlist
 
     def map_aa_one_to_three(self, missense):
@@ -439,7 +454,9 @@ class DataBaseEditor:
                 ec_2 = int(ec_levels[1]) if class_level > 1 else None
                 ec_3 = int(ec_levels[2]) if class_level > 2 else None
                 ec_4 = int(ec_levels[3]) if class_level > 3 else None
-                ec_dict[ec] = {'description': desc, 'class': class_level, 'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3, 'ec_4': ec_4}
+                ec_dict[ec] = {'description': desc, 'class': class_level,
+                               'ec_1': ec_1, 'ec_2': ec_2, 'ec_3': ec_3,
+                               'ec_4': ec_4}
         return ec_dict
 
     def parse_fasta(self, fasta_dirpath):
@@ -456,7 +473,8 @@ class DataBaseEditor:
     def fetch_seq(self, np_ls):
         fasta_dict = {}
         for np_num in np_ls:
-            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key=self.apikey)
+            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta',
+                                   retmode='text', api_key=self.apikey)
             seq_record = SeqIO.read(handle, 'fasta')
             fasta_dict[np_num] = str(seq_record.seq)
         return fasta_dict
