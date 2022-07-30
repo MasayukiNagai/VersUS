@@ -2,13 +2,15 @@ import os
 import logging
 import argparse
 from datetime import datetime
+
+from numpy import require
 from Handlers.SeqHandler import SeqHandler
 from Handlers.ClinVarHandler import ClinVarHandler
 from Handlers.BLASTHandler import BLASTHandler
 from Handlers.CADDHandler import CADDHandler
 from Handlers.VEPHandler import VEPHandler
 from Handlers.PTMHandler import PTMHandler
-from Handlers.FileHandler import *
+import Handlers.util as util
 
 
 class VersUS:
@@ -16,18 +18,36 @@ class VersUS:
     def __init__(self):
         self.vus_dict = {}
         self.logger = self.setup_logger('versus_logger', 'versus_logger.log')
-        time_info = ('VersUS{0:%y%m%d%H%M%S}.log').format(datetime.now())
+        self.time_info = ('VersUS{0:%y%m%d%H%M%S}.log').format(datetime.now())
         self.logger.info('Start VersUS!')
 
 
     def argument_parser(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--config', '-c', type=str, required=True,
-                            dest='config', help='Required; Specify a config file.')
-        parser.add_argument('--name', '-n', type=str, required=True,
-                            dest='name', help='Required; Specify analysis-ID that is added to the end of outputs.')
-        args = parser.parse_args()
-        return args
+        parser.add_argument(
+            '-c', '--config', type=str, required=True, dest='config',
+            help='Required; Specify a config file')
+        parser.add_argument(
+            '--name', '-n', type=str, required=False, dest='name',
+            default=self.time_info,
+            help='Required; Specify a suffix for the output')
+        parser.add_argument(
+            '--clinvar', type=str, required=False, dest='clinvar',
+            default=None,
+            help='Kickstart: Specify a processed clinvar tsv file')
+        parser.add_argument(
+            '--blast', type=str, required=False, dest='blast',
+            default=None,
+            help='Kickstart: Specify a blast xml file')
+        parser.add_argument(
+            '--vep', type=str, required=False, dest='vep',
+            default=None,
+            help='Kickstart: Specify a vep tsv file')
+        parser.add_argument(
+            '--cadd', type=str, required=False, dest='cadd',
+            default=None,
+            help='Kickstart: Specify a CADD vcf.gz file')
+        return parser.parse_args()
 
 
     def setup_logger(self, name: str, logfile: str):
@@ -49,35 +69,54 @@ class VersUS:
         return logger
 
 
-    def run(self, config, analysis_id):
+    def run(self, config, analysis_id,
+            pre_clinvar=None, pre_blast=None, pre_vep=None, pre_cadd=None):
         self.logger.info('Start running the process')
-        conf_dict, params_dict = parse_config(config)
+        conf_dict, params_dict = util.parse_config(config)
 
         # check if config has valid items
-        check_config_params(params_dict)
+        util.check_config_params(params_dict)
 
         clinvar_file = conf_dict['clinvar']
         genes = conf_dict['genes']
         proteomes = conf_dict['proteomes']
-        blast = os.path.abspath(conf_dict['blast']) if conf_dict['blast'] != 'None' else None
-        vep = os.path.abspath(conf_dict['vep']) if conf_dict['vep'] != 'None' else None
-        cadd = True if conf_dict['cadd'] == 'True' else False
-        for path in [clinvar_file, genes, proteomes, blast, vep]:
+        if pre_blast is None:
+            blastp = conf_dict['blastp'] if conf_dict['blastp'] != 'None'\
+                 else None
+            blastdb = conf_dict['blastdb'] if conf_dict['blastp'] != 'None'\
+                 else None
+        else:
+            blastp = None
+            blastdb = None
+        if pre_vep is None:
+            vep = conf_dict['vep'] if conf_dict['vep'] != 'None' else None
+        else:
+            vep = None
+        if pre_cadd is None:
+            cadd = True if conf_dict['cadd'] == 'True' else False
+        else:
+            cadd = None
+        paths = [clinvar_file, genes, proteomes, blastp, vep,
+                 pre_clinvar, pre_blast, pre_vep, pre_cadd]
+        for path in paths:
             if path is not None:
-                checkpath(path)
+                util.checkpath(path)
 
         # create correpsonding directories
         intermediates_dir = os.path.abspath(conf_dict['intermediates'])
-        make_dir(intermediates_dir)
+        util.make_dir(intermediates_dir)
         outdir = os.path.abspath(conf_dict['outdir'])
-        make_dir(outdir)
+        util.make_dir(outdir)
 
         seqHandler = SeqHandler(genes, proteomes)
         gene_dict = seqHandler.readUniprot_GeneId_EC()
 
         # parse a ClinvarVariation XML file
-        clinvarHandler = ClinVarHandler(clinvar_file)
-        vus_dict = clinvarHandler.readClinVarVariationsXML(gene_dict.keys())
+        if pre_clinvar is None:
+            clinvarHandler = ClinVarHandler(clinvar_file)
+            vus_dict = clinvarHandler.readClinVarVariationsXML(gene_dict.keys())
+        else:
+            vus_dict = util.read_tsv_to_dict(pre_clinvar)
 
         # add EC number and Uniprot id
         vus_dict = seqHandler.add_uniprotId_EC(vus_dict)
@@ -92,14 +131,17 @@ class VersUS:
         # intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
         # write_to_tsv(vus_dict, header, intermediate_output)
 
-        if blast:
+        if blastp:
             blast_input_path = os.path.join(intermediates_dir, 'blast_input.fasta')
             blast_output_path = os.path.join(intermediates_dir, 'blast_results.xml')
-            blastHandler = BLASTHandler(blast, blast_input_path, blast_output_path)
+            blastHandler = BLASTHandler(blastp, blastdb)
             evalue = float(params_dict['evalue'])
-            vus_dict = blastHandler.run(vus_dict, evalue)
+            vus_dict = blastHandler.run(vus_dict, blast_input_path, blast_output_path, evalue)
             # header = format_header(vus_dict)
             # write_to_tsv(vus_dict, header, intermediate_output)
+        elif pre_blast:
+            blastHandler = BLASTHandler()
+            vus_dict = blastHandler.run_preprocessed(vus_dict, pre_blast)
 
         if vep:
             vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
@@ -126,11 +168,15 @@ class VersUS:
         start = datetime.now()
         args = self.argument_parser()
         config = args.config
-        analysis_id = args.name
+        suffix = args.name
+        pre_clinvar = args.clinvar
+        pre_blast = args.blast
+        pre_vep = args.vep
+        pre_cadd = args.cadd
 
         checkpath(config)
 
-        self.run(config, analysis_id)
+        self.run(config, suffix, pre_clinvar, pre_blast, pre_vep, pre_cadd)
 
         end = datetime.now()
         time = end - start
