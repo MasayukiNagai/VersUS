@@ -130,7 +130,7 @@ class VersUS:
         ptmHandler = PTMHandler()
         vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)
 
-        header = util.format_header(vus_dict)
+        header = list(vus_dict.keys())
         interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
         util.write_to_tsv(vus_dict, header, interim_output)
 
