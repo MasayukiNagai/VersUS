@@ -130,9 +130,9 @@ class VersUS:
         ptmHandler = PTMHandler()
         vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)
 
-        # header = format_header(vus_dict)
-        # interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
-        # write_to_tsv(vus_dict, header, interim_output)
+        header = util.format_header(vus_dict)
+        interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
+        util.write_to_tsv(vus_dict, header, interim_output)
 
         if blastp:
             blast_input_path = os.path.join(interim_dir, 'blast_input.fasta')
@@ -153,7 +153,7 @@ class VersUS:
                 vus_dict, vep_input_path, vep_output_path)
         elif pre_vep:
             vepHandler = VEPHandler()
-            vus_dict = vepHandler.run(vus_dict, vep_output_path)
+            vus_dict = vepHandler.run_preprocessed(vus_dict, pre_vep)
 
         if cadd:
             cadd_input_file = os.path.join(interim_dir, 'cadd_input.vcf.gz')
