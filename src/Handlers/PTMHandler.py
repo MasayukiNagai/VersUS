@@ -34,7 +34,7 @@ class PTMHandler:
             xml = self.get_xml(u_id)
             positions = self.parse_xml(xml)
             uid2ptm[u_id] = positions
-            if i % 100 == 0:
+            if (i+1) % 100 == 0:
                 print(f'{i}/{len(uniprot_ids)} done')
         end = datetime.now()
         time = end - start
@@ -49,11 +49,8 @@ class PTMHandler:
                 line = '\t'.join([uid, positions])
                 f.write(line + '\n')
 
-    def addPTM2VUSdict(self, vus_dict, gene_dict, outfile=None):
-        uids = []
-        for gene_id in gene_dict.keys():
-            uids.append(gene_id)
-        uid2ptm = self.run(uids)
+    def addPTM2VUSdict(self, vus_dict, uniprot_ids, outfile=None):
+        uid2ptm = self.run(uniprot_ids)
         if outfile is not None:
             self.write_tsv(uid2ptm, outfile)
         for vus in vus_dict.values():

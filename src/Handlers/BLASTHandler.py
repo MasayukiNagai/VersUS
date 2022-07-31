@@ -30,8 +30,8 @@ class BLASTHandler():
         self.logger.info('Start running BLAST')
         start = datetime.datetime.now()
         cmd = f'{self.blastp} '\
-            + f'-query {infile}'\
-            + f'-evalue {str(evalue)}'\
+            + f'-query {infile} '\
+            + f'-evalue {str(evalue)} '\
             + f'-outfmt 5 '\
             + f'-out {outfile}'
         if self.blastdb is not None:
