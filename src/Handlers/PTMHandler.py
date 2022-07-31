@@ -23,8 +23,9 @@ class PTMHandler:
             if feature.attrib['type'] == 'modified residue':
                 pos = feature[0][0].attrib['position']
                 ptm_dict[pos] += 1
+        seq = myroot[0].find('{http://uniprot.org/uniprot}sequence').text
         positions = ptm_dict.keys()
-        return positions
+        return {'pos': positions, 'seq': seq}
 
     def run(self, uniprot_ids):
         self.logger.info('Start retriving PTMs')
@@ -49,15 +50,16 @@ class PTMHandler:
                 line = '\t'.join([uid, positions])
                 f.write(line + '\n')
 
-    def addPTM2VUSdict(self, vus_dict, uniprot_ids, outfile=None):
+    def addPTM2VUSdict(self, vus_dict, uniprot_ids, seq_dict, outfile=None):
         uid2ptm = self.run(uniprot_ids)
         if outfile is not None:
             self.write_tsv(uid2ptm, outfile)
         for vus in vus_dict.values():
             uid = vus['uniprot_id']
-            pos = vus['start']
-            # end = int(vus_dict['end'])
-            if pos in uid2ptm[uid]:
+            pos = vus['pos']
+            np = vus['NP_accession']
+            seq = seq_dict[np]
+            if (uid2ptm[uid]['seq'] == seq) and (pos in uid2ptm[uid]['pos']):
                 vus['PTM'] = True
             else:
                 vus['PTM'] = False

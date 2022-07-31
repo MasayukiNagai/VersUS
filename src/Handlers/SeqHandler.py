@@ -47,7 +47,7 @@ class SeqHandler:
 
     # makes dictionary of fasta sequences and np number
     # returns dict{np_num: fasta sequence}
-    def make_seq_dict(self, proteomesdir, seq_dict={}):
+    def parse_proteomes(self, proteomesdir, seq_dict={}):
         self.logger.debug(f'Open sequence files')
         ct_np = 0
         for root, _, file_names in os.walk(proteomesdir):
@@ -109,11 +109,11 @@ class SeqHandler:
 
     def get_seq(self, vus_dict, proteomesdir, window_size: int=12):
         self.logger.info('Add sequences to vus_dict')
-        seq_dict = self.make_seq_dict(proteomesdir)
+        seq_dict = self.parse_proteomes(proteomesdir)
         vus_dict, unfonund_np_ls = self.add_seq_to_dict(
             vus_dict, seq_dict, window_size)
         seq_fetched_dict = self.fetch_seq(unfonund_np_ls)
         vus_dict, _ = self.add_seq_to_dict(
             vus_dict, seq_fetched_dict, window_size)
         self.logger.info('Finish adding sequences to vus_dict')
-        return vus_dict
+        return vus_dict, seq_dict

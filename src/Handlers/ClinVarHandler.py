@@ -39,8 +39,6 @@ class ClinVarHandler:
             self.is_MANESelect = False
             self.has_ProteinExpression = False
             self.has_MANEandMissense = False
-            # self.np_acc = ''
-            # self.change = ''
             self.interpretation = ''
             self.is_first_gene_tag = True
             # self.has_np_yet = False
@@ -166,17 +164,22 @@ class ClinVarHandler:
                         change_one_char = ref + str(pos) + alt
                         # Register the variant
                         self.vus_dict[self.vus_id] = {}
-                        self.vus_dict[self.vus_id]['ClinVar_accession'] = self.clinvar_acc
-                        self.vus_dict[self.vus_id]['gene_id'] = self.gene_symbol
-                        self.vus_dict[self.vus_id]['gene_name'] = self.gene_name
-                        self.vus_dict[self.vus_id]['clinical_significance'] = clinical_significance
-                        self.vus_dict[self.vus_id]['missense_variation'] = change_one_char
-                        self.vus_dict[self.vus_id]['NP_accession'] = hgvs['NP']
-                        self.vus_dict[self.vus_id]['chr'] = self.chr
-                        self.vus_dict[self.vus_id]['start'] = self.start_pos
-                        self.vus_dict[self.vus_id]['stop'] = self.stop_pos
-                        self.vus_dict[self.vus_id]['referenceAllele'] = self.refAllele
-                        self.vus_dict[self.vus_id]['alternateAllele'] = self.altAllele
+                        self.vus_dict[self.vus_id] = {
+                            'ClinVar_accession': self.clinvar_acc,
+                            'gene_id': self.gene_symbol,
+                            'gene_name': self.gene_name,
+                            'clinical_significance': clinical_significance,
+                            'missense_variation': change_one_char,
+                            'ref': ref,
+                            'alt': alt,
+                            'pos': str(pos),
+                            'NP_accession': hgvs['NP'],
+                            'chr': self.chr,
+                            'start': self.start_pos,
+                            'stop': self.stop_pos,
+                            'referenceAllele': self.refAllele,
+                            'alternateAllele': self.altAllele
+                        }
                         self.vus_id += 1
                 # Reset variables
                 self.clinvar_acc = ''
@@ -187,8 +190,6 @@ class ClinVarHandler:
                 self.stop_pos = ''
                 self.refAllele = ''
                 self.altAllele = ''
-                # self.np_acc = ''
-                # self.change = ''
                 self.hgvs_ls = []
                 self.has_MANEandMissense = False
                 self.interpretation = ''

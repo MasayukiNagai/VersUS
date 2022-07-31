@@ -124,10 +124,11 @@ class VersUS:
         vus_dict, uids = seqHandler.add_uniprotId_EC(vus_dict, gene_dict)
 
         fasta_window = int(params_dict['fasta_window'])
-        vus_dict = seqHandler.get_seq(vus_dict, proteomes, fasta_window)
+        vus_dict, seq_dict = seqHandler.get_seq(
+            vus_dict, proteomes, fasta_window)
 
         ptmHandler = PTMHandler()
-        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids)
+        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)
 
         # header = format_header(vus_dict)
         # interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
