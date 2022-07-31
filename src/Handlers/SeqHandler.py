@@ -9,10 +9,6 @@ from logging import getLogger
 class SeqHandler:
 
     def __init__(self):
-        # self.gene_file = gene_file
-        # self.genes_dict = {}
-        # self.proteomes_dir = proteomes_dir
-        # self.seq_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
 
     def setup(self, email, api_key):
@@ -39,13 +35,15 @@ class SeqHandler:
         return genes_dict
 
     def add_uniprotId_EC(self, vus_dict, genes_dict):
-        for mut in vus_dict.values():
-            gene_id = mut['gene_id']
+        uids = set()
+        for vus in vus_dict.values():
+            gene_id = vus['gene_id']
             uniprot_id = genes_dict[gene_id]['uniprot_id']
-            ec = self.genes_dict[gene_id]['ec']
-            mut['uniprot_id'] = uniprot_id
-            mut['EC_number'] = ec
-        return vus_dict
+            ec = genes_dict[gene_id]['ec']
+            vus['uniprot_id'] = uniprot_id
+            vus['EC_number'] = ec
+            uids.add(uniprot_id)
+        return vus_dict, uids
 
     # makes dictionary of fasta sequences and np number
     # returns dict{np_num: fasta sequence}
@@ -64,9 +62,11 @@ class SeqHandler:
 
     # fetches fasta sequences for varinants whose sequences aren't in the imported files
     # returns dict{np_num: fasta sequence}
-    def fetch_seq(self, ls_np, seq_dict={}):
-        for np_num in ls_np:
-            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key=self.api_key)
+    def fetch_seq(self, nps: list):
+        seq_dict = {}
+        for np_num in nps:
+            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta',
+                                   retmode='text', api_key=self.api_key)
             seq_record = SeqIO.read(handle, 'fasta')
             seq_dict[np_num] = str(seq_record.seq)
         return seq_dict

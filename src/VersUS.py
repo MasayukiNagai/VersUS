@@ -69,11 +69,6 @@ class VersUS:
         logger.addHandler(sh)
         return logger
 
-    def get_uniprotids(vus_dict):
-        uids = []
-        for vus in vus_dict.values():
-            uid = vus['uniprot-id']
-
 
     def run(self, config, analysis_id,
             pre_clinvar=None, pre_blast=None, pre_vep=None, pre_cadd=None):
@@ -113,25 +108,26 @@ class VersUS:
         outdir = os.path.abspath(conf_dict['outdir'])
         util.make_dir(outdir)
 
-        seqHandler = SeqHandler(proteomes)
+        seqHandler = SeqHandler()
         seqHandler.setup(conf_dict['email'], conf_dict['apikey'])
         gene_dict = seqHandler.readUniprot_GeneId_EC(genes)
 
         # parse a ClinvarVariation XML file
         if pre_clinvar is None:
             clinvarHandler = ClinVarHandler(clinvar_file)
-            vus_dict = clinvarHandler.readClinVarVariationsXML(gene_dict.keys())
+            vus_dict = clinvarHandler.readClinVarVariationsXML(
+                gene_dict.keys())
         else:
             vus_dict = util.read_tsv_to_dict(pre_clinvar)
 
         # add EC number and Uniprot id
-        vus_dict = seqHandler.add_uniprotId_EC(vus_dict)
+        vus_dict, uids = seqHandler.add_uniprotId_EC(vus_dict, gene_dict)
 
         fasta_window = int(params_dict['fasta_window'])
-        vus_dict = seqHandler.get_seq(vus_dict, fasta_window)
+        vus_dict = seqHandler.get_seq(vus_dict, proteomes, fasta_window)
 
         ptmHandler = PTMHandler()
-        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, gene_dict)
+        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids)
 
         # header = format_header(vus_dict)
         # interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')

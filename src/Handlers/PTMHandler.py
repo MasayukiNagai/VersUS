@@ -12,7 +12,7 @@ class PTMHandler:
         self.logger = getLogger('versus_logger').getChild(__name__)
 
     def get_xml(self, uniprot_id):
-        xml = self.uniprot.search()(uniprot_id, frmt='xml')
+        xml = self.uniprot.search(uniprot_id, frmt='xml')
         return xml
 
     def parse_xml(self, xml):
@@ -30,21 +30,32 @@ class PTMHandler:
         self.logger.info('Start retriving PTMs')
         start = datetime.now()
         uid2ptm = {}
-        for u_id in uniprot_ids:
+        for i, u_id in enumerate(uniprot_ids):
             xml = self.get_xml(u_id)
             positions = self.parse_xml(xml)
             uid2ptm[u_id] = positions
+            if i % 100 == 0:
+                print(f'{i}/{len(uniprot_ids)} done')
         end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
         self.logger.info(f'Retriving PTMs took {c[0]} mins {c[1]} secs')
         return uid2ptm
 
-    def addPTM2VUSdict(self, vus_dict, gene_dict):
+    def write_tsv(self, uid2ptm, outfile):
+        with open(outfile, 'w') as f:
+            for uid, pos_ls in uid2ptm.items():
+                positions = ','.join(pos_ls)
+                line = '\t'.join([uid, positions])
+                f.write(line + '\n')
+
+    def addPTM2VUSdict(self, vus_dict, gene_dict, outfile=None):
         uids = []
         for gene_id in gene_dict.keys():
             uids.append(gene_id)
         uid2ptm = self.run(uids)
+        if outfile is not None:
+            self.write_tsv(uid2ptm, outfile)
         for vus in vus_dict.values():
             uid = vus['uniprot_id']
             pos = vus['start']
