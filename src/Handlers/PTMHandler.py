@@ -1,5 +1,7 @@
 from bioservices import UniProt
 from collections import defaultdict
+from datetime import datetime
+from logging import getLogger
 import xml.etree.ElementTree as ET
 
 
@@ -7,9 +9,10 @@ class PTMHandler:
 
     def __init__(self):
         self.uniprot = UniProt()
+        self.logger = getLogger('versus_logger').getChild(__name__)
 
     def get_xml(self, uniprot_id):
-        xml = self.uniprot.serach(uniprot_id, frmt='xml')
+        xml = self.uniprot.search()(uniprot_id, frmt='xml')
         return xml
 
     def parse_xml(self, xml):
@@ -24,11 +27,17 @@ class PTMHandler:
         return positions
 
     def run(self, uniprot_ids):
+        self.logger.info('Start retriving PTMs')
+        start = datetime.now()
         uid2ptm = {}
         for u_id in uniprot_ids:
             xml = self.get_xml(u_id)
             positions = self.parse_xml(xml)
             uid2ptm[u_id] = positions
+        end = datetime.now()
+        time = end - start
+        c = divmod(time.days * 86400 + time.seconds, 60)
+        self.logger.info(f'Retriving PTMs took {c[0]} mins {c[1]} secs')
         return uid2ptm
 
     def addPTM2VUSdict(self, vus_dict, gene_dict):
