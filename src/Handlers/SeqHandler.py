@@ -4,72 +4,72 @@ from Bio import Entrez
 from Bio import SeqIO
 from logging import getLogger
 
-Entrez.email = "mnaffairs.intl@gmail.com"
+
 
 class SeqHandler:
 
-    def __init__(self, gene_file, proteomes_dir):
-        self.gene_file = gene_file
-        self.genes_dict = {}
-        self.proteomes_dir = proteomes_dir
-        self.seq_dict = {}
+    def __init__(self):
+        # self.gene_file = gene_file
+        # self.genes_dict = {}
+        # self.proteomes_dir = proteomes_dir
+        # self.seq_dict = {}
         self.logger = getLogger('versus_logger').getChild(__name__)
 
+    def setup(self, email, api_key):
+        Entrez.email = email
+        self.api_key = api_key
 
     # read tsv file of entry(uniprot_id) - gene id - ec number
     # return dict {gene_id: 'ec': ec number, 'uniprot_id': uniprot_id}
-    def readUniprot_GeneId_EC(self):
+    def readUniprot_GeneId_EC(self, genefile):
         dup = set()
-        with open(self.gene_file, 'r') as f:
+        genes_dict = {}
+        with open(genefile, 'r') as f:
             f.readline()  # skips the header
             for line in f:
                 data = line.rstrip().split('\t')
                 uniprot_id = data[0]
                 gene_id = data[1]
                 ec = data[2]
-                if gene_id in self.genes_dict.keys():
+                if gene_id in genes_dict.keys():
                     dup.add(gene_id)
                 else:
-                    self.genes_dict[gene_id] = {'ec': ec, 'uniprot_id': uniprot_id}
+                    genes_dict[gene_id] = {'ec': ec, 'uniprot_id': uniprot_id}
         self.logger.info(f'{len(dup)} genes are duplicated: {dup}')
-        return self.genes_dict
+        return genes_dict
 
-
-    def add_uniprotId_EC(self, vus_dict):
+    def add_uniprotId_EC(self, vus_dict, genes_dict):
         for mut in vus_dict.values():
             gene_id = mut['gene_id']
-            uniprot_id = self.genes_dict[gene_id]['uniprot_id']
+            uniprot_id = genes_dict[gene_id]['uniprot_id']
             ec = self.genes_dict[gene_id]['ec']
             mut['uniprot_id'] = uniprot_id
             mut['EC_number'] = ec
         return vus_dict
 
-
     # makes dictionary of fasta sequences and np number
     # returns dict{np_num: fasta sequence}
-    def make_seq_dict(self):
+    def make_seq_dict(self, proteomesdir, seq_dict={}):
         self.logger.debug(f'Open sequence files')
         ct_np = 0
-        for root, _, file_names in os.walk(self.proteomes_dir):
+        for root, _, file_names in os.walk(proteomesdir):
             for filename in file_names:
                 fname = os.path.join(root, filename)
                 with gzip.open(fname, 'rt') as handle:
                     for record in SeqIO.parse(handle, 'fasta'):
-                        self.seq_dict[record.id] = str(record.seq)
-        self.logger.debug(f'Finish storing {len(self.seq_dict)} sequences')
+                        seq_dict[record.id] = str(record.seq)
+        self.logger.debug(f'Finish storing {len(seq_dict)} sequences')
         # print(f'The number of np found in the files: {ct_np}')
-        return self.seq_dict
-
+        return seq_dict
 
     # fetches fasta sequences for varinants whose sequences aren't in the imported files
     # returns dict{np_num: fasta sequence}
-    def fetch_seq(self, ls_np):
+    def fetch_seq(self, ls_np, seq_dict={}):
         for np_num in ls_np:
-            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key='2959e9bc88ce27224b70cada27e5b58c6b09')
+            handle = Entrez.efetch(db='protein', id=np_num, rettype='fasta', retmode='text', api_key=self.api_key)
             seq_record = SeqIO.read(handle, 'fasta')
-            self.seq_dict[np_num] = str(seq_record.seq)
-        return self.seq_dict
-
+            seq_dict[np_num] = str(seq_record.seq)
+        return seq_dict
 
     # crops fasta sequence
     # returns the sequnece cropped in a specified range
@@ -86,34 +86,34 @@ class SeqHandler:
             self.logger.warning('Failed to crop a sequence')
             return None
 
-
     # add fasta sequence to vus dict
     # return vus dict and unfound_seq set
-    def add_seq_to_dict(self, vus_dict: dict, seq_range: int=12):
+    def add_seq_to_dict(self, vus_dict: dict, seq_dict: dict,  seq_range: int=12):
         unfound_seq = set()
         seq_list = []
-        for vus_id in vus_dict.keys():
-            if vus_dict[vus_id].get('FASTA_window') != None:
+        for vus in vus_dict.values():
+            if vus.get('FASTA_window') is not None:
                 continue
-            mutation = vus_dict[vus_id]['missense_variation']
+            mutation = vus['missense_variation']
             ref = mutation[0]
             pos = int(mutation[1:-1])
-            np_num = vus_dict[vus_id]['NP_accession']
+            np_num = vus['NP_accession']
             try:
-                seq = self.seq_dict[np_num]
+                seq = seq_dict[np_num]
                 seq_cropped = self.crop_seq(seq, pos, ref, seq_range)
             except:
                 seq_cropped = None
                 unfound_seq.add(np_num)
-            vus_dict[vus_id]['FASTA_window'] = seq_cropped
+            vus['FASTA_window'] = seq_cropped
         return vus_dict, unfound_seq
 
-
-    def get_seq(self, vus_dict, window_size: int=12):
+    def get_seq(self, vus_dict, proteomesdir, window_size: int=12):
         self.logger.info('Add sequences to vus_dict')
-        self.make_seq_dict()
-        vus_dict, unfonund_np_ls = self.add_seq_to_dict(vus_dict, window_size)
-        self.fetch_seq(unfonund_np_ls)
-        vus_dict, unfonund_np_ls = self.add_seq_to_dict(vus_dict, window_size)
+        seq_dict = self.make_seq_dict(proteomesdir)
+        vus_dict, unfonund_np_ls = self.add_seq_to_dict(
+            vus_dict, seq_dict, window_size)
+        seq_fetched_dict = self.fetch_seq(unfonund_np_ls)
+        vus_dict, _ = self.add_seq_to_dict(
+            vus_dict, seq_fetched_dict, window_size)
         self.logger.info('Finish adding sequences to vus_dict')
         return vus_dict

@@ -54,17 +54,25 @@ class VersUS:
         # creates a file handler that logs messages above DEBUG level
         fh = logging.FileHandler(logfile)
         fh.setLevel(logging.DEBUG)
-        fh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s %(funcName)s : %(message)s')
+        fh_formatter = logging.Formatter(
+            '[%(asctime)s] %(levelname)s %(filename)s %(funcName)s : %(message)s')
         fh.setFormatter(fh_formatter)
         # creates a file handler that logs messages above INFO level
         sh = logging.StreamHandler()
         sh.setLevel(logging.DEBUG)
-        sh_formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s : %(message)s', '%Y-%m-%d %H:%M:%S')
+        sh_formatter = logging.Formatter(
+            '[%(asctime)s] %(levelname)s %(filename)s : %(message)s',
+            '%Y-%m-%d %H:%M:%S')
         sh.setFormatter(sh_formatter)
         # add the handlers to logger
         logger.addHandler(fh)
         logger.addHandler(sh)
         return logger
+
+    def get_uniprotids(vus_dict):
+        uids = []
+        for vus in vus_dict.values():
+            uid = vus['uniprot-id']
 
 
     def run(self, config, analysis_id,
@@ -100,13 +108,14 @@ class VersUS:
                 util.checkpath(path)
 
         # create correpsonding directories
-        intermediates_dir = os.path.abspath(conf_dict['intermediates'])
-        util.make_dir(intermediates_dir)
+        interim_dir = os.path.abspath(conf_dict['intermediates'])
+        util.make_dir(interim_dir)
         outdir = os.path.abspath(conf_dict['outdir'])
         util.make_dir(outdir)
 
-        seqHandler = SeqHandler(genes, proteomes)
-        gene_dict = seqHandler.readUniprot_GeneId_EC()
+        seqHandler = SeqHandler(proteomes)
+        seqHandler.setup(conf_dict['email'], conf_dict['apikey'])
+        gene_dict = seqHandler.readUniprot_GeneId_EC(genes)
 
         # parse a ClinvarVariation XML file
         if pre_clinvar is None:
@@ -125,33 +134,36 @@ class VersUS:
         vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, gene_dict)
 
         # header = format_header(vus_dict)
-        # intermediate_output = os.path.join(intermediates_dir, f'vus_intermediate-{analysis_id}.tsv')
-        # write_to_tsv(vus_dict, header, intermediate_output)
+        # interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
+        # write_to_tsv(vus_dict, header, interim_output)
 
         if blastp:
-            blast_input_path = os.path.join(intermediates_dir, 'blast_input.fasta')
-            blast_output_path = os.path.join(intermediates_dir, 'blast_results.xml')
+            blast_input_path = os.path.join(interim_dir, 'blast_input.fasta')
+            blast_output_path = os.path.join(interim_dir, 'blast_results.xml')
             blastHandler = BLASTHandler(blastp, blastdb)
             evalue = float(params_dict['evalue'])
-            vus_dict = blastHandler.run(vus_dict, blast_input_path, blast_output_path, evalue)
+            vus_dict = blastHandler.run(
+                vus_dict, blast_input_path, blast_output_path, evalue)
         elif pre_blast:
             blastHandler = BLASTHandler()
             vus_dict = blastHandler.run_preprocessed(vus_dict, pre_blast)
 
         if vep:
-            vep_input_path = os.path.join(intermediates_dir, 'vep_input.tsv')
-            vep_output_path = os.path.join(intermediates_dir, 'vep_results.tsv')
+            vep_input_path = os.path.join(interim_dir, 'vep_input.tsv')
+            vep_output_path = os.path.join(interim_dir, 'vep_results.tsv')
             vepHandler = VEPHandler(vep)
-            vus_dict = vepHandler.run(vus_dict, vep_input_path, vep_output_path)
+            vus_dict = vepHandler.run(
+                vus_dict, vep_input_path, vep_output_path)
         elif pre_vep:
             vepHandler = VEPHandler()
             vus_dict = vepHandler.run(vus_dict, vep_output_path)
 
         if cadd:
-            cadd_input_file = os.path.join(intermediates_dir, 'cadd_input.vcf.gz')
-            cadd_output_file = os.path.join(intermediates_dir, 'cadd_scores.tsv.gz')
+            cadd_input_file = os.path.join(interim_dir, 'cadd_input.vcf.gz')
+            cadd_output_file = os.path.join(interim_dir, 'cadd_scores.tsv.gz')
             caddHandler = CADDHandler()
-            vus_dict = caddHandler.run(vus_dict, cadd_input_file, cadd_output_file)
+            vus_dict = caddHandler.run(
+                vus_dict, cadd_input_file, cadd_output_file)
         elif pre_cadd:
             caddHandler = CADDHandler()
             vus_dict = caddHandler.run_preprocessed(vus_dict, pre_cadd)
