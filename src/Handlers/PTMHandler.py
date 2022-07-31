@@ -58,7 +58,7 @@ class PTMHandler:
             pos = vus['start']
             # end = int(vus_dict['end'])
             if pos in uid2ptm[uid]:
-                vus['ptm'] = True
+                vus['PTM'] = True
             else:
-                vus['ptm'] = False
+                vus['PTM'] = False
         return vus_dict

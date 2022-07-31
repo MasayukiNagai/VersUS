@@ -139,8 +139,8 @@ class BLASTHandler():
         return blast_dict
 
     def add_blast_results(self, vus_dict, blast_dict) -> dict:
-        if vus_dict.keys() != self.blast_dict.keys():
-            self.logger.warning(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(self.blast_dict)}')
+        if vus_dict.keys() != blast_dict.keys():
+            self.logger.warning(f'VUS_dict and Blast_dict have different keys. vus_dict: {len(vus_dict)}, blast_dict: {len(blast_dict)}')
             return None
         for common_id in range(0, len(vus_dict)):
             vus_dict[common_id]['pdb_ID'] = blast_dict[common_id]['pdb_ID']
