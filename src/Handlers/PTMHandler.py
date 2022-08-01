@@ -58,7 +58,7 @@ class PTMHandler:
             uid = vus['uniprot_id']
             pos = vus['pos']
             np = vus['NP_accession']
-            seq = seq_dict[np]
+            seq = seq_dict.get(np)
             if (uid2ptm[uid]['seq'] == seq) and (pos in uid2ptm[uid]['pos']):
                 vus['PTM'] = True
             else:
