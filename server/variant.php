@@ -132,16 +132,24 @@ try{
             <span ng-show="sortType == 'pdb' && sortReverse" class="fa fa-caret-down"></span>
             <span ng-show="sortType == 'pdb' && !sortReverse" class="fa fa-caret-up"></span>
           </a></th>
+        <th class="ptm"><a ng-click="sortType = 'ptm'; reverse(); sort()" class="sortable">
+            PTM
+            <span ng-show="sortType == 'ptm' && sortReverse" class="fa fa-caret-down"></span>
+            <span ng-show="sortType == 'ptm' && !sortReverse" class="fa fa-caret-up"></span>
+          </a></th>
       </tr>
     </thead>
     <tbody>
       <tr ng-repeat="x in results" ng-click="rowClicked(x)">
         <td><input type="checkbox" ng-checked="x.selected" ng-click="toggleRow($event, x)"></td>
         <td class="variation">{{ x.ref + x.pos + x.alt}}</td>
-        <td class="clinvar_link"><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}"> {{ x.accession }}</a></td>
+        <td class="clinvar_link"><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}">
+          {{ x.accession }}</a></td>
         <td class="cadd_score">{{ x.CADD_score }}</td>
-        <td class="gnomAD_AF">{{ x.gnomAD_AF }}</td>
+        <td class="gnomAD_AF"><a href="https://gnomad.broadinstitute.org/variant/{{x.chr}}-{{x.start}}-{{x.referenceAllele}}-{{x.alternateAllele}}?dataset=gnomad_r3">
+          {{ x.gnomAD_AF }}</a></td>
         <td class="pdb">{{ x.pdb }}</td>
+        <td class="ptm">{{ x.PTM }}</td>
       </tbody>
   </table>
 
