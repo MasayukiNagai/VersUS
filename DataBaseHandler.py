@@ -301,7 +301,8 @@ class DataBaseEditor:
         variant_dict = {}
         keytup = ('gene_id', 'ref', 'pos', 'alt', 'accession',
                   'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
-                  'PTM', 'fasta_id')
+                  'PTM', 'fasta_id', 'chrom', 'referenceAllele',
+                  'alternateAllele')
         for i, vus in enumerate(vus_dictlist):
             if vus['gene_id'] not in variant_dict.keys():
                 variant_dict[vus['gene_id']] = []
@@ -326,7 +327,7 @@ class DataBaseEditor:
                'ref': ref,
                'pos': pos,
                'alt': alt,
-               'chr': vus['chr'],
+               'chrom': vus['chr'],
                'referenceAllele': vus['referenceAllele'],
                'alternateAllele': vus['alternateAllele'],
                'accession': accession,
@@ -397,7 +398,7 @@ class DataBaseEditor:
         np_set = set()
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip().split('\t')
-            assert header[6] == 'NP_accession',\
+            assert header[9] == 'NP_accession',\
                 'Error: Confirm the column for "NP_accession"'
             for line in f:
                 data = line.rstrip().split('\t')
@@ -427,11 +428,12 @@ class DataBaseEditor:
             header = f.readline().rstrip()
             keys = header.split('\t')
             keytup = ('gene_id', 'gene_name', 'clinical_significance',
-                      'EC_number', 'uniprot_id', 'missense_variation',
-                      'NP_accession', 'ClinVar_accession', 'gnomAD_AF',
-                      'CADD_score', 'chrom', 'start', 'stop',
-                      'referenceAllele', 'alternateAllele', 'FASTA_window',
-                      'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to', 'PTM')
+                      'EC_number', 'uniprot_id', 'pos', 'ref', 'alt',
+                      'missense_variation', 'NP_accession',
+                      'ClinVar_accession', 'gnomAD_AF', 'CADD_score',
+                      'PTM', 'chr', 'start', 'stop', 'referenceAllele',
+                      'alternateAllele', 'FASTA_window', 'pdb_ID',
+                      'BLAST_evalue', 'hit_from', 'hit_to')
             assert len(keys) == len(keytup)
             vus_dictlist = []
             for line in f:
