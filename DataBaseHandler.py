@@ -230,7 +230,7 @@ class DataBaseEditor:
         vus_dictlist = self.parse_vus_data(vus_tsv)
         self.register_genes(vus_dictlist)
         self.add_index_gene()
-        self.register_mutations(vus_dictlist)
+        self.register_variants(vus_dictlist)
         self.add_index_mutation()
 
     def register_genes(self, vus_dictlist):
@@ -284,18 +284,33 @@ class DataBaseEditor:
         else:
             return True
 
-    def register_mutations(self, vus_dictlist):
-        mutation_dict = dict()
-        for vus_dict in vus_dictlist:
-            if vus_dict['gene_id'] not in mutation_dict.keys():
-                mutation_dict[vus_dict['gene_id']] = []
-            mut_entry = self.make_mut_dict(vus_dict)
-            mutation_dict[vus_dict['gene_id']].append(mut_entry)
+    # def register_mutations(self, vus_dictlist):
+    #     mutation_dict = dict()
+    #     for vus_dict in vus_dictlist:
+    #         if vus_dict['gene_id'] not in mutation_dict.keys():
+    #             mutation_dict[vus_dict['gene_id']] = []
+    #         mut_entry = self.make_mut_dict(vus_dict)
+    #         mutation_dict[vus_dict['gene_id']].append(mut_entry)
+    #     keytup = ('gene_id', 'ref', 'pos', 'alt', 'accession',
+    #               'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
+    #               'PTM', 'fasta_id')
+    #     vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
+    #     self.insert_items(self.mutation_table, keytup, vus_values)
+
+    def register_variants(self, vus_dictlist, n=10000):
+        variant_dict = {}
         keytup = ('gene_id', 'ref', 'pos', 'alt', 'accession',
                   'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
                   'PTM', 'fasta_id')
-        vus_values = self.get_tuplist_for_mut(keytup, mutation_dict)
-        self.insert_items(self.mutation_table, keytup, vus_values)
+        for i, vus in enumerate(vus_dictlist):
+            if vus['gene_id'] not in variant_dict.keys():
+                variant_dict[vus['gene_id']] = []
+            vus_entry = self.make_mut_dict(vus)
+            variant_dict[vus['gene_id']].append(vus_entry)
+            if (i+1) % n == 0 or (i+1) == len(vus_dictlist):
+                vus_values = self.get_tuplist_for_mut(keytup, variant_dict)
+                self.insert_items(self.mutation_table, keytup, vus_values)
+                variant_dict.clear()
 
     def make_mut_dict(self, vus: dict):
         gene_id = self.get_gene_id(vus['gene_id'])
