@@ -146,7 +146,7 @@ try{
         <td class="clinvar_link"><a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/{{ x.accession }}">
           {{ x.accession }}</a></td>
         <td class="cadd_score">{{ x.CADD_score }}</td>
-        <td class="gnomAD_AF"><a href="https://gnomad.broadinstitute.org/variant/{{x.chr}}-{{x.start}}-{{x.referenceAllele}}-{{x.alternateAllele}}?dataset=gnomad_r3">
+        <td class="gnomAD_AF"><a href="https://gnomad.broadinstitute.org/variant/{{ x.chrom }}-{{ x.start }}-{{ x.referenceAllele }}-{{ x.alternateAllele }}?dataset=gnomad_r3">
           {{ x.gnomAD_AF }}</a></td>
         <td class="pdb">{{ x.pdb }}</td>
         <td class="ptm">{{ x.PTM }}</td>
@@ -222,7 +222,12 @@ try{
             'CADD_score': formatCADD(value['CADD_score']),
             'gnomAD_AF': formatAF(value['gnomAD_AF']),
             'pdb': value['pdb'],
-            'fasta_id': value['fasta_id']
+            'fasta_id': value['fasta_id'],
+            'chrom': value['chrom'],
+            'start': value['start']
+            'referenceAllele': value['referenceAllele'],
+            'alternateAllele': value['alternateAllele'],
+            'PTM': formatPTM(value['PTM'])
           })
         }
       };
@@ -238,6 +243,14 @@ try{
       formatAF = function (af) {
         if (af != null){
           return Number.parseFloat(af).toExponential(2);
+        } else {
+          return null;
+        };
+      }
+
+      formatPTM = function (ptm) {
+        if (ptm > 0){
+          return '*';
         } else {
           return null;
         };

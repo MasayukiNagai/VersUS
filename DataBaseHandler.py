@@ -108,6 +108,8 @@ class DataBaseEditor:
                           'pos': 'INT' + nn,
                           'alt': 'CHAR(3)' + nn,
                           'chrom': 'VARCHAR(20)' + nn,
+                          'start': 'VARCHAR(20)',
+                          'stop': 'VARCHAR(20)',
                           'referenceAllele': 'CHAR(1)',
                           'alternateAllele': 'CHAR(1)',
                           'accession': 'VARCHAR(255)' + nn,
@@ -301,8 +303,8 @@ class DataBaseEditor:
         variant_dict = {}
         keytup = ('gene_id', 'ref', 'pos', 'alt', 'accession',
                   'clinical_significance', 'CADD_score', 'gnomAD_AF', 'pdb',
-                  'PTM', 'fasta_id', 'chrom', 'referenceAllele',
-                  'alternateAllele')
+                  'PTM', 'fasta_id', 'chrom', 'start', 'stop',
+                  'referenceAllele', 'alternateAllele')
         for i, vus in enumerate(vus_dictlist):
             if vus['gene_id'] not in variant_dict.keys():
                 variant_dict[vus['gene_id']] = []
@@ -396,13 +398,14 @@ class DataBaseEditor:
 
     def register_fasta_from_fetched(self, fasta_dict, vus_tsv):
         np_set = set()
+        np_index = 9
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip().split('\t')
-            assert header[9] == 'NP_accession',\
+            assert header[np_index] == 'NP_accession',\
                 'Error: Confirm the column for "NP_accession"'
             for line in f:
                 data = line.rstrip().split('\t')
-                np_acc = data[6]
+                np_acc = data[np_index]
                 np_set.add(np_acc)
         unfound_nps = np_set - set(fasta_dict.keys())
         print(f'"{len(unfound_nps)}" unfound NP_accessions: {unfound_nps}')
