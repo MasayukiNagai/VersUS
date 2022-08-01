@@ -36,7 +36,7 @@ class PTMHandler:
             positions = self.parse_xml(xml)
             uid2ptm[u_id] = positions
             if (i+1) % 100 == 0:
-                print(f'{i}/{len(uniprot_ids)} done')
+                print(f'{i+1}/{len(uniprot_ids)} done')
         end = datetime.now()
         time = end - start
         c = divmod(time.days * 86400 + time.seconds, 60)
