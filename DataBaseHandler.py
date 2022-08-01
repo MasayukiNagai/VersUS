@@ -330,6 +330,8 @@ class DataBaseEditor:
                'pos': pos,
                'alt': alt,
                'chrom': vus['chr'],
+               'start': vus['start'],
+               'stop': vus['stop'],
                'referenceAllele': vus['referenceAllele'],
                'alternateAllele': vus['alternateAllele'],
                'accession': accession,

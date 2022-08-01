@@ -224,7 +224,7 @@ try{
             'pdb': value['pdb'],
             'fasta_id': value['fasta_id'],
             'chrom': value['chrom'],
-            'start': value['start']
+            'start': value['start'],
             'referenceAllele': value['referenceAllele'],
             'alternateAllele': value['alternateAllele'],
             'PTM': formatPTM(value['PTM'])
