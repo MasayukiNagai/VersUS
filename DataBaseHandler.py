@@ -107,7 +107,7 @@ class DataBaseEditor:
                           'ref': 'CHAR(3)' + nn,
                           'pos': 'INT' + nn,
                           'alt': 'CHAR(3)' + nn,
-                          'chr': 'VARCHAR(20)' + nn,
+                          'chrom': 'VARCHAR(20)' + nn,
                           'referenceAllele': 'CHAR(1)',
                           'alternateAllele': 'CHAR(1)',
                           'accession': 'VARCHAR(255)' + nn,
@@ -429,7 +429,7 @@ class DataBaseEditor:
             keytup = ('gene_id', 'gene_name', 'clinical_significance',
                       'EC_number', 'uniprot_id', 'missense_variation',
                       'NP_accession', 'ClinVar_accession', 'gnomAD_AF',
-                      'CADD_score', 'chr', 'start', 'stop',
+                      'CADD_score', 'chrom', 'start', 'stop',
                       'referenceAllele', 'alternateAllele', 'FASTA_window',
                       'pdb_ID', 'BLAST_evalue', 'hit_from', 'hit_to', 'PTM')
             assert len(keys) == len(keytup)
