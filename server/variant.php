@@ -48,7 +48,10 @@ try{
       $order = "ORDER BY gnomAD_AF ";
     } elseif($sort_by == 'pdb'){
       $order = "ORDER BY pdb ";
-    }else{
+    } elseif($sort_by == 'ptm'){
+      $order = "ORDER BY PTM ";
+    }
+    else{
       $order = "";
     }
     if($desc == 'true'){
@@ -250,7 +253,7 @@ try{
 
       formatPTM = function (ptm) {
         if (ptm > 0){
-          return '*';
+          return 'True';
         } else {
           return null;
         };
