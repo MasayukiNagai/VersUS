@@ -32,6 +32,7 @@ try{
     else{
         $search_by = $_GET['search_by'];
         $term = rtrim($_GET['term']);
+        $term = str_replace("*", "%", $term);
         if ($search_by == 'gene'){
           // search by Gene ID
           $condition = "WHERE gene_symbol LIKE :keyword";
