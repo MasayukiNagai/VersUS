@@ -81,6 +81,17 @@ try{
         $order .= 'ASC';
       }
     }
+    if(isset($_GET['monomer'])){
+      $monomer = $_GET['monomer'];
+      if($monomer == 'true'){
+        if($condition == ""){
+          $condition = "WHERE monomer = 1";
+        }
+        else{
+           $condition .= "AND monomer = 1";
+        }
+      }
+    }
     $limit = "LIMIT :start, :num_per_page";
     # query to get gene items
     $sql = get_query($condition, $order, $limit);
@@ -114,6 +125,12 @@ try{
 
   <?php require "templates/pagination.php" ?>
 
+  <hr>
+    <div class="d-flex justify-content-end">
+      <label> Filter by Monomer
+        <input type='checkbox' id="monomer" ng-click="switchMonomer(); filterByMonomer()" >
+      </label>
+    </div>
   <hr>
 
   <div class="table">
@@ -188,15 +205,49 @@ try{
                            'Leu': 'L', 'Lys': 'K', 'Met': 'M', 'Phe': 'F', 'Pro': 'P',
                            'Ser': 'S', 'Thr': 'T', 'Trp': 'W', 'Tyr': 'Y', 'Val': 'V'}
     app.controller("myCtrl", function($scope){
+
+      $scope.init = function(){
+        console.log('Call init function');
+        $scope.initSortReverse();
+        $scope.initSavedResults();
+        $scope.initIsMonomer();
+      };
+
+      $scope.initSortReverse = function () {
+        if (sessionStorage.reverse == null){
+          sessionStorage.reverse = false;
+        }
+        $scope.sortReverse = JSON.parse(sessionStorage.reverse);
+      };
+
+      $scope.initSavedResults = function () {
+        if (sessionStorage.savedResults == null) {
+          // sessionStorage.savedResults = [];
+          $scope.savedResults = [];
+        }
+        else {
+          // console.log(sessionStorage.savedResults);
+          $scope.savedResults = JSON.parse(sessionStorage.savedResults);
+        }
+      };
+
+      $scope.initIsMonomer = function () {
+        if (sessionStorage.isMonomer == null){
+          sessionStorage.isMonomer = false;
+        }
+        $scope.isMonomer = JSON.parse(sessionStorage.isMonomer);
+        if ($scope.isMonomer){
+          document.getElementById('monomer').checked = true;
+        };
+      }
+
       $scope.gene_symbol = <?= json_encode($gene_symbol); ?>;
       $scope.sortType = '<?= $_GET['sort'] ?>';
-      // $scope.sortReverse = JSON.parse(sessionStorage.reverse);
       $scope.sort = function () {tableSort($scope.sortType, JSON.parse(sessionStorage.reverse))};
       $scope.reverse = function (){sortReverse()};
-
       $scope.results = [];
       // $scope.savedResults = [];
-      $scope.fastaSeqs = []
+      $scope.fastaSeqs = [];
 
       function tableSort(sortType, sortReverse){
         var url = window.location.href;
@@ -225,6 +276,44 @@ try{
 
       function sortReverse(){
         sessionStorage.reverse = !(JSON.parse(sessionStorage.reverse));
+      };
+
+      $scope.switchMonomer = function(){
+        sessionStorage.isMonomer = !(JSON.parse(sessionStorage.isMonomer));
+      };
+
+      $scope.filterByMonomer = function (){
+        var url = window.location.href;
+        var url_query = url.split('?');
+        var newurl = url_query[0];
+        var ct = 0;
+        if (url_query.length > 1){
+            var querystring = url_query[url_query.length - 1];
+            var queries = querystring.split("&");
+            var newQueries = [];
+            for (var query of queries){
+              if (!query.includes("monomer")){
+                if (ct == 0){
+                  newurl += "?" + query;
+                  ct += 1
+                }
+                else{
+                  newurl += "&" + query;
+                }
+              }
+            }
+        }
+        if (document.getElementById('monomer').checked){
+          if (ct == 0){
+            newurl += "?";
+          }
+          else{
+            newurl += "&";
+          }
+          newurl += "monomer=true";
+        }
+        // console.log(newurl);
+        location.href = newurl;
       };
 
       // $scope.passMutationInfo = function (){
@@ -364,32 +453,6 @@ try{
           console.log(ref + pos + alt);
           return null;
         }
-      };
-
-      $scope.initSortReverse = function () {
-        if (sessionStorage.reverse == null){
-          sessionStorage.reverse = false;
-        }
-        else{
-          $scope.sortReverse = JSON.parse(sessionStorage.reverse);
-        }
-      }
-
-      $scope.initSavedResults = function () {
-        if (sessionStorage.savedResults == null) {
-          // sessionStorage.savedResults = [];
-          $scope.savedResults = [];
-        }
-        else {
-          // console.log(sessionStorage.savedResults);
-          $scope.savedResults = JSON.parse(sessionStorage.savedResults);
-        }
-      };
-
-      $scope.init = function(){
-        console.log('Call init function');
-        $scope.initSortReverse();
-        $scope.initSavedResults();
       };
 
     });
