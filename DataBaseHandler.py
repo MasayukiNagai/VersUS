@@ -250,7 +250,8 @@ class DataBaseEditor:
                 gene_dict[vus['gene_id']].update(ec_dict)
         keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom',
                   'EC_number', 'ec_1', 'ec_2', 'ec_3', 'ec_4',
-                  'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4')
+                  'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4',
+                  'monomer')
         gene_values = self.get_tuplist_for_gene(keytup, gene_dict)
         self.insert_items(self.gene_table, keytup, gene_values)
 
@@ -402,7 +403,7 @@ class DataBaseEditor:
 
     def register_fasta_from_fetched(self, fasta_dict, vus_tsv):
         np_set = set()
-        np_index = 9
+        np_index = 10
         with open(vus_tsv, 'r') as f:
             header = f.readline().rstrip().split('\t')
             assert header[np_index] == 'NP_accession',\
