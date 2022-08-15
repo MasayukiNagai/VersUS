@@ -81,6 +81,7 @@ class VersUS:
         clinvar_file = conf_dict['clinvar']
         genes = conf_dict['genes']
         proteomes = conf_dict['proteomes']
+        monomer_tsv = conf_dict['monomer']
         if pre_blast is None:
             blastp = conf_dict['blastp'] if conf_dict['blastp'] != 'None'\
                  else None
@@ -126,6 +127,8 @@ class VersUS:
         fasta_window = int(params_dict['fasta_window'])
         vus_dict, seq_dict = seqHandler.get_seq(
             vus_dict, proteomes, fasta_window)
+
+        vus_dict = SeqHandler.addMonomoerFlag2VUSdict(vus_dict, monomer_tsv)
 
         ptmHandler = PTMHandler()
         vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)

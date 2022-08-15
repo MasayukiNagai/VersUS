@@ -117,3 +117,27 @@ class SeqHandler:
             vus_dict, seq_fetched_dict, window_size)
         self.logger.info('Finish adding sequences to vus_dict')
         return vus_dict, seq_dict
+
+    def read_monomer_list(self, tsv):
+        uids = set()
+        with open(tsv, 'r') as f:
+            header = f.readline().rstrip()
+            header_info = header.split('\t')
+            assert header_info[0] == 'Entry',\
+                'The first column needs to be "Entry" representing UniprotID.'
+            for line in f:
+                data = line.rstrip().split('\t')
+                uid = data[0]
+                uids.add(uid)
+        self.logger.info(f'{len(uids)} entries are monomer.')
+        return uids
+
+    def addMonomoerFlag2VUSdict(self, vus_dict, monomer_tsv):
+        uids = self.read_monomer_list(monomer_tsv)
+        for vus in vus_dict.values():
+            uid = vus['uniprot_id']
+            if uid in uids:
+                vus['monomer'] = True
+            else:
+                vus['monomer'] = False
+        return vus_dict

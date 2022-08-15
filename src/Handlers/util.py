@@ -46,7 +46,7 @@ def check_config_params(params_dict):
 
 def format_header(vus_dict):
     header = ('gene_id', 'gene_name', 'clinical_significance', 'EC_number',
-              'uniprot_id', 'pos', 'ref', 'alt', 'missense_variation',
+              'uniprot_id', 'monomer', 'pos', 'ref', 'alt', 'missense_variation',
               'NP_accession', 'ClinVar_accession', 'gnomAD_AF', 'CADD_score',
               'PTM', 'chr', 'start', 'stop', 'referenceAllele',
               'alternateAllele', 'FASTA_window', 'pdb_ID', 'BLAST_evalue',
