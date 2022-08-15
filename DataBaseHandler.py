@@ -97,7 +97,8 @@ class DataBaseEditor:
                           'ec_2': 'INT', 'ec_3': 'INT', 'ec_4': 'INT',
                           'EC_number2': 'VARCHAR(100)',
                           'ec2_1': 'INT',
-                          'ec2_2': 'INT', 'ec2_3': 'INT', 'ec2_4': 'INT'}
+                          'ec2_2': 'INT', 'ec2_3': 'INT', 'ec2_4': 'INT',
+                          'monomer': 'TINYINT(1)'}
         self.create_table(self.gene_table, name_type_dict)
 
     def create_mutation_table(self):
@@ -237,15 +238,16 @@ class DataBaseEditor:
 
     def register_genes(self, vus_dictlist):
         gene_dict = dict()
-        for vus_dict in vus_dictlist:
-            if vus_dict['gene_id'] not in gene_dict.keys():
-                gene_dict[vus_dict['gene_id']] = {
-                    'gene_symbol': vus_dict['gene_id'],
-                    'gene_full_name': vus_dict['gene_name'],
-                    'uniprot_id': vus_dict['uniprot_id'],
-                    'chrom': vus_dict['chr']}
-                ec_dict = self.get_ec_info(vus_dict['EC_number'])
-                gene_dict[vus_dict['gene_id']].update(ec_dict)
+        for vus in vus_dictlist:
+            if vus['gene_id'] not in gene_dict.keys():
+                gene_dict[vus['gene_id']] = {
+                    'gene_symbol': vus['gene_id'],
+                    'gene_full_name': vus['gene_name'],
+                    'uniprot_id': vus['uniprot_id'],
+                    'chrom': vus['chr'],
+                    'monomer': 1 if vus['monomer'] else 0}
+                ec_dict = self.get_ec_info(vus['EC_number'])
+                gene_dict[vus['gene_id']].update(ec_dict)
         keytup = ('gene_symbol', 'gene_full_name', 'uniprot_id', 'chrom',
                   'EC_number', 'ec_1', 'ec_2', 'ec_3', 'ec_4',
                   'EC_number2', 'ec2_1', 'ec2_2', 'ec2_3', 'ec2_4')
@@ -433,7 +435,8 @@ class DataBaseEditor:
             header = f.readline().rstrip()
             keys = header.split('\t')
             keytup = ('gene_id', 'gene_name', 'clinical_significance',
-                      'EC_number', 'uniprot_id', 'pos', 'ref', 'alt',
+                      'EC_number', 'uniprot_id', 'monomer',
+                      'pos', 'ref', 'alt',
                       'missense_variation', 'NP_accession',
                       'ClinVar_accession', 'gnomAD_AF', 'CADD_score',
                       'PTM', 'chr', 'start', 'stop', 'referenceAllele',
@@ -450,7 +453,7 @@ class DataBaseEditor:
                         vus[key] = None
                     elif key == 'missense_variation':
                         vus[key] = self.map_aa_one_to_three(vus[key])
-                    elif key == 'PTM':
+                    elif key in ('PTM', 'monomer'):
                         vus[key] = True if vus[key] == 'True' else False
                 vus_dictlist.append(vus)
         return vus_dictlist
