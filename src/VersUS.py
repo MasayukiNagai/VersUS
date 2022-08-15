@@ -118,24 +118,18 @@ class VersUS:
             clinvarHandler = ClinVarHandler(clinvar_file)
             vus_dict = clinvarHandler.readClinVarVariationsXML(
                 gene_dict.keys())
+            vus_dict, uids = seqHandler.addUniprotIDandEC(vus_dict, gene_dict)
+            fasta_window = int(params_dict['fasta_window'])
+            vus_dict, seq_dict = seqHandler.get_seq(
+                vus_dict, proteomes, fasta_window)
+            ptmHandler = PTMHandler()
+            vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)
+            vus_dict = seqHandler.addMonomoerFlag2VUSdict(vus_dict, monomer_tsv)
+            header = list(vus_dict[0].keys())
+            interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
+            util.write_to_tsv(vus_dict, header, interim_output)
         else:
             vus_dict = util.read_tsv_to_dict(pre_clinvar)
-
-        # add EC number and Uniprot id
-        vus_dict, uids = seqHandler.add_uniprotId_EC(vus_dict, gene_dict)
-
-        fasta_window = int(params_dict['fasta_window'])
-        vus_dict, seq_dict = seqHandler.get_seq(
-            vus_dict, proteomes, fasta_window)
-
-        vus_dict = SeqHandler.addMonomoerFlag2VUSdict(vus_dict, monomer_tsv)
-
-        ptmHandler = PTMHandler()
-        vus_dict = ptmHandler.addPTM2VUSdict(vus_dict, uids, seq_dict)
-
-        header = list(vus_dict[0].keys())
-        interim_output = os.path.join(interim_dir, f'vus_interim-{analysis_id}.tsv')
-        util.write_to_tsv(vus_dict, header, interim_output)
 
         if blastp:
             blast_input_path = os.path.join(interim_dir, 'blast_input.fasta')

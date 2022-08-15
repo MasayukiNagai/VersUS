@@ -34,7 +34,7 @@ class SeqHandler:
         self.logger.info(f'{len(dup)} genes are duplicated: {dup}')
         return genes_dict
 
-    def add_uniprotId_EC(self, vus_dict, genes_dict):
+    def addUniprotIDandEC(self, vus_dict, genes_dict):
         uids = set()
         for vus in vus_dict.values():
             gene_id = vus['gene_id']
